@@ -8,12 +8,6 @@ import (
 	"github.com/kpenfound/greetings-api/ci/tasks"
 )
 
-const (
-	golangImage    = "golang:latest"
-	baseImage      = "alpine:latest"
-	publishAddress = "ghcr.io/kpenfound/hello-container:latest"
-)
-
 func main() {
 	ctx := context.Background()
 

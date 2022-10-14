@@ -17,5 +17,5 @@ func main() {
 }
 
 func greeting() string {
-	return "Hello"
+	return "Hola"
 }
