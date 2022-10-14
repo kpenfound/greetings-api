@@ -45,6 +45,13 @@ func Push(ctx context.Context) {
 
 		fmt.Println(addr)
 
+		// Create ECS task deployment
+		err = deployGreetingsService()
+		if err != nil {
+			return err
+		}
+		fmt.Println("Deployed ECS task")
+
 		return nil
 	}); err != nil {
 		panic(err)

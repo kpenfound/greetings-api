@@ -16,6 +16,12 @@ resource "aws_lb_target_group" "greetings" {
   protocol    = "HTTP"
   vpc_id      = local.vpc_id
   target_type = "ip"
+
+  health_check {
+    interval          = 5
+    timeout           = 3
+    healthy_threshold = 2
+  }
 }
 
 resource "aws_lb_listener" "greetings" {
