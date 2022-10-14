@@ -22,7 +22,7 @@ func Push(ctx context.Context) {
 		}
 
 		// Get built binary
-		helloBin, err := builder.File("/src/hello").ID(ctx)
+		greetingsBin, err := builder.File("/src/greetings-api").ID(ctx)
 		if err != nil {
 			return err
 		}
@@ -30,13 +30,13 @@ func Push(ctx context.Context) {
 		// Get base image for publishing
 		base := core.Container().From(baseImage)
 		// Add built binary to /bin
-		base = base.WithMountedFile("/tmp/hello", helloBin)
+		base = base.WithMountedFile("/tmp/greetings-api", greetingsBin)
 		// Copy mounted file to rootfs
 		base = base.Exec(api.ContainerExecOpts{
-			Args: []string{"cp", "/tmp/hello", "/bin/hello"},
+			Args: []string{"cp", "/tmp/greetings-api", "/bin/greetings-api"},
 		})
 		// Set entrypoint
-		base = base.WithEntrypoint([]string{"/bin/hello"})
+		base = base.WithEntrypoint([]string{"/bin/greetings-api"})
 		// Publish image
 		addr, err := base.Publish(ctx, publishAddress)
 		if err != nil {
