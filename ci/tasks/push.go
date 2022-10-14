@@ -50,7 +50,7 @@ func Push(ctx context.Context) {
 		if err != nil {
 			return err
 		}
-		fmt.Println("Deployed ECS task")
+		fmt.Println("Created ECS task deployment")
 
 		return nil
 	}); err != nil {
