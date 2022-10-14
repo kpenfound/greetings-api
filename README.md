@@ -17,6 +17,10 @@ listening on :8080
 }
 ```
 
+## Runs on ECS Fargate!
+
+Check out the infrastructure defined under /terraform. It creates everything needed to run
+an api on ECS Fargate with a load balancer.
 
 ## CICD with Dagger
 
