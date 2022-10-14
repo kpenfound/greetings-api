@@ -1,17 +1,24 @@
-# hello
+# greetings-api
 
-A simple hello world app
+A simple greeting api
+
+## Try it out!
 
 ```
 > go run main.go
-Hello
+...
+listening on :8080
 ```
 
-Try it out!
+```
+> curl -s http://localhost:8080 | jq
+{
+  "greeting": "Hello"
+}
+```
 
-- `mage run`
-- `mage test`
 
-Dagger is executed in the magefile `magefiles/main.go`
+## CICD with Dagger
 
-The `Run` and `Test` tasks each load the dagger engine, load a go image, load the working directory, and run a command
+- `go run ci/main.go test`
+- `go run ci/main.go push`
