@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/aws/aws-sdk-go v1.44.116
 	github.com/gin-gonic/gin v1.8.1
-	go.dagger.io/dagger v0.2.35-0.20221014183251-473208f9f6f4
+	go.dagger.io/dagger v0.2.35-0.20221020054634-fdbf19030777
 	gotest.tools/v3 v3.0.3
 )
 
@@ -51,7 +51,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/moby/buildkit v0.10.4 // indirect
+	github.com/moby/buildkit v0.10.5 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/sys/signal v0.7.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

@@ -1,10 +1,12 @@
 package tasks
 
 import (
+	"context"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
-	"go.dagger.io/dagger/engine"
+	"go.dagger.io/dagger/sdk/go/dagger"
 	"go.dagger.io/dagger/sdk/go/dagger/api"
 )
 
@@ -15,12 +17,12 @@ const (
 	ecsService     = "greetings"
 )
 
-func goBuilder(core *api.Query, ctx engine.Context, command []string) (*api.Container, error) {
+func goBuilder(core *dagger.Client, ctx context.Context, command []string) (*api.Container, error) {
 	// Load image
-	builder := core.Container().From(golangImage)
+	builder := core.Core().Container().From(golangImage)
 
 	// Set workdir
-	src, err := core.Host().Workdir().Read().ID(ctx)
+	src, err := core.Core().Host().Workdir().Read().ID(ctx)
 	if err != nil {
 		return nil, err
 	}

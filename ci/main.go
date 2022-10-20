@@ -18,15 +18,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	var err error
+
 	switch task {
 	case "run":
 		fmt.Printf("I dont run yet")
 	case "test":
-		tasks.Test(ctx)
+		err = tasks.Test(ctx)
 	case "push":
-		tasks.Push(ctx)
+		err = tasks.Push(ctx)
 	default:
 		fmt.Printf("Unknown task %s\n", task)
 		os.Exit(1)
+	}
+
+	if err != nil {
+		fmt.Printf("failed to run task %s: %+v\n", task, err)
 	}
 }
