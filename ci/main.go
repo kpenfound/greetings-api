@@ -11,12 +11,12 @@ import (
 func main() {
 	ctx := context.Background()
 
-	task := os.Args[1]
-
 	if len(os.Args) != 2 {
 		fmt.Println("Please pass a task as an argument")
 		os.Exit(1)
 	}
+
+	task := os.Args[1]
 
 	var err error
 
