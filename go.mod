@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.119
 	github.com/gin-gonic/gin v1.8.1
 	github.com/sigstore/cosign v1.13.1
+	github.com/spdx/tools-golang v0.3.0
 	go.dagger.io/dagger v0.2.35-0.20221020191106-1d269ccce644
 	gotest.tools/v3 v3.1.0
 )

@@ -49,18 +49,19 @@ func Push(ctx context.Context) error {
 
 	fmt.Println(addr)
 
-	// TODO : SBOM
+	// SBOM
+	err = sbom()
+	if err != nil {
+		return err
+	}
+	// TODO : push sbom somewhere
 
-	// TODO : cosign sign
+	// cosign sign
 	err = cosignSign(addr, "cosign.key")
 	if err != nil {
 		return err
 	}
-	// TODO : cosign verify
-	err = cosignVerify(addr, "cosign.pub")
-	if err != nil {
-		return err
-	}
+
 	// Create ECS task deployment
 	// err = deployGreetingsService()
 	// if err != nil {

@@ -30,8 +30,7 @@ func Test(ctx context.Context) error {
 
 	//fmt.Println(out)
 	//addr := "cgr.dev/chainguard/nginx:latest"
-	addr := "docker.io/kylepenfound/greetings:unsigned@sha256:c9ef73260c513a3e7271cf6646b512e0d7ce1adf8da87f1f160f3707019f273d"
-	return cosignSign(addr, "cosign.key")
+	return sbom()
 
 	//return nil
 }

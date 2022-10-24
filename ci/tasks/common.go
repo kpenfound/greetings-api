@@ -3,11 +3,14 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/spdx/tools-golang/builder"
+	"github.com/spdx/tools-golang/tvsaver"
 	"go.dagger.io/dagger/sdk/go/dagger"
 	"go.dagger.io/dagger/sdk/go/dagger/api"
 
@@ -57,6 +60,38 @@ func deployGreetingsService() error {
 	return err
 }
 
+// TODO: deps and vulns
+func sbom() error {
+	fileout := fmt.Sprintf("%s_sbom.rdf", publishAddress)
+	config := &builder.Config2_2{
+		NamespacePrefix: "https://github.com/kpenfound/greetings-api",
+		CreatorType:     "Person",
+		Creator:         "kpenfound",
+		PathsIgnored: []string{
+			"/.git/",
+			"/.vscode/",
+		},
+	}
+
+	workdir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	doc, err := builder.Build2_2(publishAddress, workdir, config)
+	if err != nil {
+		return err
+	}
+
+	w, err := os.Create(fileout)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+
+	return tvsaver.Save2_2(doc, w)
+
+}
+
 // TODO: expand key options
 func cosignSign(image string, key string) error {
 	args := []string{image}
@@ -84,15 +119,3 @@ func cosignSign(image string, key string) error {
 	return sign.SignCmd(ro, ko, o.Registry, annotationsMap.Annotations, args, o.Cert, o.CertChain, o.Upload,
 		o.OutputSignature, o.OutputCertificate, o.PayloadPath, o.Force, o.Recursive, o.Attachment, o.NoTlogUpload)
 }
-
-func cosignVerify(image string, key string) error {
-	// sign := cosign.Verify()
-	// args := []string{"--key", key, image}
-	// sign.SetArgs(args)
-	// return sign.Execute()
-	return nil
-}
-
-// SignCmd(ro *options.RootOptions, ko options.KeyOpts, regOpts options.RegistryOptions, annotations map[string]interface{},
-// imgs []string, certPath string, certChainPath string, upload bool, outputSignature, outputCertificate string,
-// payloadPath string, force bool, recursive bool, attachment string, noTlogUpload bool)
