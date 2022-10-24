@@ -30,6 +30,7 @@ func Push(ctx context.Context) error {
 		return err
 	}
 
+	// TODO : distroless image
 	// Get base image for publishing
 	base := client.Core().Container().From(baseImage)
 	// Add built binary to /bin
@@ -48,12 +49,24 @@ func Push(ctx context.Context) error {
 
 	fmt.Println(addr)
 
-	// Create ECS task deployment
-	err = deployGreetingsService()
+	// TODO : SBOM
+
+	// TODO : cosign sign
+	err = cosignSign(addr, "cosign.key")
 	if err != nil {
 		return err
 	}
-	fmt.Println("Created ECS task deployment")
+	// TODO : cosign verify
+	err = cosignVerify(addr, "cosign.pub")
+	if err != nil {
+		return err
+	}
+	// Create ECS task deployment
+	// err = deployGreetingsService()
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Println("Created ECS task deployment")
 
 	return nil
 }

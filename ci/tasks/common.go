@@ -8,12 +8,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"go.dagger.io/dagger/sdk/go/dagger"
 	"go.dagger.io/dagger/sdk/go/dagger/api"
+
+	cosign "github.com/sigstore/cosign/cmd/cosign/cli"
 )
 
 const (
 	golangImage    = "golang:latest"
 	baseImage      = "alpine:latest"
-	publishAddress = "518461225764.dkr.ecr.us-east-1.amazonaws.com/greetings:latest"
+	publishAddress = "kylepenfound/greetings:latest"
 	ecsService     = "greetings"
 )
 
@@ -50,4 +52,19 @@ func deployGreetingsService() error {
 
 	_, err := svc.UpdateService(input)
 	return err
+}
+
+// TODO: expand key options
+func cosignSign(image string, key string) error {
+	sign := cosign.Sign()
+	args := []string{"--key", key, image}
+	sign.SetArgs(args)
+	return sign.Execute()
+}
+
+func cosignVerify(image string, key string) error {
+	sign := cosign.Verify()
+	args := []string{"--key", key, image}
+	sign.SetArgs(args)
+	return sign.Execute()
 }
