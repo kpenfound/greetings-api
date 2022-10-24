@@ -2,6 +2,8 @@ package tasks
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -9,7 +11,8 @@ import (
 	"go.dagger.io/dagger/sdk/go/dagger"
 	"go.dagger.io/dagger/sdk/go/dagger/api"
 
-	cosign "github.com/sigstore/cosign/cmd/cosign/cli"
+	"github.com/sigstore/cosign/cmd/cosign/cli/options"
+	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
 )
 
 const (
@@ -56,15 +59,40 @@ func deployGreetingsService() error {
 
 // TODO: expand key options
 func cosignSign(image string, key string) error {
-	sign := cosign.Sign()
-	args := []string{"--key", key, image}
-	sign.SetArgs(args)
-	return sign.Execute()
+	args := []string{image}
+	o := &options.SignOptions{
+		Upload:           true,
+		Key:              key,
+		Force:            false,
+		Recursive:        false,
+		SkipConfirmation: false,
+		NoTlogUpload:     false,
+	}
+	ro := &options.RootOptions{
+		Timeout: 3 * time.Minute,
+		Verbose: false,
+	}
+	ko := options.KeyOpts{
+		KeyRef: o.Key,
+	}
+	annotationsMap, err := o.AnnotationsMap()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Signing %s\n", image)
+	return sign.SignCmd(ro, ko, o.Registry, annotationsMap.Annotations, args, o.Cert, o.CertChain, o.Upload,
+		o.OutputSignature, o.OutputCertificate, o.PayloadPath, o.Force, o.Recursive, o.Attachment, o.NoTlogUpload)
 }
 
 func cosignVerify(image string, key string) error {
-	sign := cosign.Verify()
-	args := []string{"--key", key, image}
-	sign.SetArgs(args)
-	return sign.Execute()
+	// sign := cosign.Verify()
+	// args := []string{"--key", key, image}
+	// sign.SetArgs(args)
+	// return sign.Execute()
+	return nil
 }
+
+// SignCmd(ro *options.RootOptions, ko options.KeyOpts, regOpts options.RegistryOptions, annotations map[string]interface{},
+// imgs []string, certPath string, certChainPath string, upload bool, outputSignature, outputCertificate string,
+// payloadPath string, force bool, recursive bool, attachment string, noTlogUpload bool)
