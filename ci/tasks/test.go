@@ -3,7 +3,7 @@ package tasks
 import (
 	"context"
 
-	"go.dagger.io/dagger/sdk/go/dagger"
+	"dagger.io/dagger"
 )
 
 func Test(ctx context.Context) error {

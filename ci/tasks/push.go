@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"go.dagger.io/dagger/sdk/go/dagger"
-	"go.dagger.io/dagger/sdk/go/dagger/api"
+	"dagger.io/dagger"
 )
 
 func Push(ctx context.Context) error {
@@ -32,11 +31,11 @@ func Push(ctx context.Context) error {
 
 	// TODO : distroless image
 	// Get base image for publishing
-	base := client.Core().Container().From(baseImage)
+	base := client.Container().From(baseImage)
 	// Add built binary to /bin
 	base = base.WithMountedFile("/tmp/greetings-api", greetingsBin)
 	// Copy mounted file to rootfs
-	base = base.Exec(api.ContainerExecOpts{
+	base = base.Exec(dagger.ContainerExecOpts{
 		Args: []string{"cp", "/tmp/greetings-api", "/bin/greetings-api"},
 	})
 	// Set entrypoint
@@ -63,11 +62,11 @@ func Push(ctx context.Context) error {
 	}
 
 	// Create ECS task deployment
-	// err = deployGreetingsService()
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Println("Created ECS task deployment")
+	err = deployGreetingsService()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Created ECS task deployment")
 
 	return nil
 }

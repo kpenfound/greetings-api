@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"dagger.io/dagger"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/spdx/tools-golang/builder"
 	"github.com/spdx/tools-golang/tvsaver"
-	"go.dagger.io/dagger/sdk/go/dagger"
-	"go.dagger.io/dagger/sdk/go/dagger/api"
 
 	"github.com/sigstore/cosign/cmd/cosign/cli/options"
 	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
@@ -25,12 +25,12 @@ const (
 	ecsService     = "greetings"
 )
 
-func goBuilder(core *dagger.Client, ctx context.Context, command []string) (*api.Container, error) {
+func goBuilder(client *dagger.Client, ctx context.Context, command []string) (*dagger.Container, error) {
 	// Load image
-	builder := core.Core().Container().From(golangImage)
+	builder := client.Container().From(golangImage)
 
 	// Set workdir
-	src, err := core.Core().Host().Workdir().Read().ID(ctx)
+	src, err := client.Host().Workdir().Read().ID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func goBuilder(core *dagger.Client, ctx context.Context, command []string) (*api
 	builder = builder.WithEnvVariable("GOOS", "linux")
 
 	// Execute Command
-	builder = builder.Exec(api.ContainerExecOpts{
+	builder = builder.Exec(dagger.ContainerExecOpts{
 		Args: command,
 	})
 	return builder, nil
@@ -62,7 +62,9 @@ func deployGreetingsService() error {
 
 // TODO: deps and vulns
 func sbom() error {
-	fileout := fmt.Sprintf("%s_sbom.rdf", publishAddress)
+	imageTagParts := strings.Split(publishAddress, "/")
+	imageTag := imageTagParts[len(imageTagParts)-1]
+	fileout := fmt.Sprintf("%s_sbom.rdf", imageTag)
 	config := &builder.Config2_2{
 		NamespacePrefix: "https://github.com/kpenfound/greetings-api",
 		CreatorType:     "Person",
