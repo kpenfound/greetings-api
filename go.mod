@@ -3,18 +3,17 @@ module github.com/kpenfound/greetings-api
 go 1.18
 
 require (
+	dagger.io/dagger v0.3.1
 	github.com/aws/aws-sdk-go v1.44.119
 	github.com/gin-gonic/gin v1.8.1
 	github.com/sigstore/cosign v1.13.1
 	github.com/spdx/tools-golang v0.3.0
-	go.dagger.io/dagger v0.2.35-0.20221020191106-1d269ccce644
 	gotest.tools/v3 v3.1.0
 )
 
 require (
 	bitbucket.org/creachadair/shell v0.0.7 // indirect
 	cloud.google.com/go/compute v1.10.0 // indirect
-	dagger.io/dagger v0.3.1 // indirect
 	github.com/AliyunContainerService/ack-ram-tool/pkg/credentials/alibabacloudsdkgo/helper v0.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go v67.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
