@@ -3,12 +3,13 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"dagger.io/dagger"
 )
 
 func Push(ctx context.Context) error {
-	client, err := dagger.Connect(ctx)
+	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
 		return err
 	}

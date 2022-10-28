@@ -35,9 +35,21 @@ func goBuilder(client *dagger.Client, ctx context.Context, command []string) (*d
 		return nil, err
 	}
 	builder = builder.WithMountedDirectory("/src", src).WithWorkdir("/src")
+
+	// Environment
 	builder = builder.WithEnvVariable("CGO_ENABLED", "0")
 	builder = builder.WithEnvVariable("GOARCH", "amd64")
 	builder = builder.WithEnvVariable("GOOS", "linux")
+
+	// Caching
+	cacheKey := "gomods"
+	cacheID, err := client.CacheVolume(cacheKey).ID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	builder = builder.WithMountedCache(cacheID, "/cache")
+	builder = builder.WithEnvVariable("GOMODCACHE", "/cache")
 
 	// Execute Command
 	builder = builder.Exec(dagger.ContainerExecOpts{

@@ -2,10 +2,6 @@ resource "aws_ecs_cluster" "greetings" {
   name = var.name
 }
 
-resource "aws_ecr_repository" "greetings" {
-  name = var.name
-}
-
 resource "aws_iam_role" "task" {
   name = "${var.name}-task"
 
@@ -100,7 +96,7 @@ resource "aws_ecs_task_definition" "greetings" {
   container_definitions = jsonencode([
     {
       name      = var.name
-      image     = "${aws_ecr_repository.greetings.repository_url}:latest"
+      image     = var.image
       cpu       = 256
       memory    = 512
       essential = true

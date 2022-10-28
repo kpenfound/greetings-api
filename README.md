@@ -24,5 +24,12 @@ an api on ECS Fargate with a load balancer.
 
 ## CICD with Dagger
 
-- `go run ci/main.go test`
-- `go run ci/main.go push`
+Build the project's CI cli
+`go build -o cicli ./ci`
+
+### Testing
+
+`cicli test`
+
+This task 
+- `cicli push`

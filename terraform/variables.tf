@@ -25,3 +25,7 @@ variable "domain" {
 variable "fqdn" {
   default = "greetings.kpenfound.io"
 }
+
+variable "image" {
+  default = "kylepenfound/greetings:latest"
+}
