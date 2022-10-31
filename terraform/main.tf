@@ -21,19 +21,11 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
-resource "aws_default_vpc" "default" {
-  tags = {
-    Name = "Default VPC"
-  }
-}
+module "fargate_task" {
+  source = "github.com/kpenfound/terraform-aws-ecs-fargate-task?ref=v1.0.0"
 
-locals {
-  vpc_id = var.vpc_id == "" ? aws_default_vpc.default.id : var.vpc_id
-}
-
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [local.vpc_id]
-  }
+  name = var.name
+  r53zone = var.domain
+  fqdn = var.fqdn
+  image = var.image
 }

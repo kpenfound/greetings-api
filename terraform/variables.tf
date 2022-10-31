@@ -10,10 +10,6 @@ variable "aws_secret_key" {
   default = ""
 }
 
-variable "vpc_id" {
-  default = ""
-}
-
 variable "name" {
   default = "greetings"
 }
