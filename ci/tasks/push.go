@@ -15,6 +15,7 @@ func Push(ctx context.Context) error {
 	}
 	defer client.Close()
 
+	// Build our app
 	builder, err := goBuilder(
 		client,
 		ctx,
@@ -30,7 +31,6 @@ func Push(ctx context.Context) error {
 		return err
 	}
 
-	// TODO : distroless image
 	// Get base image for publishing
 	base := client.Container().From(baseImage)
 	// Add built binary to /bin
