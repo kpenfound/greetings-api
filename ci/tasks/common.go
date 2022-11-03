@@ -25,37 +25,34 @@ const (
 	ecsService     = "greetings"
 )
 
-func goBuilder(client *dagger.Client, ctx context.Context, command []string) (*dagger.Container, error) {
+func goBuilder(client *dagger.Client, ctx context.Context, command []string) *dagger.Container {
 	// Load image
-	builder := client.Container().From(golangImage)
+	builder := client.Container().
+		From(golangImage)
 
 	// Set workdir
-	src, err := client.Host().Workdir().Read().ID(ctx)
-	if err != nil {
-		return nil, err
-	}
-	builder = builder.WithMountedDirectory("/src", src).WithWorkdir("/src")
+	src := client.Host().Workdir()
+
+	builder = builder.WithMountedDirectory("/src", src).
+		WithWorkdir("/src")
 
 	// Environment
-	builder = builder.WithEnvVariable("CGO_ENABLED", "0")
-	builder = builder.WithEnvVariable("GOARCH", "amd64")
-	builder = builder.WithEnvVariable("GOOS", "linux")
+	builder = builder.WithEnvVariable("CGO_ENABLED", "0").
+		WithEnvVariable("GOARCH", "amd64").
+		WithEnvVariable("GOOS", "linux")
 
 	// Caching
 	cacheKey := "gomods"
-	cacheID, err := client.CacheVolume(cacheKey).ID(ctx)
-	if err != nil {
-		return nil, err
-	}
+	cache := client.CacheVolume(cacheKey)
 
-	builder = builder.WithMountedCache(cacheID, "/cache")
-	builder = builder.WithEnvVariable("GOMODCACHE", "/cache")
+	builder = builder.WithMountedCache("/cache", cache).
+		WithEnvVariable("GOMODCACHE", "/cache")
 
 	// Execute Command
 	builder = builder.Exec(dagger.ContainerExecOpts{
 		Args: command,
 	})
-	return builder, nil
+	return builder
 }
 
 func deployGreetingsService() error {

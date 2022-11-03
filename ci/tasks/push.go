@@ -16,20 +16,14 @@ func Push(ctx context.Context) error {
 	defer client.Close()
 
 	// Build our app
-	builder, err := goBuilder(
+	builder := goBuilder(
 		client,
 		ctx,
 		[]string{"go", "build"},
 	)
-	if err != nil {
-		return err
-	}
 
 	// Get built binary
-	greetingsBin, err := builder.File("/src/greetings-api").ID(ctx)
-	if err != nil {
-		return err
-	}
+	greetingsBin := builder.File("/src/greetings-api")
 
 	// Get base image for publishing
 	base := client.Container().From(baseImage)

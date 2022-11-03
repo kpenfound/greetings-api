@@ -27,7 +27,7 @@ func Tf(ctx context.Context, subtask string) error {
 	defer client.Close()
 
 	// Load terraform directory
-	tfdirectory, err := client.Host().Workdir().Read().Directory("terraform").ID(ctx)
+	tfdirectory := client.Host().Directory("terraform")
 
 	// Load terraform image
 	tf := client.Container().From("hashicorp/terraform:latest")

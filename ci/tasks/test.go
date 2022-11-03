@@ -15,14 +15,11 @@ func Test(ctx context.Context) error {
 	}
 	defer client.Close()
 
-	builder, err := goBuilder(
+	builder := goBuilder(
 		client,
 		ctx,
 		[]string{"go", "test"},
 	)
-	if err != nil {
-		return err
-	}
 
 	// Get Command Output
 	out, err := builder.Stdout().Contents(ctx)
