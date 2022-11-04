@@ -6,7 +6,7 @@ on:
 jobs:
   test:
     name: test
-    runs-on: ubuntu-22.04-16c-64g-600gb
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v3
         with:
