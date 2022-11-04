@@ -19,40 +19,31 @@ import (
 )
 
 const (
-	golangImage    = "golang:latest"
-	baseImage      = "alpine:latest"
-	publishAddress = "kylepenfound/greetings:latest"
-	ecsService     = "greetings"
+	golangImage = "golang:latest"
+	ecsService  = "greetings"
 )
 
 func goBuilder(client *dagger.Client, ctx context.Context, command []string) *dagger.Container {
-	// Load image
-	builder := client.Container().
-		From(golangImage)
-
-	// Set workdir
+	// get project dir
 	src := client.Host().Workdir()
-
-	builder = builder.WithMountedDirectory("/src", src).
-		WithWorkdir("/src")
-
-	// Environment
-	builder = builder.WithEnvVariable("CGO_ENABLED", "0").
-		WithEnvVariable("GOARCH", "amd64").
-		WithEnvVariable("GOOS", "linux")
 
 	// Caching
 	cacheKey := "gomods"
 	cache := client.CacheVolume(cacheKey)
 
-	builder = builder.WithMountedCache("/cache", cache).
-		WithEnvVariable("GOMODCACHE", "/cache")
-
-	// Execute Command
-	builder = builder.Exec(dagger.ContainerExecOpts{
-		Args: command,
-	})
-	return builder
+	// assemble golang
+	return client.Container().
+		From(golangImage).
+		WithMountedDirectory("/src", src).
+		WithWorkdir("/src").
+		WithMountedCache("/cache", cache).
+		WithEnvVariable("GOMODCACHE", "/cache").
+		WithEnvVariable("CGO_ENABLED", "0").
+		WithEnvVariable("GOARCH", "amd64").
+		WithEnvVariable("GOOS", "linux").
+		Exec(dagger.ContainerExecOpts{
+			Args: command,
+		})
 }
 
 func deployGreetingsService() error {

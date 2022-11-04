@@ -29,26 +29,21 @@ func Tf(ctx context.Context, subtask string) error {
 	// Load terraform directory
 	tfdirectory := client.Host().Directory("terraform")
 
-	// Load terraform image
-	tf := client.Container().From("hashicorp/terraform:latest")
-
-	// Mount terraform to container workdir
-	tf = tf.WithMountedDirectory("/terraform", tfdirectory)
-	tf = tf.WithWorkdir("/terraform")
-
 	// Pass through TF_TOKEN for Terraform Cloud
 	tkn := os.Getenv("TF_TOKEN")
-	tf = tf.WithEnvVariable("TF_TOKEN_app_terraform_io", tkn)
 
-	// terraform init
-	tf = tf.Exec(dagger.ContainerExecOpts{
-		Args: []string{"init"},
-	})
-
-	// Set command
-	tf = tf.Exec(dagger.ContainerExecOpts{
-		Args: tfcommand,
-	})
+	// Load terraform image, init, and run
+	tf := client.Container().
+		From("hashicorp/terraform:latest").
+		WithMountedDirectory("/terraform", tfdirectory).
+		WithWorkdir("/terraform").
+		WithEnvVariable("TF_TOKEN_app_terraform_io", tkn).
+		Exec(dagger.ContainerExecOpts{
+			Args: []string{"init"},
+		}).
+		Exec(dagger.ContainerExecOpts{
+			Args: tfcommand,
+		})
 
 	// Execute against dagger engine
 	_, err = tf.ExitCode(ctx)
