@@ -8,9 +8,6 @@ import (
 	"time"
 
 	"dagger.io/dagger"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/spdx/tools-golang/builder"
 	"github.com/spdx/tools-golang/tvsaver"
 
@@ -39,25 +36,9 @@ func goBuilder(client *dagger.Client, ctx context.Context, command []string) *da
 		WithMountedCache("/cache", cache).
 		WithEnvVariable("GOMODCACHE", "/cache").
 		WithEnvVariable("CGO_ENABLED", "0").
-		WithEnvVariable("GOARCH", "amd64").
-		WithEnvVariable("GOOS", "linux").
 		Exec(dagger.ContainerExecOpts{
 			Args: command,
 		})
-}
-
-func deployGreetingsService() error {
-	svc := ecs.New(session.New(&aws.Config{
-		Region: aws.String("us-east-1"),
-	}))
-	input := &ecs.UpdateServiceInput{
-		Service:            aws.String(ecsService),
-		Cluster:            aws.String(ecsService),
-		ForceNewDeployment: aws.Bool(true),
-	}
-
-	_, err := svc.UpdateService(input)
-	return err
 }
 
 // TODO: deps and vulns

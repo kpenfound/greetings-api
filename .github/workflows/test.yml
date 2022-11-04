@@ -8,8 +8,12 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
+      - name: Set up QEMU
+        run: |
+          docker run --rm --privileged tonistiigi/binfmt:latest --install all
       - uses: actions/setup-go@v3
         with:
           go-version: 1.19
       - uses: actions/checkout@v3
       - run: go run ci/main.go test
+      - run: output/*/*/*.out
