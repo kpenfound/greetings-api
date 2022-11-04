@@ -18,6 +18,8 @@ func Test(ctx context.Context) error {
 	src := client.Host().Workdir()
 
 	testoutput := client.Directory()
+	cacheKey := "gomods"
+	cache := client.CacheVolume(cacheKey)
 
 	// multiplatform tests
 	goversions := []string{"1.18", "1.19"}
@@ -30,6 +32,8 @@ func Test(ctx context.Context) error {
 				From(image).
 				WithMountedDirectory("/src", src).
 				WithWorkdir("/src").
+				WithMountedCache("/cache", cache).
+				WithEnvVariable("GOMODCACHE", "/cache").
 				WithEnvVariable("CGO_ENABLED", "0").
 				Exec(dagger.ContainerExecOpts{
 					Args: []string{"go", "test"},
