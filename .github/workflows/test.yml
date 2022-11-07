@@ -16,4 +16,4 @@ jobs:
           go-version: 1.19
       - uses: actions/checkout@v3
       - run: go run ci/main.go test
-      - run: cat output/*/*/*.out
+      - run: tail -n +1 output/*/*/*.out

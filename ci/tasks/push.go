@@ -11,11 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 )
 
-const (
-	baseImage      = "alpine:latest"
-	publishAddress = "kylepenfound/greetings:latest"
-)
-
 var platformToArch = map[dagger.Platform]string{
 	"linux/amd64": "amd64",
 	"linux/arm64": "arm64",
@@ -33,7 +28,7 @@ func Push(ctx context.Context) error {
 
 	variants := make([]*dagger.Container, 0, len(platformToArch))
 	for platform, arch := range platformToArch {
-		// assemble golang
+		// assemble golang build
 		builder := client.Container().
 			From("golang:latest").
 			WithMountedDirectory("/src", src).
@@ -71,16 +66,6 @@ func Push(ctx context.Context) error {
 	fmt.Println(addr)
 
 	// Create ECS task deployment
-	err = deployFargateService()
-	if err != nil {
-		return err
-	}
-	fmt.Println("Created ECS task deployment")
-
-	return nil
-}
-
-func deployFargateService() error {
 	svc := ecs.New(session.New(&aws.Config{
 		Region: aws.String("us-east-1"),
 	}))
@@ -90,6 +75,11 @@ func deployFargateService() error {
 		ForceNewDeployment: aws.Bool(true),
 	}
 
-	_, err := svc.UpdateService(input)
-	return err
+	_, err = svc.UpdateService(input)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Created ECS task deployment")
+
+	return nil
 }
