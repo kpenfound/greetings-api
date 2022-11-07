@@ -15,7 +15,15 @@ func Test(ctx context.Context) error {
 	}
 	defer client.Close()
 
-	src := client.Host().Workdir()
+	src := client.Host().Workdir(dagger.HostWorkdirOpts{
+		Exclude: []string{
+			".circleci/*",
+			".github/*",
+			"ci/*",
+			"terraform/*",
+			"output/*",
+		},
+	})
 
 	testoutput := client.Directory()
 	cacheKey := "gomods"
