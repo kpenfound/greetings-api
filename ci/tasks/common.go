@@ -1,45 +1,17 @@
 package tasks
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
-	"dagger.io/dagger"
 	"github.com/spdx/tools-golang/builder"
 	"github.com/spdx/tools-golang/tvsaver"
 
 	"github.com/sigstore/cosign/cmd/cosign/cli/options"
 	"github.com/sigstore/cosign/cmd/cosign/cli/sign"
 )
-
-const (
-	golangImage = "golang:latest"
-	ecsService  = "greetings"
-)
-
-func goBuilder(client *dagger.Client, ctx context.Context, command []string) *dagger.Container {
-	// get project dir
-	src := client.Host().Workdir()
-
-	// Caching
-	cacheKey := "gomods"
-	cache := client.CacheVolume(cacheKey)
-
-	// assemble golang
-	return client.Container().
-		From(golangImage).
-		WithMountedDirectory("/src", src).
-		WithWorkdir("/src").
-		WithMountedCache("/cache", cache).
-		WithEnvVariable("GOMODCACHE", "/cache").
-		WithEnvVariable("CGO_ENABLED", "0").
-		Exec(dagger.ContainerExecOpts{
-			Args: command,
-		})
-}
 
 // TODO: deps and vulns
 func sbom() error {

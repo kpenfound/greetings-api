@@ -1,19 +1,26 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"os"
 )
 
 func main() {
-	r := gin.Default()
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"greeting": greeting(),
-		})
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("got / request from %s\n", r.RemoteAddr)
+		io.WriteString(w, greeting())
 	})
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+
+	err := http.ListenAndServe(":8080", nil)
+	if errors.Is(err, http.ErrServerClosed) {
+		fmt.Printf("server closed\n")
+	} else if err != nil {
+		fmt.Printf("error starting server: %s\n", err)
+		os.Exit(1)
+	}
 }
 
 func greeting() string {

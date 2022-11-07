@@ -23,5 +23,5 @@ variable "fqdn" {
 }
 
 variable "image" {
-  default = "kylepenfound/greetings:latest"
+  default = "public.ecr.aws/t5t3s6c1/hello:latest"
 }

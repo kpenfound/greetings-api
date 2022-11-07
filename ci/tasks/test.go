@@ -34,7 +34,6 @@ func Test(ctx context.Context) error {
 				WithWorkdir("/src").
 				WithMountedCache("/cache", cache).
 				WithEnvVariable("GOMODCACHE", "/cache").
-				WithEnvVariable("CGO_ENABLED", "0").
 				Exec(dagger.ContainerExecOpts{
 					Args: []string{"go", "test"},
 				})

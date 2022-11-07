@@ -16,6 +16,11 @@ const (
 	publishAddress = "kylepenfound/greetings:latest"
 )
 
+var platformToArch = map[dagger.Platform]string{
+	"linux/amd64": "amd64",
+	"linux/arm64": "arm64",
+}
+
 func Push(ctx context.Context) error {
 	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
@@ -23,25 +28,42 @@ func Push(ctx context.Context) error {
 	}
 	defer client.Close()
 
-	// Build our app
-	builder := goBuilder(
-		client,
-		ctx,
-		[]string{"go", "build"},
-	)
+	// get project dir
+	src := client.Host().Workdir()
 
-	// Get built binary
-	greetingsBin := builder.File("/src/greetings-api")
-	// Build container on production base with build artifact
-	base := client.Container().
-		From(baseImage).
-		WithMountedFile("/tmp/greetings-api", greetingsBin).
-		Exec(dagger.ContainerExecOpts{
-			Args: []string{"cp", "/tmp/greetings-api", "/bin/greetings-api"},
-		}).
-		WithEntrypoint([]string{"/bin/greetings-api"})
-	// Publish image
-	addr, err := base.Publish(ctx, publishAddress)
+	variants := make([]*dagger.Container, 0, len(platformToArch))
+	for platform, arch := range platformToArch {
+		// assemble golang
+		builder := client.Container().
+			From("golang:latest").
+			WithMountedDirectory("/src", src).
+			WithWorkdir("/src").
+			WithEnvVariable("CGO_ENABLED", "0").
+			WithEnvVariable("GOOS", "linux").
+			WithEnvVariable("GOARCH", arch).
+			Exec(dagger.ContainerExecOpts{
+				Args: []string{"go", "build", "-o", "/src/greetings-api"},
+			})
+
+		// Build container on production base with build artifact
+		base := client.Container(dagger.ContainerOpts{Platform: platform}).
+			From("alpine")
+		// copy build artifact from builder image
+		base = base.WithFS(
+			base.FS().WithFile("/bin/greetings-api",
+				builder.File("/src/greetings-api"),
+			)).
+			WithEntrypoint([]string{"/bin/greetings-api"})
+		// add built container to container variants
+		variants = append(variants, base)
+	}
+	// Publish all images
+	addr, err := client.Container().Publish(
+		ctx,
+		"public.ecr.aws/t5t3s6c1/hello:latest",
+		dagger.ContainerPublishOpts{
+			PlatformVariants: variants,
+		})
 	if err != nil {
 		return err
 	}
@@ -49,7 +71,7 @@ func Push(ctx context.Context) error {
 	fmt.Println(addr)
 
 	// Create ECS task deployment
-	err = deployGreetingsService()
+	err = deployFargateService()
 	if err != nil {
 		return err
 	}
@@ -58,13 +80,13 @@ func Push(ctx context.Context) error {
 	return nil
 }
 
-func deployGreetingsService() error {
+func deployFargateService() error {
 	svc := ecs.New(session.New(&aws.Config{
 		Region: aws.String("us-east-1"),
 	}))
 	input := &ecs.UpdateServiceInput{
-		Service:            aws.String(ecsService),
-		Cluster:            aws.String(ecsService),
+		Service:            aws.String("greetings"),
+		Cluster:            aws.String("greetings"),
 		ForceNewDeployment: aws.Bool(true),
 	}
 
