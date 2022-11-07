@@ -1,7 +1,6 @@
 terraform {
   cloud {
     organization = "kpenfound"
-
     workspaces {
       name = "greetings-api"
     }
@@ -23,7 +22,6 @@ provider "aws" {
 
 module "fargate_task" {
   source = "github.com/kpenfound/terraform-aws-ecs-fargate-task?ref=v1.0.0"
-
   name = var.name
   r53zone = var.domain
   fqdn = var.fqdn
