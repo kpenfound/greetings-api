@@ -16,4 +16,4 @@ jobs:
 workflows:
   test:
     jobs:
-      - tset
+      - test
