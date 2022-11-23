@@ -24,7 +24,7 @@ func Push(ctx context.Context) error {
 	defer client.Close()
 
 	// get project dir
-	src := client.Host().Workdir()
+	src := client.Host().Directory(".")
 
 	variants := make([]*dagger.Container, 0, len(platformToArch))
 	for platform, arch := range platformToArch {
@@ -36,16 +36,14 @@ func Push(ctx context.Context) error {
 			WithEnvVariable("CGO_ENABLED", "0").
 			WithEnvVariable("GOOS", "linux").
 			WithEnvVariable("GOARCH", arch).
-			Exec(dagger.ContainerExecOpts{
-				Args: []string{"go", "build", "-o", "/src/greetings-api"},
-			})
+			WithExec([]string{"go", "build", "-o", "/src/greetings-api"})
 
 		// Build container on production base with build artifact
 		base := client.Container(dagger.ContainerOpts{Platform: platform}).
 			From("alpine")
 		// copy build artifact from builder image
-		base = base.WithFS(
-			base.FS().WithFile("/bin/greetings-api",
+		base = base.WithRootfs(
+			base.Rootfs().WithFile("/bin/greetings-api",
 				builder.File("/src/greetings-api"),
 			)).
 			WithEntrypoint([]string{"/bin/greetings-api"})

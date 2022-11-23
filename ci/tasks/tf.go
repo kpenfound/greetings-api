@@ -38,12 +38,8 @@ func Tf(ctx context.Context, subtask string) error {
 		WithMountedDirectory("/terraform", tfdirectory).
 		WithWorkdir("/terraform").
 		WithEnvVariable("TF_TOKEN_app_terraform_io", tkn).
-		Exec(dagger.ContainerExecOpts{
-			Args: []string{"init"},
-		}).
-		Exec(dagger.ContainerExecOpts{
-			Args: tfcommand,
-		})
+		WithExec([]string{"init"}).
+		WithExec(tfcommand)
 
 	// Execute against dagger engine
 	_, err = tf.ExitCode(ctx)

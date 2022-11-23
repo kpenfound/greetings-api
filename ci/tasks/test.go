@@ -15,7 +15,7 @@ func Test(ctx context.Context) error {
 	}
 	defer client.Close()
 
-	src := client.Host().Workdir(dagger.HostWorkdirOpts{
+	src := client.Host().Directory(".", dagger.HostDirectoryOpts{
 		Exclude: []string{
 			".circleci/*",
 			".github/*",
@@ -42,15 +42,13 @@ func Test(ctx context.Context) error {
 				WithWorkdir("/src").
 				WithMountedCache("/cache", cache).
 				WithEnvVariable("GOMODCACHE", "/cache").
-				Exec(dagger.ContainerExecOpts{
-					Args: []string{"go", "test"},
-				})
+				WithExec([]string{"sh", "-c", "go test > /src/test.out"})
 
 			// Get Command Output
 			outputfile := fmt.Sprintf("output/%s/%s.out", string(plat), goversion)
 			testoutput = testoutput.WithFile(
 				outputfile,
-				builder.Stdout(),
+				builder.File("/src/test.out"),
 			)
 		}
 	}
