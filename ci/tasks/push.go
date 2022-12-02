@@ -40,12 +40,8 @@ func Push(ctx context.Context) error {
 
 		// Build container on production base with build artifact
 		base := client.Container(dagger.ContainerOpts{Platform: platform}).
-			From("alpine")
-		// copy build artifact from builder image
-		base = base.WithRootfs(
-			base.Rootfs().WithFile("/bin/greetings-api",
-				builder.File("/src/greetings-api"),
-			)).
+			From("alpine").
+			WithFile("/bin/greetings-api", builder.File("/src/greetings-api")).
 			WithEntrypoint([]string{"/bin/greetings-api"})
 		// add built container to container variants
 		variants = append(variants, base)
