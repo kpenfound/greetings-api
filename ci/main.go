@@ -21,8 +21,14 @@ func main() {
 	var err error
 
 	switch task {
+	case "ci":
+		err = tasks.Ci(ctx)
+	case "lint":
+		err = tasks.Lint(ctx)
 	case "test":
 		err = tasks.Test(ctx)
+	case "build":
+		err = tasks.Build(ctx)
 	case "push":
 		err = tasks.Push(ctx)
 	case "tf":

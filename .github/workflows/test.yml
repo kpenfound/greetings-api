@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    name: test
+    name: ci
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
@@ -15,5 +15,4 @@ jobs:
         with:
           go-version: 1.19
       - uses: actions/checkout@v3
-      - run: go run ci/main.go test
-      - run: tail -n +1 output/*/*/*.out
+      - run: go run ci/main.go ci
