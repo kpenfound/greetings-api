@@ -45,5 +45,6 @@ func main() {
 
 	if err != nil {
 		fmt.Printf("failed to run task %s: %+v\n", task, err)
+		os.Exit(1)
 	}
 }
