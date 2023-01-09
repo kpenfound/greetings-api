@@ -11,7 +11,10 @@ import (
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("got / request from %s\n", r.RemoteAddr)
-		io.WriteString(w, greeting())
+		_, err := io.WriteString(w, greeting())
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	err := http.ListenAndServe(":8080", nil)
