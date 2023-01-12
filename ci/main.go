@@ -11,18 +11,24 @@ import (
 func main() {
 	ctx := context.Background()
 
-	task := os.Args[1]
-
 	if len(os.Args) < 2 {
 		fmt.Println("Please pass a task as an argument [ test | push | tf ]")
 		os.Exit(1)
 	}
 
+	task := os.Args[1]
+
 	var err error
 
 	switch task {
+	case "ci":
+		err = tasks.Ci(ctx)
+	case "lint":
+		err = tasks.Lint(ctx)
 	case "test":
 		err = tasks.Test(ctx)
+	case "build":
+		err = tasks.Build(ctx)
 	case "push":
 		err = tasks.Push(ctx)
 	case "tf":
@@ -39,5 +45,6 @@ func main() {
 
 	if err != nil {
 		fmt.Printf("failed to run task %s: %+v\n", task, err)
+		os.Exit(1)
 	}
 }
