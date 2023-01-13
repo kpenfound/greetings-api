@@ -39,9 +39,10 @@ func main() {
 }
 
 func nix(ctx context.Context, client *dagger.Client, src *dagger.Directory) error {
-	err := client.Container().
-		From("alpine").
+	err := client.
 		Pipeline("nix").
+		Container().
+		From("alpine").
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "nix"}).
@@ -51,9 +52,10 @@ func nix(ctx context.Context, client *dagger.Client, src *dagger.Directory) erro
 }
 
 func docs(ctx context.Context, client *dagger.Client, src *dagger.Directory) error {
-	err := client.Container().
-		From("alpine").
+	err := client.
 		Pipeline("docs").
+		Container().
+		From("alpine").
 		WithMountedDirectory("/src", src.directory("docs")).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "docs"}).
@@ -63,9 +65,10 @@ func docs(ctx context.Context, client *dagger.Client, src *dagger.Directory) err
 }
 
 func test(ctx context.Context, client *dagger.Client, src *dagger.Directory) error {
-	err := client.Container().
-		From("golang:latest").
+	err := client.
 		Pipeline("test").
+		Container().
+		From("golang:latest").
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
 		WithExec([]string{"go", "test"}).
@@ -81,9 +84,10 @@ func build(ctx context.Context, client *dagger.Client, src *dagger.Directory) er
 
 	for _, plat := range platforms {
 		pipeline := fmt.Sprintf("build-%s", plat)
-		builder := client.Container().
-			From("golang:latest").
+		builder := client.
 			Pipeline(pipeline).
+			Container().
+			From("golang:latest").
 			WithMountedDirectory("/src", src).
 			WithWorkdir("/src").
 			WithEnvVariable("GOOS", plat).
