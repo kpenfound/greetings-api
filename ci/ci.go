@@ -39,7 +39,7 @@ func main() {
 }
 
 func nix(ctx context.Context, client *dagger.Client, src *dagger.Directory) error {
-	err := client.
+	_, err := client.
 		Pipeline("nix").
 		Container().
 		From("alpine").
@@ -52,11 +52,11 @@ func nix(ctx context.Context, client *dagger.Client, src *dagger.Directory) erro
 }
 
 func docs(ctx context.Context, client *dagger.Client, src *dagger.Directory) error {
-	err := client.
+	_, err := client.
 		Pipeline("docs").
 		Container().
 		From("alpine").
-		WithMountedDirectory("/src", src.directory("docs")).
+		WithMountedDirectory("/src", src.Directory("docs")).
 		WithWorkdir("/src").
 		WithExec([]string{"make", "docs"}).
 		ExitCode(ctx)
@@ -65,14 +65,15 @@ func docs(ctx context.Context, client *dagger.Client, src *dagger.Directory) err
 }
 
 func test(ctx context.Context, client *dagger.Client, src *dagger.Directory) error {
-	err := client.
+	testQuery := client.
 		Pipeline("test").
 		Container().
 		From("golang:latest").
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
-		WithExec([]string{"go", "test"}).
-		ExitCode(ctx)
+		WithExec([]string{"go", "test"})
+
+	_, err := testQuery.ExitCode(ctx)
 
 	return err
 }
