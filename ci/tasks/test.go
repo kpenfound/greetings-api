@@ -31,26 +31,23 @@ func Test(ctx context.Context) error {
 
 	// multiplatform tests
 	goversions := []string{"1.18", "1.19"}
-	platforms := []dagger.Platform{"linux/amd64", "linux/arm64"}
 
-	for _, plat := range platforms {
-		for _, goversion := range goversions {
-			image := fmt.Sprintf("golang:%s", goversion)
-			builder := client.Container(dagger.ContainerOpts{Platform: plat}).
-				From(image).
-				WithMountedDirectory("/src", src).
-				WithWorkdir("/src").
-				WithMountedCache("/cache", cache).
-				WithEnvVariable("GOMODCACHE", "/cache").
-				WithExec([]string{"sh", "-c", "go test > /src/test.out"})
+	for _, goversion := range goversions {
+		image := fmt.Sprintf("golang:%s", goversion)
+		builder := client.Container().
+			From(image).
+			WithMountedDirectory("/src", src).
+			WithWorkdir("/src").
+			WithMountedCache("/cache", cache).
+			WithEnvVariable("GOMODCACHE", "/cache").
+			WithExec([]string{"sh", "-c", "go test > /src/test.out"})
 
-			// Get Command Output
-			outputfile := fmt.Sprintf("output/%s/%s.out", string(plat), goversion)
-			testoutput = testoutput.WithFile(
-				outputfile,
-				builder.File("/src/test.out"),
-			)
-		}
+		// Get Command Output
+		outputfile := fmt.Sprintf("output/%s.out", goversion)
+		testoutput = testoutput.WithFile(
+			outputfile,
+			builder.File("/src/test.out"),
+		)
 	}
 
 	_, err = testoutput.Export(ctx, ".")

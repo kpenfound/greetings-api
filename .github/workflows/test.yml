@@ -7,49 +7,10 @@ on:
 jobs:
   ci:
     name: ci
-    runs-on: ubuntu-latest # TODO
+    runs-on: example-runnerdeploy-66mgz-8htp9
     steps:
-      - name: Set up QEMU # TODO
-        run: |
-          docker run --rm --privileged tonistiigi/binfmt:latest --install all
       - uses: actions/setup-go@v3
         with:
           go-version: 1.19
       - uses: actions/checkout@v3
       - run: go run ci/main.go ci
-  lint:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up QEMU
-        run: |
-          docker run --rm --privileged tonistiigi/binfmt:latest --install all
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-      - uses: actions/checkout@v3
-      - run: go run ci/main.go lint
-  test:
-    name: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up QEMU
-        run: |
-          docker run --rm --privileged tonistiigi/binfmt:latest --install all
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-      - uses: actions/checkout@v3
-      - run: go run ci/main.go test
-  build:
-    name: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up QEMU
-        run: |
-          docker run --rm --privileged tonistiigi/binfmt:latest --install all
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-      - uses: actions/checkout@v3
-      - run: go run ci/main.go build
