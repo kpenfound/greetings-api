@@ -4,7 +4,7 @@ on:
 jobs:
   dagger:
     name: dagger
-    runs-on: dagger-runner
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - run: go run ci/ci.go
