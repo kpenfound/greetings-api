@@ -21,6 +21,8 @@ func main() {
 	var err error
 
 	switch task {
+	case "gha":
+		err = tasks.Gha(ctx)
 	case "ci":
 		err = tasks.Ci(ctx)
 	case "lint":
