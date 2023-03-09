@@ -22,4 +22,4 @@ jobs:
             mkdir -p "$DAGGER_TMP_BINDIR"
             curl "https://dl.dagger.io/dagger/main/${DAGGER_CLI_COMMIT}/dagger_${DAGGER_CLI_COMMIT}_$(uname -s | tr A-Z a-z)_$(uname -m | sed s/x86_64/amd64/).tar.gz" | tar xvz -C "$DAGGER_TMP_BINDIR"
           fi
-          dagger run go run ci/main.go ci
+          ${_EXPERIMENTAL_DAGGER_CLI_BIN} run go run ci/main.go ci
