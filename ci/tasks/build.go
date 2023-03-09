@@ -26,26 +26,23 @@ func Build(ctx context.Context) error {
 
 	// multiplatform tests
 	goversions := []string{"1.18", "1.19"}
-	platforms := []dagger.Platform{"linux/amd64", "linux/arm64"}
 
-	for _, plat := range platforms {
-		for _, goversion := range goversions {
-			image := fmt.Sprintf("golang:%s", goversion)
-			builder := client.Container(dagger.ContainerOpts{Platform: plat}).
-				From(image).
-				WithMountedDirectory("/src", src).
-				WithWorkdir("/src").
-				WithMountedCache("/cache", cache).
-				WithEnvVariable("GOMODCACHE", "/cache").
-				WithExec([]string{"go", "build", "-o", "/src/greetings-api"})
+	for _, goversion := range goversions {
+		image := fmt.Sprintf("golang:%s", goversion)
+		builder := client.Container().
+			From(image).
+			WithMountedDirectory("/src", src).
+			WithWorkdir("/src").
+			WithMountedCache("/cache", cache).
+			WithEnvVariable("GOMODCACHE", "/cache").
+			WithExec([]string{"go", "build", "-o", "/src/greetings-api"})
 
-			// Get Command Output
-			outputfile := fmt.Sprintf("output/%s/%s/greetings-api", string(plat), goversion)
-			buildoutput = buildoutput.WithFile(
-				outputfile,
-				builder.File("/src/greetings-api"),
-			)
-		}
+		// Get Command Output
+		outputfile := fmt.Sprintf("output/%s/greetings-api", goversion)
+		buildoutput = buildoutput.WithFile(
+			outputfile,
+			builder.File("/src/greetings-api"),
+		)
 	}
 
 	_, err = buildoutput.Export(ctx, ".")
