@@ -13,6 +13,7 @@ jobs:
             docker run \
             --name dagger-engine \
             --privileged \
+            -d \
             -e _EXPERIMENTAL_DAGGER_CACHESERVICE_TOKEN=$CACHE_TOKEN \
             -v dagger-engine:/var/lib/dagger \
             registry.dagger.io/engine:v0.6.2
