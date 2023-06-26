@@ -21,7 +21,7 @@ jobs:
       - run:
           command: docker ps
       - run:
-          command: sleep 30
+          command: sleep 300
       - run:
           name: Dagger Test Pipeline
           command: go run ./ci ci
