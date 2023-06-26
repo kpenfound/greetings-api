@@ -30,7 +30,7 @@ jobs:
             fi
       - run:
           name: Dagger Test Pipeline
-          command: /bin/dagger run go run ./ci ci
+          command: /bin/dagger/dagger run go run ./ci ci
       - run:
           name: Test results
           command: tail -n +1 output/*/*.out
