@@ -25,6 +25,8 @@ jobs:
           name: Dagger Test Pipeline
           command: go run ./ci ci
       - run:
+          command: sleep 30
+      - run:
           command: docker kill dagger-engine
       - run:
           command: sleep 30
