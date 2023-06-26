@@ -8,11 +8,17 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
-          name: Setup QEMU
-          command: docker run --rm --privileged tonistiigi/binfmt:latest --install all
+          name: Setup Engine
+          command: |
+            docker run \
+            --name dagger-engine \
+            --privileged \
+            -e _EXPERIMENTAL_DAGGER_CACHESERVICE_TOKEN=$CACHE_TOKEN \
+            -v dagger-engine:/var/lib/dagger \
+            registry.dagger.io/engine:v0.6.2
       - run:
           name: Dagger Test Pipeline
-          command: go run ci/main.go test
+          command: go run ./ci ci
       - run:
           name: Test results
           command: tail -n +1 output/*/*/*.out
