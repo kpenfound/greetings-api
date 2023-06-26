@@ -18,11 +18,13 @@ jobs:
             -v dagger-engine:/var/lib/dagger \
             registry.dagger.io/engine:v0.6.2
       - run:
+          command: docker ps
+      - run:
           name: Dagger Test Pipeline
           command: go run ./ci ci
       - run:
           name: Test results
-          command: tail -n +1 output/*/*/*.out
+          command: tail -n +1 output/*/*.out
 workflows:
   test:
     jobs:
