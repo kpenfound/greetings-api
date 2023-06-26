@@ -2,19 +2,13 @@ package tasks
 
 import (
 	"context"
-	"os"
 
 	"dagger.io/dagger"
 )
 
-func Ci(ctx context.Context) error {
-	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stderr))
-	if err != nil {
-		return err
-	}
-	defer client.Close()
+func Ci(client *dagger.Client, ctx context.Context) error {
 	// lint
-	err = Lint(client.Pipeline("lint"), ctx)
+	err := Lint(client.Pipeline("lint"), ctx)
 	if err != nil {
 		return err
 	}

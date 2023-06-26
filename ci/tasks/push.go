@@ -3,7 +3,6 @@ package tasks
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"dagger.io/dagger"
 	"github.com/aws/aws-sdk-go/aws"
@@ -16,13 +15,7 @@ var platformToArch = map[dagger.Platform]string{
 	"linux/arm64": "arm64",
 }
 
-func Push(ctx context.Context) error {
-	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
+func Push(client *dagger.Client, ctx context.Context) error {
 	// get project dir
 	src := client.Host().Directory(".")
 

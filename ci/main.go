@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"dagger.io/dagger"
 	"github.com/kpenfound/greetings-api/ci/tasks"
 )
 
@@ -20,17 +21,23 @@ func main() {
 
 	var err error
 
+	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stderr))
+	if err != nil {
+		panic(err)
+	}
+	defer client.Close()
+
 	switch task {
 	case "ci":
-		err = tasks.Ci(ctx)
+		err = tasks.Ci(client, ctx)
 	case "lint":
-		err = tasks.Lint(ctx)
+		err = tasks.Lint(client, ctx)
 	case "test":
-		err = tasks.Test(ctx)
+		err = tasks.Test(client, ctx)
 	case "build":
-		err = tasks.Build(ctx)
+		err = tasks.Build(client, ctx)
 	case "push":
-		err = tasks.Push(ctx)
+		err = tasks.Push(client, ctx)
 	case "tf":
 		if len(os.Args) < 3 {
 			fmt.Println("Please subtask as an argument to tf [plan | apply | destroy]")
