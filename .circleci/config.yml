@@ -20,8 +20,17 @@ jobs:
       - run:
           command: docker ps
       - run:
+          name: Install Dagger CLI
+          command: |
+            DAGGER_TMP_BINDIR="/bin/dagger"
+            export _EXPERIMENTAL_DAGGER_CLI_BIN="$DAGGER_TMP_BINDIR/dagger"
+            if [ ! -f  "$_EXPERIMENTAL_DAGGER_CLI_BIN" ]; then
+              mkdir -p "$DAGGER_TMP_BINDIR"
+              curl -L "https://github.com/dagger/dagger/releases/download/v0.6.2/dagger_v0.6.2_linux_amd64.tar.gz" | tar xvz -C "$DAGGER_TMP_BINDIR"
+            fi
+      - run:
           name: Dagger Test Pipeline
-          command: go run ./ci ci
+          command: /bin/dagger run go run ./ci ci
       - run:
           name: Test results
           command: tail -n +1 output/*/*.out
