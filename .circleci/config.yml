@@ -15,6 +15,7 @@ jobs:
             --privileged \
             -d \
             -e _EXPERIMENTAL_DAGGER_CACHESERVICE_TOKEN=$CACHE_TOKEN \
+            -e _EXPERIMENTAL_DAGGER_CACHESERVICE_URL=https://api.dagger.cloud/magicache \
             -v dagger-engine:/var/lib/dagger \
             registry.dagger.io/engine:v0.6.2
       - run:
