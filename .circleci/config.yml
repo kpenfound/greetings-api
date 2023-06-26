@@ -22,9 +22,6 @@ jobs:
       - run:
           name: Dagger Test Pipeline
           command: go run ./ci ci
-      - run:
-          name: Test results
-          command: tail -n +1 output/*/*.out
 workflows:
   test:
     jobs:
