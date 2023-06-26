@@ -2,18 +2,11 @@ package tasks
 
 import (
 	"context"
-	"os"
 
 	"dagger.io/dagger"
 )
 
-func Lint(ctx context.Context) error {
-	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stderr))
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
+func Lint(client *dagger.Client, ctx context.Context) error {
 	src := client.Host().Directory(".", dagger.HostDirectoryOpts{
 		Exclude: []string{
 			".circleci/*",
@@ -24,7 +17,7 @@ func Lint(ctx context.Context) error {
 		},
 	})
 
-	_, err = client.Container().
+	_, err := client.Container().
 		From("golangci/golangci-lint:v1.48").
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").

@@ -3,18 +3,11 @@ package tasks
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"dagger.io/dagger"
 )
 
-func Test(ctx context.Context) error {
-	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
+func Test(client *dagger.Client, ctx context.Context) error {
 	src := client.Host().Directory(".", dagger.HostDirectoryOpts{
 		Exclude: []string{
 			".circleci/*",
@@ -50,7 +43,7 @@ func Test(ctx context.Context) error {
 		)
 	}
 
-	_, err = testoutput.Export(ctx, ".")
+	_, err := testoutput.Export(ctx, ".")
 	if err != nil {
 		return err
 	}

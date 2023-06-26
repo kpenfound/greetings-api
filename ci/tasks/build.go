@@ -3,20 +3,13 @@ package tasks
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"dagger.io/dagger"
 )
 
 var archs = []string{"amd64", "arm64"}
 
-func Build(ctx context.Context) error {
-	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
+func Build(client *dagger.Client, ctx context.Context) error {
 	// get project dir
 	src := client.Host().Directory(".")
 
@@ -48,7 +41,7 @@ func Build(ctx context.Context) error {
 		}
 	}
 
-	_, err = buildoutput.Export(ctx, ".")
+	_, err := buildoutput.Export(ctx, ".")
 	if err != nil {
 		return err
 	}
