@@ -1,5 +1,28 @@
 package tasks
 
+import (
+	"os"
+
+	"dagger.io/dagger"
+)
+
+func getSource(client *dagger.Client) *dagger.Directory {
+	if os.Getenv("CIRCLE_REPOSITORY_URL") != "" && os.Getenv("CIRCLE_SHA1") != "" {
+		repo := os.Getenv("CIRCLE_REPOSITORY_URL")
+		commit := os.Getenv("CIRCLE_SHA1")
+		return client.Git(repo).Commit(commit).Tree()
+	}
+	return client.Host().Directory(".", dagger.HostDirectoryOpts{
+		Exclude: []string{
+			".circleci/*",
+			".github/*",
+			"ci/*",
+			"terraform/*",
+			"output/*",
+		},
+	})
+}
+
 // TODO: deps and vulns
 // func sbom() error {
 // 	imageTagParts := strings.Split(publishAddress, "/")

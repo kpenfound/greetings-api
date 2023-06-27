@@ -7,15 +7,7 @@ import (
 )
 
 func Lint(client *dagger.Client, ctx context.Context) error {
-	src := client.Host().Directory(".", dagger.HostDirectoryOpts{
-		Exclude: []string{
-			".circleci/*",
-			".github/*",
-			"ci/*",
-			"terraform/*",
-			"output/*",
-		},
-	})
+	src := getSource(client)
 
 	_, err := client.Container().
 		From("golangci/golangci-lint:v1.48").

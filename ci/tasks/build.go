@@ -11,7 +11,7 @@ var archs = []string{"amd64", "arm64"}
 
 func Build(client *dagger.Client, ctx context.Context) error {
 	// get project dir
-	src := client.Host().Directory(".")
+	src := getSource(client)
 
 	buildoutput := client.Directory()
 	cacheKey := "gomods"

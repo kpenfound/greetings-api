@@ -17,7 +17,7 @@ var platformToArch = map[dagger.Platform]string{
 
 func Push(client *dagger.Client, ctx context.Context) error {
 	// get project dir
-	src := client.Host().Directory(".")
+	src := getSource(client)
 
 	variants := make([]*dagger.Container, 0, len(platformToArch))
 	for platform, arch := range platformToArch {

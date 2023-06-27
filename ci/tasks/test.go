@@ -8,15 +8,7 @@ import (
 )
 
 func Test(client *dagger.Client, ctx context.Context) error {
-	src := client.Host().Directory(".", dagger.HostDirectoryOpts{
-		Exclude: []string{
-			".circleci/*",
-			".github/*",
-			"ci/*",
-			"terraform/*",
-			"output/*",
-		},
-	})
+	src := getSource(client)
 
 	testoutput := client.Directory()
 	cacheKey := "gomods"

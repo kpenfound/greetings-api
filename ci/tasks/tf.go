@@ -27,7 +27,7 @@ func Tf(ctx context.Context, subtask string) error {
 	defer client.Close()
 
 	// Load terraform directory
-	tfdirectory := client.Host().Directory("terraform")
+	tfdirectory := getSource(client).Directory("terraform")
 
 	// Pass through TF_TOKEN for Terraform Cloud
 	tkn := os.Getenv("TF_TOKEN")
