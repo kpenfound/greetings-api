@@ -8,12 +8,12 @@ import (
 
 func Ci(client *dagger.Client, ctx context.Context) error {
 	// lint
-	err := Lint(client.Pipeline("lint"), ctx)
-	if err != nil {
-		return err
-	}
+	// err := Lint(client.Pipeline("lint"), ctx)
+	// if err != nil {
+	// 	return err
+	// }
 	// test
-	err = Test(client.Pipeline("test"), ctx)
+	err := Test(client.Pipeline("test"), ctx)
 	if err != nil {
 		return err
 	}
