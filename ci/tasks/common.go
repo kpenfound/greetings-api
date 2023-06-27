@@ -17,7 +17,6 @@ func getSource(client *dagger.Client) *dagger.Directory {
 			".circleci/*",
 			".github/*",
 			"ci/*",
-			"terraform/*",
 			"output/*",
 		},
 	})
