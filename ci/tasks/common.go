@@ -7,8 +7,8 @@ import (
 )
 
 func getSource(client *dagger.Client) *dagger.Directory {
-	if os.Getenv("CIRCLE_REPOSITORY_URL") != "" && os.Getenv("CIRCLE_SHA1") != "" {
-		repo := os.Getenv("CIRCLE_REPOSITORY_URL")
+	if os.Getenv("CIRCLE_SHA1") != "" {
+		repo := "https://github.com/kpenfound/greetings-api.git"
 		commit := os.Getenv("CIRCLE_SHA1")
 		return client.Git(repo).Commit(commit).Tree()
 	}
