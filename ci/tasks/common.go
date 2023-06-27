@@ -10,7 +10,10 @@ func getSource(client *dagger.Client) *dagger.Directory {
 	if os.Getenv("CIRCLE_SHA1") != "" {
 		repo := "https://github.com/kpenfound/greetings-api.git"
 		commit := os.Getenv("CIRCLE_SHA1")
-		return client.Git(repo).Commit(commit).Tree()
+		return client.Git(repo).Commit(commit).Tree().
+			WithoutDirectory(".circleci").
+			WithoutDirectory(".github").
+			WithoutDirectory("ci")
 	}
 	return client.Host().Directory(".", dagger.HostDirectoryOpts{
 		Exclude: []string{
