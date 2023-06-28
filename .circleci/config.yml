@@ -21,12 +21,12 @@ jobs:
       - run:
           command: docker ps
       - run:
-          command: sleep 5
+          command: sleep 2
       - run:
           name: Dagger Test Pipeline
           command: go run ./ci ci
       - run:
-          command: sleep 10
+          command: sleep 2
       - run:
           command: docker logs dagger-engine
 workflows:
