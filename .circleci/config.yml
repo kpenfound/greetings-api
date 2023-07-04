@@ -6,27 +6,23 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-          # docker_layer_caching: true
       - run:
           name: Setup Engine
           command: |
             docker run \
             --name dagger-engine \
             --privileged \
+            --stop-signal SIGTERM \
             -d \
             -e _EXPERIMENTAL_DAGGER_CACHESERVICE_TOKEN=$CACHE_TOKEN \
             -e _EXPERIMENTAL_DAGGER_CACHESERVICE_URL=https://api.dagger.cloud/magicache \
             -v dagger-engine:/var/lib/dagger \
             registry.dagger.io/engine:v0.6.2
       - run:
-          command: docker ps
-      - run:
-          command: sleep 2
-      - run:
           name: Dagger Test Pipeline
           command: go run ./ci ci
       - run:
-          command: sleep 2
+          command: docker stop --time 60 dagger-engine
       - run:
           command: docker logs dagger-engine
 workflows:
