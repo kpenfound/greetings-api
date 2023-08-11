@@ -14,6 +14,6 @@ func Lint(client *dagger.Client, ctx context.Context) error {
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
 		WithExec([]string{"golangci-lint", "run", "-v", "--timeout", "5m"}).
-		ExitCode(ctx)
+		Sync(ctx)
 	return err
 }

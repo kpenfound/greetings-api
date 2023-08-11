@@ -42,7 +42,7 @@ func Tf(ctx context.Context, subtask string) error {
 		WithExec(tfcommand)
 
 	// Execute against dagger engine
-	_, err = tf.ExitCode(ctx)
+	_, err = tf.Sync(ctx)
 
 	return err
 }
