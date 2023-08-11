@@ -16,11 +16,11 @@ func getSource(client *dagger.Client) *dagger.Directory {
 			WithoutDirectory("ci")
 	}
 	return client.Host().Directory(".", dagger.HostDirectoryOpts{
-		Exclude: []string{
-			".circleci/*",
-			".github/*",
-			"ci/*",
-			"output/*",
+		Include: []string{
+			"terraform/",
+			"go.mod",
+			"go.sum",
+			"*.go",
 		},
 	})
 }
