@@ -3,7 +3,7 @@ module github.com/kpenfound/greetings-api
 go 1.18
 
 require (
-	dagger.io/dagger v0.8.2
+	dagger.io/dagger v0.8.4
 	github.com/aws/aws-sdk-go v1.44.119
 	gotest.tools/v3 v3.1.0
 )
