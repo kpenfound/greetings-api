@@ -9,6 +9,7 @@ func main() {
 		WithCheck(UnitTest).
 		WithCheck(Lint).
 		WithCheck(Build).
+		WithArtifact(Binary).
 		Serve()
 }
 
@@ -16,11 +17,25 @@ func buildBase(ctx context.Context) *Container {
 	return dag.Apko().Wolfi([]string{"go-1.20"})
 }
 
+func Binary(ctx context.Context) *File {
+        return dag.Go().Build(
+                buildBase(ctx),
+                dag.Host().Directory("."),
+                GoBuildOpts{
+                        Static:   true,
+                        Packages: []string{"."},
+                },
+        ).File("greetings-api")
+}
+
 func UnitTest(ctx context.Context) *EnvironmentCheck {
 	return dag.Go().Test(
 		buildBase(ctx),
 		dag.Host().Directory("."),
-		GoTestOpts{},
+		GoTestOpts{
+			Packages: []string{"./..."},
+			Verbose: true,
+		},
 	)
 }
 
