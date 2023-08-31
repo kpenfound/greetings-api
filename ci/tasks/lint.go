@@ -6,14 +6,12 @@ import (
 	"dagger.io/dagger"
 )
 
-func Lint(client *dagger.Client, ctx context.Context) error {
+func Lint(client *dagger.Client, ctx context.Context) *dagger.Container {
 	src := getSource(client)
 
-	_, err := client.Container().
+	return client.Container().
 		From("golangci/golangci-lint:v1.48").
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
-		WithExec([]string{"golangci-lint", "run", "-v", "--timeout", "5m"}).
-		Sync(ctx)
-	return err
+		WithExec([]string{"golangci-lint", "run", "-v", "--timeout", "5m"})
 }

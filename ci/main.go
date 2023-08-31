@@ -2,56 +2,59 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
-
-	"dagger.io/dagger"
-	"github.com/kpenfound/greetings-api/ci/tasks"
 )
 
 func main() {
-	ctx := context.Background()
+	dag.Environment().
+		WithCheck(UnitTest).
+		WithCheck(Lint).
+		WithCheck(Build).
+		Serve()
+}
 
-	if len(os.Args) < 2 {
-		fmt.Println("Please pass a task as an argument [ test | push | tf ]")
-		os.Exit(1)
-	}
+func buildBase(ctx context.Context) *Container {
+	return dag.Apko().Wolfi([]string{"go-1.20"})
+}
 
-	task := os.Args[1]
+func UnitTest(ctx context.Context) *EnvironmentCheck {
+	return dag.Go().Test(
+		buildBase(ctx),
+		dag.Host().Directory("."),
+		GoTestOpts{},
+	)
+}
 
-	var err error
+func Lint(ctx context.Context) *EnvironmentCheck {
+	//l := lint(ctx)
+	//return dag.EnvironmentCheck().
+	//WithDescription("GolangCILint").
+	//WithContainer(l)
+	l := dag.Go().GolangCilint(
+		buildBase(ctx),
+		dag.Host().Directory("."),
+		GoGolangCilintOpts{},
+	)
+	return dag.EnvironmentCheck().
+	WithDescription("Go Lint").
+	WithContainer(l)
+}
 
-	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stderr))
-	if err != nil {
-		panic(err)
-	}
-	defer client.Close()
+func lint(ctx context.Context) *Container {
+	return dag.Container().
+		From("golangci/golangci-lint:v1.50").
+		WithMountedDirectory("/src", dag.Host().Directory(".")).
+		WithWorkdir("/src").
+		WithExec([]string{"go", "mod", "download"}).
+		WithExec([]string{"golangci-lint", "run", "-v", "--timeout", "5m"})
+}
 
-	switch task {
-	case "ci":
-		err = tasks.Ci(client, ctx)
-	case "lint":
-		err = tasks.Lint(client, ctx)
-	case "test":
-		err = tasks.Test(client, ctx)
-	case "build":
-		err = tasks.Build(client, ctx)
-	case "push":
-		err = tasks.Push(client, ctx)
-	case "tf":
-		if len(os.Args) < 3 {
-			fmt.Println("Please subtask as an argument to tf [plan | apply | destroy]")
-			os.Exit(1)
-		}
-		subtask := os.Args[2]
-		err = tasks.Tf(ctx, subtask)
-	default:
-		fmt.Printf("Unknown task %s\n", task)
-		os.Exit(1)
-	}
+func Build(ctx context.Context) *EnvironmentCheck {
+	b := buildBase(ctx).
+	WithMountedDirectory("/src", dag.Host().Directory(".")).
+	WithWorkdir("/src").
+	WithExec([]string{"go", "build"})
 
-	if err != nil {
-		fmt.Printf("failed to run task %s: %+v\n", task, err)
-		os.Exit(1)
-	}
+	return dag.EnvironmentCheck().
+	WithDescription("Go Build").
+	WithContainer(b)
 }

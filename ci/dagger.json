@@ -1,0 +1,5 @@
+{
+  "root": "..",
+  "name": "greetingsapi",
+  "sdk": "go"
+}
