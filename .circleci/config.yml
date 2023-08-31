@@ -6,17 +6,12 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-          # docker_layer_caching: true
       - run:
           name: Install Dagger CLI
           command: cd /usr/local && { curl -L https://dl.dagger.io/dagger/install.sh | sudo sh; cd -; }
       - run:
           name: Dagger Test Pipeline
           command: dagger run --progress plain go run ./ci ci
-      - run:
-          command: sleep 2
-      - run:
-          command: docker logs dagger-engine
 workflows:
   test:
     jobs:
