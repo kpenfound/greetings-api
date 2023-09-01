@@ -33,34 +33,21 @@ func UnitTest(ctx context.Context) *EnvironmentCheck {
 		buildBase(ctx),
 		dag.Host().Directory("."),
 		GoTestOpts{
-			Packages: []string{"./..."},
+			Packages: []string{"."},
 			Verbose: true,
 		},
 	)
 }
 
 func Lint(ctx context.Context) *EnvironmentCheck {
-	//l := lint(ctx)
-	//return dag.EnvironmentCheck().
-	//WithDescription("GolangCILint").
-	//WithContainer(l)
 	l := dag.Go().GolangCilint(
-		buildBase(ctx),
+		buildBase(ctx).WithExec([]string{"apk", "add", "golangci-lint"}),
 		dag.Host().Directory("."),
 		GoGolangCilintOpts{},
 	)
 	return dag.EnvironmentCheck().
 	WithDescription("Go Lint").
 	WithContainer(l)
-}
-
-func lint(ctx context.Context) *Container {
-	return dag.Container().
-		From("golangci/golangci-lint:v1.50").
-		WithMountedDirectory("/src", dag.Host().Directory(".")).
-		WithWorkdir("/src").
-		WithExec([]string{"go", "mod", "download"}).
-		WithExec([]string{"golangci-lint", "run", "-v", "--timeout", "5m"})
 }
 
 func Build(ctx context.Context) *EnvironmentCheck {
