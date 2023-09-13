@@ -4,7 +4,7 @@ import "context"
 
 type Greetings struct{}
 
-func (m *Greetings) HelloWorld(context.Context) (string, error) {
+func (m *Greetings) HelloWorld(ctx context.Context) (string, error) {
 	return dag.Golang().Base("latest").WithExec([]string{"echo", "hello", "world"}).Stdout(ctx)
 }
 
