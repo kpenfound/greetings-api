@@ -1,5 +1,8 @@
 {
-  "root": "..",
-  "name": "greetingsapi",
-  "sdk": "go"
+  "root": "../",
+  "name": "greetings",
+  "sdk": "go",
+  "dependencies": [
+    "git://github.com/kpenfound/dagger-modules?subpath=golang\u0026ref=4d1d4cfa57e10d94e82835db463f1ea1c85fd063"
+  ]
 }
