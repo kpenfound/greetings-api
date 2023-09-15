@@ -1,4 +1,5 @@
 {
+  "root": "..",
   "name": "greetings",
   "sdk": "go",
   "dependencies": [
