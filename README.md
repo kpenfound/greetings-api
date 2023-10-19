@@ -16,20 +16,22 @@ listening on :8080
   "greeting": "Hello"
 }
 ```
+## Dagger CI
 
-## Runs on ECS Fargate!
+stuff
 
-Check out the infrastructure defined under /terraform. It creates everything needed to run
-an api on ECS Fargate with a load balancer.
+## TODO
 
-## CICD with Dagger
+modules:
+- backend
+    - go test/build - github.com/kpenfound/dagger-modules/golang
+    - golangci-lint - github.com/kpenfound/dagger-modules/golang
+- frontend
+    - hugo - github.com/jedevc/daggerverse/hugo
+- deploy
+    - fly.io
+    - netlify
+    - vercel
+    - helm?
+    - github release
 
-Build the project's CI cli
-`go build -o cicli ./ci`
-
-### Testing
-
-`cicli test`
-
-This task 
-- `cicli push`
