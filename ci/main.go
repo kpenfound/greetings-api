@@ -17,11 +17,11 @@ func (g *Greetings) Binary(ctx context.Context) (*File, error) {
 }
 
 func (g *Greetings) UnitTest(ctx context.Context) (string, error) {
-	b := dag.
+	base := dag.
 		Golang().Base("1.21").
 		WithDirectory("/src", project()).
-		WithWorkdir("/src").
-		GoTest([]string{"./..."})
+		WithWorkdir("/src")
+	b := dag.Golang().Test(base, []string{"./..."})
 
 	return b.Stdout(ctx)
 }
@@ -31,11 +31,11 @@ func (g *Greetings) UnitTest(ctx context.Context) (string, error) {
 // }
 
 func (g *Greetings) Build(ctx context.Context) (*Directory, error) {
-	b := dag.
+	base := dag.
 		Golang().Base("1.21").
 		WithDirectory("/src", project()).
-		WithWorkdir("/src").
-		GoBuild([]string{})
+		WithWorkdir("/src")
+	b := dag.Golang().Build(base, []string{})
 
 	return b.Directory("/src"), nil
 }
