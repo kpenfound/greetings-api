@@ -22,6 +22,6 @@ func (g *Greetings) UnitTest(ctx context.Context, dir *Directory) (string, error
 
 }
 func (g *Greetings) Build(ctx context.Context, dir *Directory) *Directory {
-	return dag.Backend().Build(dir)
+	return dag.Backend().Build(dir).WithDirectory("website/", dag.Frontend().Build(dir.Directory("website")))
 }
 
