@@ -1,0 +1,5 @@
+<p>
+{{ $url := "http://localhost:8080/" }}
+{{ $dataJ := getJSON $url }}
+The greeting is <b>{{ $dataJ.greeting }}</b>
+</p>
