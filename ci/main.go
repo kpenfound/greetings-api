@@ -1,27 +1,27 @@
 package main
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 type Greetings struct{}
 
-func (g *Greetings) Binary(ctx context.Context, dir *Directory) *File {
-	d := g.Build(ctx, dir)
-	return d.File("greetings-api")
-}
-
 func (g *Greetings) UnitTest(ctx context.Context, dir *Directory) (string, error) {
-	return dag.
-		Golang().
-		WithProject(dir).
-		Test([]string{"./..."}).
-		Container().Stdout(ctx)
-}
+	backendResult, err := dag.Backend().UnitTest(ctx, dir)
+	if err != nil {
+		return "", err
+	}
 
+	frontendResult, err := dag.Frontend().UnitTest(ctx, dir.Directory("website"))
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("BACKEND\n\n%s\n\nFRONTEND\n\n%s", backendResult, frontendResult), err
+
+}
 func (g *Greetings) Build(ctx context.Context, dir *Directory) *Directory {
-	return dag.
-		Golang().
-		WithProject(dir).
-		Build([]string{}).
-		Project()
+	return dag.Backend().Build(dir)
 }
 

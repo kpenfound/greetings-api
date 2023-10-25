@@ -3,6 +3,7 @@
   "root": "..",
   "sdk": "go",
   "dependencies": [
-    "github.com/kpenfound/dagger-modules/golang@main"
+    "backend",
+    "frontend"
   ]
 }
