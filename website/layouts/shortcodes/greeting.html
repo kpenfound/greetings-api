@@ -1,5 +1,21 @@
 <p>
-{{ $url := "http://localhost:8080/" }}
-{{ $dataJ := getJSON $url }}
-The greeting is <b>{{ $dataJ.greeting }}</b>
+The greeting is: <p id="greeting"></p>
 </p>
+
+<script>
+const greeting = document.getElementById("greeting");
+
+const req = new Request({{$.Site.Params.backend}});
+
+fetch(req)
+  .then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error. Status: ${response.status}`);
+    }
+
+    return response.json();
+  })
+  .then((response) => {
+    greeting.innerHTML = response.greeting;
+  });
+</script>

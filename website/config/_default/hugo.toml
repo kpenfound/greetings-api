@@ -2,3 +2,5 @@ baseURL = 'https://greetings.kylepenfound.com/'
 languageCode = 'en-us'
 title = 'Greetings Website'
 theme = 'ananke'
+[Params]
+    backend = 'http://greetingsapi.kylepenfound.com'

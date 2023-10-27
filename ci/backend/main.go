@@ -4,20 +4,20 @@ import "context"
 
 type Backend struct{}
 
-func (g *Backend) Binary(ctx context.Context, dir *Directory) *File {
-	d := g.Build(ctx, dir)
+func (b *Backend) Binary(dir *Directory) *File {
+	d := b.Build(dir)
 	return d.File("greetings-api")
 }
 
-func (g *Backend) UnitTest(ctx context.Context, dir *Directory) (string, error) {
+func (b *Backend) UnitTest(ctx context.Context, dir *Directory) (string, error) {
 	return dag.
 		Golang().
 		WithProject(dir).
 		Test([]string{"./..."}).
-		Container().Stdout(ctx)
+		Container().Stdout(ctx) // TODO: dont breakout to container. Store test result some other way.
 }
 
-func (g *Backend) Build(ctx context.Context, dir *Directory) *Directory {
+func (b *Backend) Build(dir *Directory) *Directory {
 	return dag.
 		Golang().
 		WithProject(dir).
@@ -25,13 +25,15 @@ func (g *Backend) Build(ctx context.Context, dir *Directory) *Directory {
 		Project()
 }
 
-func (g *Backend) Serve(ctx context.Context, dir *Directory) *Service {
+func (b *Backend) Serve(dir *Directory) *Service {
+	bin := b.Binary(dir)
 	return dag.
-		Golang().
-		WithProject(dir).
 		Container().
+		From("cgr.dev/chainguard/wolfi-base:latest").
+		WithFile("/bin/greetings-api", bin).
+		WithExec([]string{"ls", "-lart", "/bin/greetings-api"}).
+		WithExec([]string{"/bin/greetings-api"}).
 		WithExposedPort(8080).
-		WithEntrypoint([]string{"go", "run", "main.go"}).
 		AsService()
 }
 

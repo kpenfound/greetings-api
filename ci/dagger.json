@@ -4,6 +4,7 @@
   "sdk": "go",
   "dependencies": [
     "backend",
-    "frontend"
+    "frontend",
+    "github.com/kpenfound/dagger-modules/proxy@f9cc629f6d5d98e620c4fc35312d27d3d6de48f7"
   ]
 }

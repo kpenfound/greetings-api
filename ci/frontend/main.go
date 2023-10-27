@@ -21,7 +21,7 @@ func (g *Frontend) Build(dir *Directory) *Directory {
 func (g *Frontend) Serve(dir *Directory) *Service {
 	build := dag.
 		Hugo().
-		Build(dir)
+		Build(dir, HugoBuildOpts{ HugoEnv: "dev" })
 
 	return dag.Container().From("nginx").
 		WithDirectory("/usr/share/nginx/html", build).
