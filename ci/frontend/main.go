@@ -4,21 +4,27 @@ import "context"
 
 type Frontend struct{}
 
-func (g *Frontend) UnitTest(ctx context.Context, dir *Directory) (string, error) {
+func (f *Frontend) UnitTest(ctx context.Context, dir *Directory) (string, error) {
 	return dag.
 		Golang().
 		WithProject(dir).
-		Test([]string{"./..."}).
-		Container().Stdout(ctx)
+		Test(ctx, []string{"./..."})
 }
 
-func (g *Frontend) Build(dir *Directory) *Directory {
+func (f *Frontend) Build(dir *Directory) *Directory {
 	return dag.
 		Hugo().
 		Build(dir)
 }
 
-func (g *Frontend) Serve(dir *Directory) *Service {
+func (f *Frontend) Lint(ctx context.Context, dir *Directory) (string, error) {
+	return dag.
+		Golang().
+		WithProject(dir).
+		GolangciLint(ctx)
+}
+
+func (f *Frontend) Serve(dir *Directory) *Service {
 	build := dag.
 		Hugo().
 		Build(dir, HugoBuildOpts{ HugoEnv: "dev" })

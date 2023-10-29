@@ -18,8 +18,20 @@ func (g *Greetings) UnitTest(ctx context.Context, dir *Directory) (string, error
 		return "", err
 	}
 
-	return fmt.Sprintf("BACKEND\n\n%s\n\nFRONTEND\n\n%s", backendResult, frontendResult), err
+	return fmt.Sprintf("BACKEND\n\n%s\n\nFRONTEND\n\n%s", backendResult, frontendResult), nil
 
+}
+
+func (g *Greetings) Lint(ctx context.Context, dir *Directory) (string, error) {
+	backendResult, err := dag.Backend().Lint(ctx, dir)
+	if err != nil {
+		return "", err
+	}
+	frontendResult, err := dag.Frontend().Lint(ctx, dir.Directory("website"))
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("BACKEND\n\n%s\n\nFRONTEND\n\n%s", backendResult, frontendResult), nil
 }
 
 func (g *Greetings) Build(dir *Directory) *Directory {

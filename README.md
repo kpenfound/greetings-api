@@ -23,11 +23,6 @@ stuff
 ## TODO
 
 modules:
-- backend
-    - go test/build - github.com/kpenfound/dagger-modules/golang
-    - golangci-lint - github.com/kpenfound/dagger-modules/golang
-- frontend
-    - hugo - github.com/jedevc/daggerverse/hugo
 - deploy
     - fly.io
     - netlify

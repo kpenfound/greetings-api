@@ -13,16 +13,21 @@ func (b *Backend) UnitTest(ctx context.Context, dir *Directory) (string, error) 
 	return dag.
 		Golang().
 		WithProject(dir).
-		Test([]string{"./..."}).
-		Container().Stdout(ctx) // TODO: dont breakout to container. Store test result some other way.
+		Test(ctx, []string{"./..."})
 }
 
 func (b *Backend) Build(dir *Directory) *Directory {
 	return dag.
 		Golang().
 		WithProject(dir).
-		Build([]string{}).
-		Project()
+		Build([]string{})
+}
+
+func (b *Backend) Lint(ctx context.Context, dir *Directory) (string, error) {
+	return dag.
+		Golang().
+		WithProject(dir).
+		GolangciLint(ctx)
 }
 
 func (b *Backend) Serve(dir *Directory) *Service {
