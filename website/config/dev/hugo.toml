@@ -1,6 +1,6 @@
 baseURL = 'https://greetings.kylepenfound.com/'
 languageCode = 'en-us'
 title = 'Greetings Website'
-theme = 'ananke'
+theme = ["github.com/theNewDynamic/gohugo-theme-ananke"]
 [Params]
     backend = 'http://localhost:8080'

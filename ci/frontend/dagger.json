@@ -3,6 +3,6 @@
   "sdk": "go",
   "dependencies": [
     "github.com/kpenfound/dagger-modules/golang@4551ef8d50070bb7ddd5365c0c46456c5d20432f",
-    "github.com/kpenfound/jedevc-daggerverse/hugo@4dfd02e6d135e2f57f0be4ac2b440b856f3fb1f7"
+    "github.com/kpenfound/jedevc-daggerverse/hugo@fdd29e746b3424e6af13ff18051b923ea2c637c2"
   ]
 }
