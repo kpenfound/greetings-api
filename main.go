@@ -18,7 +18,7 @@ func main() {
 	})
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://greetings.kylepenfound.com", "http://localhost:8081"},
+		AllowedOrigins: []string{"http://greetings.kylepenfound.com", "http://localhost:8081", "http://localhost:1313"},
 		// Enable Debugging for testing, consider disabling in production
 		Debug: true,
 	})
