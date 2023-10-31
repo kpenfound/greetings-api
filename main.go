@@ -18,7 +18,12 @@ func main() {
 	})
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://greetings.kylepenfound.com", "http://localhost:8081", "http://localhost:1313"},
+		AllowedOrigins: []string{
+			"http://greetings.kylepenfound.com",
+			"https://dagger-demo.netlify.app",
+			"http://localhost:8081",
+			"http://localhost:1313",
+		},
 		// Enable Debugging for testing, consider disabling in production
 		Debug: true,
 	})

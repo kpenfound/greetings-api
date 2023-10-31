@@ -2,7 +2,8 @@
   "name": "frontend",
   "sdk": "go",
   "dependencies": [
-    "github.com/kpenfound/dagger-modules/golang@4551ef8d50070bb7ddd5365c0c46456c5d20432f",
+    "github.com/kpenfound/dagger-modules/golang@ae390050521fe96b4f436b4eddcc2aa763e2b717",
+    "github.com/kpenfound/dagger-modules/netlify@5f1da981030dfc8931b0543190369301926bf003",
     "github.com/kpenfound/jedevc-daggerverse/hugo@fdd29e746b3424e6af13ff18051b923ea2c637c2"
   ]
 }

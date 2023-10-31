@@ -5,6 +5,8 @@
   "dependencies": [
     "backend",
     "frontend",
+    "github.com/kpenfound/dagger-modules/fly@f41cc6fa3a1af415b6d32087f88249aec41ae20d",
+    "github.com/kpenfound/dagger-modules/netlify@9e98d4b6c88a7ce63109ff21a51786b4bf3dc26f",
     "github.com/kpenfound/dagger-modules/proxy@f9cc629f6d5d98e620c4fc35312d27d3d6de48f7"
   ]
 }

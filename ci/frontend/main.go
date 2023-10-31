@@ -11,10 +11,11 @@ func (f *Frontend) UnitTest(ctx context.Context, dir *Directory) (string, error)
 		Test(ctx, []string{"./..."})
 }
 
-func (f *Frontend) Build(dir *Directory) *Directory {
+func (f *Frontend) Build(dir *Directory, env Optional[string]) *Directory {
+	envStr := env.GetOr("dev")
 	return dag.
 		Hugo().
-		Build(dir)
+		Build(dir, HugoBuildOpts{ HugoEnv: envStr })
 }
 
 func (f *Frontend) Lint(ctx context.Context, dir *Directory) (string, error) {
@@ -25,9 +26,7 @@ func (f *Frontend) Lint(ctx context.Context, dir *Directory) (string, error) {
 }
 
 func (f *Frontend) Serve(dir *Directory) *Service {
-	build := dag.
-		Hugo().
-		Build(dir, HugoBuildOpts{ HugoEnv: "dev" })
+	build := f.Build(dir, Opt[string]("dev"))
 
 	return dag.Container().From("nginx").
 		WithDirectory("/usr/share/nginx/html", build).

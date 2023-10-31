@@ -1,0 +1,6 @@
+baseURL = 'https://dagger-demo.netlify.app/'
+languageCode = 'en-us'
+title = 'Dagger Demo'
+theme = ["github.com/theNewDynamic/gohugo-theme-ananke"]
+[Params]
+    backend = 'https://dagger-demo.fly.dev '

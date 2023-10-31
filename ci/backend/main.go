@@ -1,11 +1,15 @@
 package main
 
-import "context"
+import (
+	"context"
+	"runtime"
+)
+
 
 type Backend struct{}
 
-func (b *Backend) Binary(dir *Directory) *File {
-	d := b.Build(dir)
+func (b *Backend) Binary(dir *Directory, arch Optional[string]) *File {
+	d := b.Build(dir, arch)
 	return d.File("greetings-api")
 }
 
@@ -16,11 +20,12 @@ func (b *Backend) UnitTest(ctx context.Context, dir *Directory) (string, error) 
 		Test(ctx, []string{"./..."})
 }
 
-func (b *Backend) Build(dir *Directory) *Directory {
+func (b *Backend) Build(dir *Directory, arch Optional[string]) *Directory {
+	archStr := arch.GetOr(runtime.GOARCH)
 	return dag.
 		Golang().
 		WithProject(dir).
-		Build([]string{})
+		Build([]string{}, GolangBuildOpts{ Arch: archStr })
 }
 
 func (b *Backend) Lint(ctx context.Context, dir *Directory) (string, error) {
@@ -30,15 +35,18 @@ func (b *Backend) Lint(ctx context.Context, dir *Directory) (string, error) {
 		GolangciLint(ctx)
 }
 
-func (b *Backend) Serve(dir *Directory) *Service {
-	bin := b.Binary(dir)
+func (b *Backend) Container(dir *Directory, arch Optional[string]) *Container {
+	archStr := arch.GetOr(runtime.GOARCH)
+	bin := b.Binary(dir, arch)
 	return dag.
-		Container().
+		Container(ContainerOpts{ Platform: Platform(archStr)}).
 		From("cgr.dev/chainguard/wolfi-base:latest").
 		WithFile("/bin/greetings-api", bin).
-		WithExec([]string{"ls", "-lart", "/bin/greetings-api"}).
-		WithExec([]string{"/bin/greetings-api"}).
-		WithExposedPort(8080).
-		AsService()
+		WithEntrypoint([]string{"/bin/greetings-api"}).
+		WithExposedPort(8080)
+}
+
+func (b *Backend) Serve(dir *Directory) *Service {
+	return b.Container(dir, Opt[string](runtime.GOARCH)).AsService()
 }
 
