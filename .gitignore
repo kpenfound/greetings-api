@@ -3,5 +3,6 @@ greetings-api
 cosign.*
 cicli
 output/
+build/
 # Local Netlify folder
 .netlify
