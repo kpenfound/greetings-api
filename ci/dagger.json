@@ -7,6 +7,6 @@
     "frontend",
     "github.com/kpenfound/dagger-modules/fly@f41cc6fa3a1af415b6d32087f88249aec41ae20d",
     "github.com/kpenfound/dagger-modules/netlify@9e98d4b6c88a7ce63109ff21a51786b4bf3dc26f",
-    "github.com/kpenfound/dagger-modules/proxy@0897c5cc6ceb19183a6d4a8b6690dc1cdb4a4539"
+    "github.com/kpenfound/dagger-modules/proxy@d0c6721fd50e78568dc6c2fcb30b4442320f0c09"
   ]
 }

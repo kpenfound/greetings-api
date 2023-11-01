@@ -43,8 +43,8 @@ func (g *Greetings) Serve(dir *Directory) *Service {
 	frontendService := dag.Frontend().Serve(dir.Directory("website"))
 
 	return dag.Proxy().
-	WithService("backend", 8080, 8080, backendService).
-	WithService("frontend", 8081, 80, frontendService).
+	WithService(backendService, "backend", 8080, 8080).
+	WithService(frontendService, "frontend", 8081, 80).
 	Service()
 }
 
