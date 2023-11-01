@@ -38,6 +38,6 @@ func main() {
 }
 
 func greeting() string {
-	greeting := "Hello Demo!"
+	greeting := "Hello Kubecon!"
 	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting)
 }
