@@ -42,10 +42,10 @@ func (g *Greetings) Serve(dir *Directory) *Service {
 	backendService := dag.Backend().Serve(dir)
 	frontendService := dag.Frontend().Serve(dir.Directory("website"))
 
-	proxy := dag.Proxy().Proxy(backendService, "backend", 8080)
-	proxy = dag.Proxy().AdditionalProxy(proxy, frontendService, "frontend", 8081)
-
-	return dag.Proxy().Service(proxy)
+	return dag.Proxy().
+	WithService("backend", 8080, 8080, backendService).
+	WithService("frontend", 8081, 80, frontendService).
+	Service()
 }
 
 func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret, netlifyToken *Secret) (string, error) {
