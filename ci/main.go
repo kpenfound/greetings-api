@@ -34,8 +34,10 @@ func (g *Greetings) Lint(ctx context.Context, dir *Directory) (string, error) {
 	return fmt.Sprintf("BACKEND\n\n%s\n\nFRONTEND\n\n%s", backendResult, frontendResult), nil
 }
 
-func (g *Greetings) Build(dir *Directory) *Directory {
-	return dag.Backend().Build(dir).WithDirectory("website/", dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{ Env: "netlify" }))
+func (g *Greetings) Build(dir *Directory, env string) *Directory {
+	return dag.Directory().
+		WithFile("/build/greetings-api", dag.Backend().Binary(dir)).
+		WithDirectory("build/website/", dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{ Env: env }))
 }
 
 func (g *Greetings) Serve(dir *Directory) *Service {
