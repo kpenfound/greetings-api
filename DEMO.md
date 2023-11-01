@@ -75,3 +75,33 @@ Deploy the project
 This deploys the backend to fly.io at https://dagger-demo.fly.dev/ and the frontend to
 Netlify at https://dagger-demo.netlify.app/
 
+### Demo
+
+- Lead with [Daggerverse](https://daggerverse.dev)
+	- browse to Hugo module
+	- run module against `./frontend`: `dagger download -m github.com/jedevc/daggerverse/hugo build --target ./frontend`
+- Now pull together multiple modules in `./ci`
+    - hugo module
+    - golang module
+    - proxy module <- written in python!
+    - netlify module <- written in python!
+    - fly module <- written in python!
+    - github releases
+- Highlight in code:
+    - running in containers
+    - declarative environments
+    - secrets!
+    - services
+- Local runs
+    - `dagger serve -m ./ci -p 8080,8081 serve --dir "."`
+    - navigate to [localhost:8081](http://localhost:8081/) in browser
+    - notice "Hello Kubecon!" greeting coming from backend API
+- CI
+	- push a commit
+	- see PR in Github Actions
+- Cloud
+	- look at all runs
+	- look at a run TODO: need a link
+	- errors? debugging?
+	- caching
+
