@@ -1,17 +1,17 @@
-name: ci
+name: release
 on:
   push:
-    branches: [main]
-  pull_request:
+    tags:
+      - "**"
 
 jobs:
-  ci:
-    name: ci
+  release:
+    name: release
     steps:
       - name: Install Dagger CLI
         run: cd /usr/local && { curl -L https://dl.dagger.io/dagger/install.sh | sh; cd -; }
       - name: Run Dagger pipeline
-        run: dagger call ci-remote --commit $GITHUB_SHA
+        run: dagger call ci-remote --commit $GITHUB_REF_NAME --release --tag $GITHUB_REF_NAME --fly-token ${{ secrets.FLY_TOKEN }} --netlify-token ${{ secrets.NETLIFY_TOKEN }} --github-token ${{ secrets.GH_RELEASE_TOKEN }}
         env:
           DAGGER_MODULE: github.com/kpenfound/greetings-api/ci
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}

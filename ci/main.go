@@ -133,6 +133,29 @@ func (g *Greetings) Ci(
 	return out, nil
 }
 
+func (g *Greetings) CiRemote(
+	ctx context.Context,
+	commit string,
+	release Optional[bool],
+	tag Optional[string],
+	flyToken Optional[*Secret],
+	netlifyToken Optional[*Secret],
+	ghToken Optional[*Secret],
+)	 (string, error) {
+	dir := dag.Git(fmt.Sprintf("https://%s", REPO)).
+	Commit(commit).
+	Tree()
+
+	return g.Ci(
+		ctx,
+		dir,
+		release,
+		tag,
+		flyToken,
+		netlifyToken,
+		ghToken,
+	)
+}
 func fly_deploy(ctx context.Context, imageRef string, token *Secret) (string, error) {
 	app := "dagger-demo"
 	out, err := dag.Fly().Deploy(ctx, app, imageRef, token)

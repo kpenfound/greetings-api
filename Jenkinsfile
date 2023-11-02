@@ -1,14 +1,14 @@
 pipeline {
   agent { label 'dagger' }
-  
+
   environment {
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN = "a276ce43-e1ca-4427-a6ee-200d77b85b56"
+    DAGGER_MODULE = "github.com/kpenfound/greetings-api/ci"
   }
   stages {
     stage("dagger") {
       steps {
         sh '''
-            dagger run go run ./ci ci
+            dagger call ci --dir "."
         '''
       }
     }
