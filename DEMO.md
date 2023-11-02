@@ -98,7 +98,7 @@ Netlify at https://dagger-demo.netlify.app/
     - notice "Hello Kubecon!" greeting coming from backend API
 - CI
 	- push a commit
-	- see PR in Github Actions
+	- see PR in Github Actions (And CircleCI)
 - Cloud
 	- look at all runs
 	- look at a run TODO: need a link
