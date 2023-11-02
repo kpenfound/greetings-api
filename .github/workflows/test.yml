@@ -7,6 +7,7 @@ on:
 jobs:
   ci:
     name: ci
+    runs-on: ubuntu-latest
     steps:
       - name: Install Dagger CLI
         run: cd /usr/local && { curl -L https://dl.dagger.io/dagger/install.sh | sh; cd -; }
