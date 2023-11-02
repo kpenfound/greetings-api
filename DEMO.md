@@ -49,19 +49,19 @@ those together for a single project entrypoint.
 
 Run the unit tests for the project
 
-`dagger -m ./ci call unit-test --dir "."`
+`dagger call -m ./ci unit-test --dir "."`
 
 ### Build
 
 Build the project
 
-`dagger -m ./ci call build --dir "."`
+`dagger download -m ./ci build --dir "." --env dev`
 
 ### Serve
 
 Run and serve the project
 
-`dagger -m ./ci up -p 8080,8081 serve --dir "."`
+`dagger up -m ./ci -p 8080,8081 serve --dir "."`
 
 This serves the backend at `localhost:8080` and the frontend at `localhost:8081`. Once the
 ports are tunneled, open `localhost:8081` in a browser
@@ -70,7 +70,7 @@ ports are tunneled, open `localhost:8081` in a browser
 
 Deploy the project
 
-`dagger -m ./ci call deploy --dir "." --fly-token $FLY_TOKEN --netlify-token $NETLIFY_TOKEN`
+`dagger call -m ./ci deploy --dir "." --fly-token $FLY_TOKEN --netlify-token $NETLIFY_TOKEN`
 
 This deploys the backend to fly.io at https://dagger-demo.fly.dev/ and the frontend to
 Netlify at https://dagger-demo.netlify.app/
