@@ -14,7 +14,10 @@ func main() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("got / request from %s\n", r.RemoteAddr)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(greeting()))
+		_, err := w.Write([]byte(greeting()))
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	c := cors.New(cors.Options{
