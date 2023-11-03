@@ -11,6 +11,6 @@ jobs:
       - name: Dagger
         uses: kpenfound/dagger-action@main
         with:
-          args: ci-remote --commit $GITHUB_REF_NAME --release --tag $GITHUB_REF_NAME --fly-token ${{ secrets.FLY_TOKEN }} --netlify-token ${{ secrets.NETLIFY_TOKEN }} --github-token ${{ secrets.GH_RELEASE_TOKEN }}
+          args: ci-remote --commit $GITHUB_REF_NAME --release --tag $GITHUB_REF_NAME --fly-token ${{ secrets.FLY_TOKEN }} --netlify-token ${{ secrets.NETLIFY_TOKEN }} --gh-token ${{ secrets.GH_RELEASE_TOKEN }}
           module: github.com/kpenfound/greetings-api/ci
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
