@@ -11,6 +11,6 @@ jobs:
       - name: Dagger
         uses: kpenfound/dagger-action@main
         with:
-          args: ci-remote --commit $GITHUB_SHA
+          args: ci-remote --commit ${{ env.GITHUB_SHA }}
           module: github.com/kpenfound/greetings-api/ci
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
