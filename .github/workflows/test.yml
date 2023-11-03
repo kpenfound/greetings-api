@@ -3,21 +3,14 @@ on:
   push:
     branches: [main]
   pull_request:
-
 jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
     steps:
-      - name: Install Dagger CLI
-        run: cd /usr/local && { curl -L https://dl.dagger.io/dagger/install.sh | sh; cd -; }
-      - name: Run Dagger pipeline
-        run: dagger call -s ci-remote --commit $GITHUB_SHA
-        env:
-          DAGGER_MODULE: github.com/kpenfound/greetings-api/ci
-          DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-      # for ephemeral runners only: override the default docker stop timeout and
-      # give the Dagger Engine more time to push cache data to Dagger Cloud
-      - name: Stop Engine
-        run: docker stop -t 300 $(docker ps --filter name="dagger-engine-*" -q)
-        if: always()
+      - name: Dagger
+        uses: kpenfound/dagger-action@main
+        with:
+          args: ci-remote --commit $GITHUB_SHA
+          module: github.com/kpenfound/greetings-api/ci
+          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
