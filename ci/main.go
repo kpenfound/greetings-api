@@ -50,11 +50,11 @@ func (g *Greetings) Release(ctx context.Context, dir *Directory, tag string, ghT
 	build := g.Build(dir, "netlify")
 	// Compress frontend build
 	assets := dag.Container().From("alpine:3.18").
-	WithDirectory("/build", build).
-	WithWorkdir("/build").
+	WithDirectory("/assets", build).
+	WithWorkdir("/assets/build").
 	WithExec([]string{"tar", "czf", "website.tar.gz", "website/"}).
 	WithExec([]string{"rm", "-r", "website"}).
-	Directory("/build")
+	Directory("/assets/build")
 
 	title := fmt.Sprintf("Release %s", tag)
 
