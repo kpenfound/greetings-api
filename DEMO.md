@@ -79,15 +79,16 @@ Netlify at https://dagger-demo.netlify.app/
 
 - Lead with [Daggerverse](https://daggerverse.dev)
 	- browse to Hugo module
-	- run module against `./frontend`: `dagger download -m github.com/jedevc/daggerverse/hugo build --target ./frontend`
+	- run module against `./frontend`: `dagger download -m github.com/jedevc/daggerverse/hugo build --target ./ci/frontend`
 - Now pull together multiple modules in `./ci`
-    - hugo module
-    - golang module
-    - proxy module <- written in python!
-    - netlify module <- written in python!
-    - fly module <- written in python!
-    - github releases
-- Highlight in code:
+    - hugo module in `ci/frontend/main.go`
+    - golang module in `ci/frontend/main.go` and `ci/backend/main.go`
+    - proxy module in `ci/main.go` <- written in python!
+    - netlify module in `ci/main.go` <- written in python!
+    - fly module in `ci/main.go` <- written in python!
+    - github releases in `ci/main.go`
+    - infisical in `ci/main.go` <- written in python!
+- Show in code:
     - running in containers
     - declarative environments
     - secrets!
@@ -100,6 +101,8 @@ Netlify at https://dagger-demo.netlify.app/
     - notice "Hello Kubecon!" greeting coming from backend API
 - CI
 	- push a commit
+    - show `.github/workflows/test.yml`
+    - show `.circleci/config.yml`
 	- see PR in Github Actions (And CircleCI)
 - Cloud
 	- look at all runs

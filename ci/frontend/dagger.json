@@ -3,7 +3,7 @@
   "sdk": "go",
   "dependencies": [
     "github.com/jedevc/daggerverse/hugo@32e8c20b532d065629059f2a0b535d849a77cbdb",
-    "github.com/kpenfound/dagger-modules/golang@1144790feef69cb55ba2369e5a1c45946eacd886",
+    "github.com/kpenfound/dagger-modules/golang@8643b503c8dfe331f46f48492e0045980f802b4a",
     "github.com/kpenfound/dagger-modules/netlify@5f1da981030dfc8931b0543190369301926bf003"
   ]
 }
