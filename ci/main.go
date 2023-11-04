@@ -12,6 +12,7 @@ const (
 
 type Greetings struct{}
 
+// Run unit tests for the project
 func (g *Greetings) UnitTest(ctx context.Context, dir *Directory) (string, error) {
 	backendResult, err := dag.Backend().UnitTest(ctx, dir)
 	if err != nil {
@@ -21,6 +22,7 @@ func (g *Greetings) UnitTest(ctx context.Context, dir *Directory) (string, error
 	return backendResult, nil
 }
 
+// Lint the Go code in the project
 func (g *Greetings) Lint(ctx context.Context, dir *Directory) (string, error) {
 	backendResult, err := dag.Backend().Lint(ctx, dir)
 	if err != nil {
@@ -29,12 +31,14 @@ func (g *Greetings) Lint(ctx context.Context, dir *Directory) (string, error) {
 	return backendResult, nil
 }
 
+// Build the backend and frontend for a specified environment
 func (g *Greetings) Build(dir *Directory, env string) *Directory {
 	return dag.Directory().
 		WithFile("/build/greetings-api", dag.Backend().Binary(dir)).
 		WithDirectory("build/website/", dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{Env: env}))
 }
 
+// Serve the backend and frontend to 8080 and 8081 respectively
 func (g *Greetings) Serve(dir *Directory) *Service {
 	backendService := dag.Backend().Serve(dir)
 	frontendService := dag.Frontend().Serve(dir.Directory("website"))
@@ -45,6 +49,7 @@ func (g *Greetings) Serve(dir *Directory) *Service {
 		Service()
 }
 
+// Create a GitHub release
 func (g *Greetings) Release(ctx context.Context, dir *Directory, tag string, ghToken *Secret) (string, error) {
 	// Get build
 	build := g.Build(dir, "netlify")
@@ -61,6 +66,7 @@ func (g *Greetings) Release(ctx context.Context, dir *Directory, tag string, ghT
 	return dag.GithubRelease().Create(ctx, REPO, tag, title, ghToken, GithubReleaseCreateOpts{Assets: assets})
 }
 
+// Deploy the project to fly and netlify
 func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret, netlifyToken *Secret, registryUser string, registryPass *Secret) (string, error) {
 	// Backend
 	backendAmd64 := dag.Backend().Container(dir, BackendContainerOpts{Arch: "amd64"})
@@ -93,6 +99,7 @@ func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret
 	return fmt.Sprintf("BACKEND\n\n%s\n\nFRONTEND\n\n%s", backendResult, frontendResult), nil
 }
 
+// Run the whole CI pipeline
 func (g *Greetings) Ci(
 	ctx context.Context,
 	dir *Directory,
@@ -142,6 +149,7 @@ func (g *Greetings) Ci(
 	return out, nil
 }
 
+// Run the whole CI pipeline for a particular commit
 func (g *Greetings) CiRemote(
 	ctx context.Context,
 	commit string,
@@ -161,6 +169,7 @@ func (g *Greetings) CiRemote(
 		infisicalToken,
 	)
 }
+
 func fly_deploy(ctx context.Context, imageRef string, token *Secret) (string, error) {
 	app := "dagger-demo"
 	out, err := dag.Fly().Deploy(ctx, app, imageRef, token)

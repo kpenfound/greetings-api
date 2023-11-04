@@ -2,6 +2,8 @@
 
 ## The Greetings API App
 
+Familiarize yourself with the greetings-api project
+
 ### Backend
 
 Lives at the repo root
@@ -75,12 +77,12 @@ Deploy the project
 This deploys the backend to fly.io at https://dagger-demo.fly.dev/ and the frontend to
 Netlify at https://dagger-demo.netlify.app/
 
-### Demo
+## Demo
 
 - Lead with [Daggerverse](https://daggerverse.dev)
 	- browse to Hugo module
 	- run module against `./frontend`: `dagger download -m github.com/jedevc/daggerverse/hugo build --target ./ci/frontend`
-- Now pull together multiple modules in `./ci`
+- Now pull together multiple modules in `./ci`. This ci uses:
     - hugo module in `ci/frontend/main.go`
     - golang module in `ci/frontend/main.go` and `ci/backend/main.go`
     - proxy module in `ci/main.go` <- written in python!
@@ -97,13 +99,14 @@ Netlify at https://dagger-demo.netlify.app/
     - `dagger functions -m ./ci`
     - `dagger serve ./ci serve --help`
     - `dagger serve -m ./ci -p 8080,8081 serve --dir "."`
+    - `curl localhost:8080`
     - navigate to [localhost:8081](http://localhost:8081/) in browser
     - notice "Hello Kubecon!" greeting coming from backend API
 - CI
 	- push a commit
     - show `.github/workflows/test.yml`
     - show `.circleci/config.yml`
-	- see PR in Github Actions (And CircleCI)
+	- see run in Github Actions (And CircleCI)
 - Cloud
 	- look at all runs
 	- look at a run TODO: need a link
