@@ -7,10 +7,10 @@ import (
 
 const (
 	REPO = "github.com/kpenfound/greetings-api"
+	IMAGE = "kylepenfound/greetings-api:latest"
 )
 
 type Greetings struct{}
-
 
 func (g *Greetings) UnitTest(ctx context.Context, dir *Directory) (string, error) {
 	backendResult, err := dag.Backend().UnitTest(ctx, dir)
@@ -32,7 +32,7 @@ func (g *Greetings) Lint(ctx context.Context, dir *Directory) (string, error) {
 func (g *Greetings) Build(dir *Directory, env string) *Directory {
 	return dag.Directory().
 		WithFile("/build/greetings-api", dag.Backend().Binary(dir)).
-		WithDirectory("build/website/", dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{ Env: env }))
+		WithDirectory("build/website/", dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{Env: env}))
 }
 
 func (g *Greetings) Serve(dir *Directory) *Service {
@@ -40,9 +40,9 @@ func (g *Greetings) Serve(dir *Directory) *Service {
 	frontendService := dag.Frontend().Serve(dir.Directory("website"))
 
 	return dag.Proxy().
-	WithService(backendService, "backend", 8080, 8080).
-	WithService(frontendService, "frontend", 8081, 80).
-	Service()
+		WithService(backendService, "backend", 8080, 8080).
+		WithService(frontendService, "frontend", 8081, 80).
+		Service()
 }
 
 func (g *Greetings) Release(ctx context.Context, dir *Directory, tag string, ghToken *Secret) (string, error) {
@@ -50,37 +50,42 @@ func (g *Greetings) Release(ctx context.Context, dir *Directory, tag string, ghT
 	build := g.Build(dir, "netlify")
 	// Compress frontend build
 	assets := dag.Container().From("alpine:3.18").
-	WithDirectory("/assets", build).
-	WithWorkdir("/assets/build").
-	WithExec([]string{"tar", "czf", "website.tar.gz", "website/"}).
-	WithExec([]string{"rm", "-r", "website"}).
-	Directory("/assets/build")
+		WithDirectory("/assets", build).
+		WithWorkdir("/assets/build").
+		WithExec([]string{"tar", "czf", "website.tar.gz", "website/"}).
+		WithExec([]string{"rm", "-r", "website"}).
+		Directory("/assets/build")
 
 	title := fmt.Sprintf("Release %s", tag)
 
-	return dag.GithubRelease().Create(ctx, REPO, tag, title, ghToken, GithubReleaseCreateOpts{ Assets: assets })
+	return dag.GithubRelease().Create(ctx, REPO, tag, title, ghToken, GithubReleaseCreateOpts{Assets: assets})
 }
 
-func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret, netlifyToken *Secret) (string, error) {
+func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret, netlifyToken *Secret, registryUser string, registryPass *Secret) (string, error) {
 	// Backend
-	imageTag := "kylepenfound/greetings-api:latest"
-	backendAmd64 := dag.Backend().Container(dir, BackendContainerOpts{ Arch: "amd64"})
-	backendArm64 := dag.Backend().Container(dir, BackendContainerOpts{ Arch: "arm64"})
-	_, err := dag.Container().Publish(ctx, imageTag, ContainerPublishOpts{
-		PlatformVariants: []*Container{
-			backendAmd64,
-			backendArm64,
-		},
+	backendAmd64 := dag.Backend().Container(dir, BackendContainerOpts{Arch: "amd64"})
+	backendArm64 := dag.Backend().Container(dir, BackendContainerOpts{Arch: "arm64"})
+	_, err := dag.Container().
+		WithRegistryAuth(
+			"index.docker.io",
+			registryUser,
+			registryPass,
+		).
+		Publish(ctx, IMAGE, ContainerPublishOpts{
+			PlatformVariants: []*Container{
+				backendAmd64,
+				backendArm64,
+			},
 	})
 	if err != nil {
 		return "", err
 	}
-	backendResult, err := fly_deploy(ctx, imageTag, flyToken) // Pass tag. Fly isn't happy with full shas
+	backendResult, err := fly_deploy(ctx, IMAGE, flyToken) // Pass tag. Fly isn't happy with full shas
 	if err != nil {
 		return "", err
 	}
 	// Frontend
-	frontend := dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{ Env: "netlify" })
+	frontend := dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{Env: "netlify"})
 	frontendResult, err := netlify_deploy(ctx, frontend, netlifyToken)
 	if err != nil {
 		return "", err
@@ -93,9 +98,7 @@ func (g *Greetings) Ci(
 	dir *Directory,
 	release Optional[bool],
 	tag Optional[string],
-	flyToken Optional[*Secret],
-	netlifyToken Optional[*Secret],
-	ghToken Optional[*Secret],
+	infisicalToken Optional[*Secret],
 ) (string, error) {
 	out, err := g.Lint(ctx, dir)
 	if err != nil {
@@ -107,27 +110,33 @@ func (g *Greetings) Ci(
 	}
 	out = out + "\n" + testOut
 
-	if release.GetOr(false) {
-		tag_, tagSet := tag.Get()
-		ghToken_, ghSet := ghToken.Get()
+	infisical, isset := infisicalToken.Get()
 
-		if tagSet && ghSet {
-			releaseOut, err := g.Release(ctx, dir, tag_, ghToken_)
+	if release.GetOr(false) && isset {
+		tag_, tagSet := tag.Get()
+		ghToken := dag.Infisical().GetSecret("GITHUB_TOKEN", infisical, "dev", "/")
+
+		if tagSet {
+			releaseOut, err := g.Release(ctx, dir, tag_, ghToken)
 			if err != nil {
 				return "", err
 			}
 			out = out + "\n" + releaseOut
 		}
-		fly, flySet := flyToken.Get()
-		netlify, netlifySet := netlifyToken.Get()
 
-		if flySet && netlifySet {
-			deployOut, err := g.Deploy(ctx, dir, fly, netlify)
-			if err != nil {
-				return "", err
-			}
-			out = out + "\n" + deployOut
+		flyToken := dag.Infisical().GetSecret("FLY_TOKEN", infisical, "dev", "/")
+		netlifyToken := dag.Infisical().GetSecret("NETLIFY_TOKEN", infisical, "dev", "/")
+		registryUser, err := dag.Infisical().GetSecret("DOCKERHUB_USER", infisical, "dev", "/").Plaintext(ctx)
+		if err != nil {
+			return "", err
 		}
+		registryPass := dag.Infisical().GetSecret("DOCKERHUB_PASS", infisical, "dev", "/")
+
+		deployOut, err := g.Deploy(ctx, dir, flyToken, netlifyToken, registryUser, registryPass)
+		if err != nil {
+			return "", err
+		}
+		out = out + "\n" + deployOut
 	}
 
 	return out, nil
@@ -138,22 +147,18 @@ func (g *Greetings) CiRemote(
 	commit string,
 	release Optional[bool],
 	tag Optional[string],
-	flyToken Optional[*Secret],
-	netlifyToken Optional[*Secret],
-	ghToken Optional[*Secret],
-)	 (string, error) {
+	infisicalToken Optional[*Secret],
+) (string, error) {
 	dir := dag.Git(fmt.Sprintf("https://%s", REPO)).
-	Commit(commit).
-	Tree()
+		Commit(commit).
+		Tree()
 
 	return g.Ci(
 		ctx,
 		dir,
 		release,
 		tag,
-		flyToken,
-		netlifyToken,
-		ghToken,
+		infisicalToken,
 	)
 }
 func fly_deploy(ctx context.Context, imageRef string, token *Secret) (string, error) {
@@ -167,4 +172,3 @@ func netlify_deploy(ctx context.Context, dir *Directory, token *Secret) (string,
 	out, err := dag.Netlify().Deploy(ctx, dir, token, site)
 	return out, err
 }
-

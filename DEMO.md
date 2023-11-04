@@ -93,6 +93,8 @@ Netlify at https://dagger-demo.netlify.app/
     - secrets!
     - services
 - Local runs
+    - `dagger functions -m ./ci`
+    - `dagger serve ./ci serve --help`
     - `dagger serve -m ./ci -p 8080,8081 serve --dir "."`
     - navigate to [localhost:8081](http://localhost:8081/) in browser
     - notice "Hello Kubecon!" greeting coming from backend API
