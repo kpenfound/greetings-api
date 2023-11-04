@@ -114,7 +114,7 @@ func (g *Greetings) Ci(
 
 	if release.GetOr(false) && isset {
 		tag_, tagSet := tag.Get()
-		ghToken := dag.Infisical().GetSecret("GITHUB_TOKEN", infisical, "dev", "/")
+		ghToken := dag.Infisical().GetSecret("GH_RELEASE_TOKEN", infisical, "dev", "/")
 
 		if tagSet {
 			releaseOut, err := g.Release(ctx, dir, tag_, ghToken)
