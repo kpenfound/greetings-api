@@ -47,6 +47,6 @@ func (b *Backend) Container(dir *Directory, arch Optional[string]) *Container {
 }
 
 func (b *Backend) Serve(dir *Directory) *Service {
-	return b.Container(dir, Opt[string](runtime.GOARCH)).AsService()
+	return b.Container(dir, Opt(runtime.GOARCH)).AsService()
 }
 

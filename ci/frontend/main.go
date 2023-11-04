@@ -26,7 +26,7 @@ func (f *Frontend) Lint(ctx context.Context, dir *Directory) (string, error) {
 }
 
 func (f *Frontend) Serve(dir *Directory) *Service {
-	build := f.Build(dir, Opt[string]("dev"))
+	build := f.Build(dir, Opt("dev"))
 
 	return dag.Container().From("nginx").
 		WithDirectory("/usr/share/nginx/html", build).
