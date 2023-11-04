@@ -7,8 +7,8 @@
     "frontend",
     "github.com/jpadams/daggerverse/infisical@7f64507480159500910b48f161ba8e256fa0f8ff",
     "github.com/jpadams/github-release@688e608ce3d7a68565b855708af7de4cddab8e47",
-    "github.com/kpenfound/dagger-modules/fly@f41cc6fa3a1af415b6d32087f88249aec41ae20d",
+    "github.com/kpenfound/dagger-modules/fly@1144790feef69cb55ba2369e5a1c45946eacd886",
     "github.com/kpenfound/dagger-modules/netlify@9e98d4b6c88a7ce63109ff21a51786b4bf3dc26f",
-    "github.com/kpenfound/dagger-modules/proxy@d0c6721fd50e78568dc6c2fcb30b4442320f0c09"
+    "github.com/kpenfound/dagger-modules/proxy@1144790feef69cb55ba2369e5a1c45946eacd886"
   ]
 }

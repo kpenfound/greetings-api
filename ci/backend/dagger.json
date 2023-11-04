@@ -2,6 +2,6 @@
   "name": "backend",
   "sdk": "go",
   "dependencies": [
-    "github.com/kpenfound/dagger-modules/golang@ae390050521fe96b4f436b4eddcc2aa763e2b717"
+    "github.com/kpenfound/dagger-modules/golang@1144790feef69cb55ba2369e5a1c45946eacd886"
   ]
 }
