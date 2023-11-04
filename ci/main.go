@@ -130,7 +130,7 @@ func (g *Greetings) Ci(
 		if err != nil {
 			return "", err
 		}
-		registryPass := dag.Infisical().GetSecret("DOCKERHUB_PASS", infisical, "dev", "/")
+		registryPass := dag.Infisical().GetSecret("DOCKERHUB_PASSWORD", infisical, "dev", "/")
 
 		deployOut, err := g.Deploy(ctx, dir, flyToken, netlifyToken, registryUser, registryPass)
 		if err != nil {
