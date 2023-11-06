@@ -14,7 +14,7 @@ const (
 type Greetings struct{}
 
 // Run unit tests for the project
-func (g *Greetings) UnitTest(ctx context.Context, dir *Directory) (string, error) {
+func (g *Greetings) Test(ctx context.Context, dir *Directory) (string, error) {
 	backendResult, err := dag.Backend().UnitTest(ctx, dir)
 	if err != nil {
 		return "", err
@@ -117,7 +117,7 @@ func (g *Greetings) Ci(
 	}
 
 	// Test
-	testOut, err := g.UnitTest(ctx, dir)
+	testOut, err := g.Test(ctx, dir)
 	if err != nil {
 		return "", err
 	}
@@ -128,7 +128,8 @@ func (g *Greetings) Ci(
 	// Release
 	if release.GetOr(false) && isset {
 		tag_, tagSet := tag.Get()
-		ghToken := dag.Infisical().GetSecret("GH_RELEASE_TOKEN", infisical, "dev", "/")
+		ghToken := dag.Infisical().
+			GetSecret("GH_RELEASE_TOKEN", infisical, "dev", "/")
 
 		// Github Release
 		if tagSet {
@@ -139,13 +140,18 @@ func (g *Greetings) Ci(
 			out = out + "\n" + releaseOut
 		}
 
-		flyToken := dag.Infisical().GetSecret("FLY_TOKEN", infisical, "dev", "/")
-		netlifyToken := dag.Infisical().GetSecret("NETLIFY_TOKEN", infisical, "dev", "/")
-		registryUser, err := dag.Infisical().GetSecret("DOCKERHUB_USER", infisical, "dev", "/").Plaintext(ctx)
+		flyToken := dag.Infisical().
+			GetSecret("FLY_TOKEN", infisical, "dev", "/")
+		netlifyToken := dag.Infisical().
+			GetSecret("NETLIFY_TOKEN", infisical, "dev", "/")
+		registryUser, err := dag.Infisical().
+			GetSecret("DOCKERHUB_USER", infisical, "dev", "/").
+			Plaintext(ctx)
 		if err != nil {
 			return "", err
 		}
-		registryPass := dag.Infisical().GetSecret("DOCKERHUB_PASSWORD", infisical, "dev", "/")
+		registryPass := dag.Infisical().
+			GetSecret("DOCKERHUB_PASSWORD", infisical, "dev", "/")
 
 		// Deploy
 		deployOut, err := g.Deploy(ctx, dir, flyToken, netlifyToken, registryUser, registryPass)
@@ -177,10 +183,4 @@ func (g *Greetings) CiRemote(
 		tag,
 		infisicalToken,
 	)
-}
-
-
-func netlify_deploy(ctx context.Context, dir *Directory, token *Secret) (string, error) {
-	out, err := dag.Netlify().Deploy(ctx, dir, token, APP)
-	return out, err
 }

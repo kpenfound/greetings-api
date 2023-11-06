@@ -5,14 +5,7 @@ import (
 	"runtime"
 )
 
-
 type Backend struct{}
-
-// Return the compiled backend binary for a particular architecture
-func (b *Backend) Binary(dir *Directory, arch Optional[string]) *File {
-	d := b.Build(dir, arch)
-	return d.File("greetings-api")
-}
 
 // Run the unit tests for the backend
 func (b *Backend) UnitTest(ctx context.Context, dir *Directory) (string, error) {
@@ -20,6 +13,14 @@ func (b *Backend) UnitTest(ctx context.Context, dir *Directory) (string, error) 
 		Golang().
 		WithProject(dir).
 		Test(ctx, []string{"./..."})
+}
+
+// Lint the backend Go code
+func (b *Backend) Lint(ctx context.Context, dir *Directory) (string, error) {
+	return dag.
+		Golang().
+		WithProject(dir).
+		GolangciLint(ctx)
 }
 
 // Build the backend
@@ -31,12 +32,10 @@ func (b *Backend) Build(dir *Directory, arch Optional[string]) *Directory {
 		Build([]string{}, GolangBuildOpts{ Arch: archStr })
 }
 
-// Lint the backend Go code
-func (b *Backend) Lint(ctx context.Context, dir *Directory) (string, error) {
-	return dag.
-		Golang().
-		WithProject(dir).
-		GolangciLint(ctx)
+// Return the compiled backend binary for a particular architecture
+func (b *Backend) Binary(dir *Directory, arch Optional[string]) *File {
+	d := b.Build(dir, arch)
+	return d.File("greetings-api")
 }
 
 // Get a container ready to run the backend
