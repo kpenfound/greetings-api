@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	APP = "dagger-demo"
 	REPO = "github.com/kpenfound/greetings-api"
 	IMAGE = "kylepenfound/greetings-api:latest"
 )
@@ -68,7 +69,7 @@ func (g *Greetings) Release(ctx context.Context, dir *Directory, tag string, ghT
 
 // Deploy the project to fly and netlify
 func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret, netlifyToken *Secret, registryUser string, registryPass *Secret) (string, error) {
-	// Backend
+	// Backend multiarch image
 	backendAmd64 := dag.Backend().Container(dir, BackendContainerOpts{Arch: "amd64"})
 	backendArm64 := dag.Backend().Container(dir, BackendContainerOpts{Arch: "arm64"})
 	_, err := dag.Container().
@@ -86,13 +87,15 @@ func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret
 	if err != nil {
 		return "", err
 	}
-	backendResult, err := fly_deploy(ctx, IMAGE, flyToken) // Pass tag. Fly isn't happy with full shas
+	// Deploy backend image to Fly
+	backendResult, err := dag.Fly().Deploy(ctx, APP, IMAGE, flyToken)
 	if err != nil {
 		return "", err
 	}
 	// Frontend
 	frontend := dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{Env: "netlify"})
-	frontendResult, err := netlify_deploy(ctx, frontend, netlifyToken)
+	// Deploy frontend build to Netlify
+	frontendResult, err := dag.Netlify().Deploy(ctx, frontend, netlifyToken, APP)
 	if err != nil {
 		return "", err
 	}
@@ -107,10 +110,13 @@ func (g *Greetings) Ci(
 	tag Optional[string],
 	infisicalToken Optional[*Secret],
 ) (string, error) {
+	// Lint
 	out, err := g.Lint(ctx, dir)
 	if err != nil {
 		return "", err
 	}
+
+	// Test
 	testOut, err := g.UnitTest(ctx, dir)
 	if err != nil {
 		return "", err
@@ -119,10 +125,12 @@ func (g *Greetings) Ci(
 
 	infisical, isset := infisicalToken.Get()
 
+	// Release
 	if release.GetOr(false) && isset {
 		tag_, tagSet := tag.Get()
 		ghToken := dag.Infisical().GetSecret("GH_RELEASE_TOKEN", infisical, "dev", "/")
 
+		// Github Release
 		if tagSet {
 			releaseOut, err := g.Release(ctx, dir, tag_, ghToken)
 			if err != nil {
@@ -139,6 +147,7 @@ func (g *Greetings) Ci(
 		}
 		registryPass := dag.Infisical().GetSecret("DOCKERHUB_PASSWORD", infisical, "dev", "/")
 
+		// Deploy
 		deployOut, err := g.Deploy(ctx, dir, flyToken, netlifyToken, registryUser, registryPass)
 		if err != nil {
 			return "", err
@@ -170,14 +179,8 @@ func (g *Greetings) CiRemote(
 	)
 }
 
-func fly_deploy(ctx context.Context, imageRef string, token *Secret) (string, error) {
-	app := "dagger-demo"
-	out, err := dag.Fly().Deploy(ctx, app, imageRef, token)
-	return out, err
-}
 
 func netlify_deploy(ctx context.Context, dir *Directory, token *Secret) (string, error) {
-	site := "dagger-demo"
-	out, err := dag.Netlify().Deploy(ctx, dir, token, site)
+	out, err := dag.Netlify().Deploy(ctx, dir, token, APP)
 	return out, err
 }
