@@ -16,17 +16,7 @@ listening on :8080
   "greeting": "Hello"
 }
 ```
-## Dagger CI
 
-stuff
+## New Frontend!
 
-## TODO
-
-modules:
-- deploy
-    - fly.io
-    - netlify
-    - vercel
-    - helm?
-    - github release
-
+Hugo frontend located in the website/ directory
