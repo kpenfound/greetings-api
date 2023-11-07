@@ -77,7 +77,23 @@ Deploy the project
 This deploys the backend to fly.io at https://dagger-demo.fly.dev/ and the frontend to
 Netlify at https://dagger-demo.netlify.app/
 
+Secrets are retrieved at runtime from Infisical, a SaaS Secret Manager
+
+### Release
+
+Create a release of the project
+
+`dagger call -m ./ci ci --dir . --release --infisical-token $TOKEN`
+
+### CI without cloning the project/branch
+
+Run the CI without even checking out a branch
+
+`dagger call -m ./ci ci-remote --commit $COMMIT_SHA`
+
 ## Demo
+
+Install Dagger CLI 0.9.3 or above
 
 Recording [on Drive](https://drive.google.com/file/d/1mWthDw6lFa_Z-WQgPvyinVodtn9ELl-d/view?usp=sharing)
 
@@ -101,7 +117,7 @@ Recording [on Drive](https://drive.google.com/file/d/1mWthDw6lFa_Z-WQgPvyinVodtn
     - `dagger functions -m ./ci`
     - `dagger serve ./ci serve --help`
     - `dagger serve -m ./ci -p 8080,8081 serve --dir "."`
-    - `curl localhost:8080`
+    - `curl localhost:8080` to show the result from the backend API
     - navigate to [localhost:8081](http://localhost:8081/) in browser
     - notice "Hello Kubecon!" greeting coming from backend API 🎥 8:12
 - CI
