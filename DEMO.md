@@ -51,7 +51,7 @@ those together for a single project entrypoint.
 
 Run the unit tests for the project
 
-`dagger call -m ./ci unit-test --dir "."`
+`dagger call -m ./ci test --dir "."`
 
 ### Build
 
