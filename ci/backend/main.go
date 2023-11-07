@@ -44,7 +44,7 @@ func (b *Backend) Container(dir *Directory, arch Optional[string]) *Container {
 	bin := b.Binary(dir, arch)
 	return dag.
 		Container(ContainerOpts{ Platform: Platform(archStr)}).
-		From("cgr.dev/chainguard/wolfi-base:latest").
+		From("cgr.dev/chainguard/wolfi-base:latest@sha256:a8c9c2888304e62c133af76f520c9c9e6b3ce6f1a45e3eaa57f6639eb8053c90").
 		WithFile("/bin/greetings-api", bin).
 		WithEntrypoint([]string{"/bin/greetings-api"}).
 		WithExposedPort(8080)
