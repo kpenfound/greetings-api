@@ -79,12 +79,14 @@ Netlify at https://dagger-demo.netlify.app/
 
 ## Demo
 
+Recording [on Drive](https://drive.google.com/file/d/1mWthDw6lFa_Z-WQgPvyinVodtn9ELl-d/view?usp=sharing)
+
 - Lead with [Daggerverse](https://daggerverse.dev)
-	- browse to Hugo module
+	- browse to Hugo module 🎥 0:52
 	- run module against `./frontend`: `dagger download -m github.com/jedevc/daggerverse/hugo build --target ./ci/frontend`
-- Now pull together multiple modules in `./ci`. This ci uses:
+- Now pull together multiple modules in `./ci`. This ci uses: 🎥 3:02
     - hugo module in `ci/frontend/main.go`
-    - golang module in `ci/frontend/main.go` and `ci/backend/main.go`
+    - golang module in `ci/frontend/main.go` and `ci/backend/main.go` 🎥 4:20
     - proxy module in `ci/main.go` <- written in python!
     - netlify module in `ci/main.go` <- written in python!
     - fly module in `ci/main.go` <- written in python!
@@ -95,21 +97,21 @@ Netlify at https://dagger-demo.netlify.app/
     - declarative environments
     - secrets!
     - services
-- Local runs
+- Local runs 🎥 6:12
     - `dagger functions -m ./ci`
     - `dagger serve ./ci serve --help`
     - `dagger serve -m ./ci -p 8080,8081 serve --dir "."`
     - `curl localhost:8080`
     - navigate to [localhost:8081](http://localhost:8081/) in browser
-    - notice "Hello Kubecon!" greeting coming from backend API
+    - notice "Hello Kubecon!" greeting coming from backend API 🎥 8:12
 - CI
 	- push a commit
+    - show `.circleci/config.yml` 🎥 9:17
     - show `.github/workflows/test.yml`
-    - show `.circleci/config.yml`
-	- see run in Github Actions (And CircleCI)
-- Cloud
+	- see run in Github Actions 🎥 10:00
+- Cloud 🎥 10:25
 	- look at all runs
-	- look at a run TODO: need a link
+	- look at [a run](https://dagger.cloud/runs/7b77ca7f-c408-4a9b-a493-8637986b0597)
 	- errors? debugging?
 	- caching
 
