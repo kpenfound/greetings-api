@@ -9,6 +9,7 @@
     "github.com/jpadams/github-release@688e608ce3d7a68565b855708af7de4cddab8e47",
     "github.com/kpenfound/dagger-modules/fly@1144790feef69cb55ba2369e5a1c45946eacd886",
     "github.com/kpenfound/dagger-modules/netlify@9e98d4b6c88a7ce63109ff21a51786b4bf3dc26f",
-    "github.com/kpenfound/dagger-modules/proxy@1144790feef69cb55ba2369e5a1c45946eacd886"
+    "github.com/kpenfound/dagger-modules/proxy@1144790feef69cb55ba2369e5a1c45946eacd886",
+    "github.com/kpenfound/dagger-modules/utils@16db9cf49ff47759954ff84d9f76be92f8b3ca21"
   ]
 }
