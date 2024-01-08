@@ -1,6 +1,6 @@
 # greetings-api
 
-A simple greeting api
+A simple greeting api.
 
 ## Try it out!
 
