@@ -8,7 +8,7 @@ import (
 
 func TestGreeting(t *testing.T) {
 	g := greeting()
-	should := "{\"greeting\":\"Hello Kubecon!\"}"
+	should := "{\"greeting\":\"Hello Daggernauts!\"}"
 
 	assert.Equal(t, should, g)
 }
