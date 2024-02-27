@@ -1,0 +1,40 @@
+{
+  "name": "greetings",
+  "sdk": "go",
+  "dependencies": [
+    {
+      "name": "backend",
+      "source": "ci/backend"
+    },
+    {
+      "name": "fly",
+      "source": "github.com/kpenfound/dagger-modules/fly@4c3063d4076efb4a566be779e92b837c507c2eac"
+    },
+    {
+      "name": "frontend",
+      "source": "ci/frontend"
+    },
+    {
+      "name": "github-release",
+      "source": "github.com/kpenfound/jpadams-github-release@c6081b3210407d5ea49fce8874c5104afa8373cb"
+    },
+    {
+      "name": "infisical",
+      "source": "github.com/kpenfound/jpadams-daggerverse/infisical@41df88428b5590db0975a3455c11e4b2517cd8ab"
+    },
+    {
+      "name": "netlify",
+      "source": "github.com/kpenfound/dagger-modules/netlify@4c3063d4076efb4a566be779e92b837c507c2eac"
+    },
+    {
+      "name": "proxy",
+      "source": "github.com/kpenfound/dagger-modules/proxy@4c3063d4076efb4a566be779e92b837c507c2eac"
+    },
+    {
+      "name": "utils",
+      "source": "github.com/kpenfound/dagger-modules/utils@4c3063d4076efb4a566be779e92b837c507c2eac"
+    }
+  ],
+  "source": "ci",
+  "engineVersion": "v0.9.11"
+}

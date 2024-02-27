@@ -106,9 +106,12 @@ func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret
 func (g *Greetings) Ci(
 	ctx context.Context,
 	dir *Directory,
-	release Optional[bool],
-	tag Optional[string],
-	infisicalToken Optional[*Secret],
+	// +optional
+	release bool,
+	// +optional
+	tag string,
+	// +optional
+	infisicalToken *Secret,
 ) (string, error) {
 	// Lint
 	out, err := g.Lint(ctx, dir)
@@ -123,17 +126,14 @@ func (g *Greetings) Ci(
 	}
 	out = out + "\n" + testOut
 
-	infisical, isset := infisicalToken.Get()
-
 	// Release
-	if release.GetOr(false) && isset {
-		tag_, tagSet := tag.Get()
+	if release && infisicalToken != nil {
 		ghToken := dag.Infisical().
-			GetSecret("GH_RELEASE_TOKEN", infisical, "dev", "/")
+			GetSecret("GH_RELEASE_TOKEN", infisicalToken, "dev", "/")
 
 		// Github Release
-		if tagSet {
-			releaseOut, err := g.Release(ctx, dir, tag_, ghToken)
+		if tag != "" {
+			releaseOut, err := g.Release(ctx, dir, tag, ghToken)
 			if err != nil {
 				return "", err
 			}
@@ -141,17 +141,17 @@ func (g *Greetings) Ci(
 		}
 
 		flyToken := dag.Infisical().
-			GetSecret("FLY_TOKEN", infisical, "dev", "/")
+			GetSecret("FLY_TOKEN", infisicalToken, "dev", "/")
 		netlifyToken := dag.Infisical().
-			GetSecret("NETLIFY_TOKEN", infisical, "dev", "/")
+			GetSecret("NETLIFY_TOKEN", infisicalToken, "dev", "/")
 		registryUser, err := dag.Infisical().
-			GetSecret("DOCKERHUB_USER", infisical, "dev", "/").
+			GetSecret("DOCKERHUB_USER", infisicalToken, "dev", "/").
 			Plaintext(ctx)
 		if err != nil {
 			return "", err
 		}
 		registryPass := dag.Infisical().
-			GetSecret("DOCKERHUB_PASSWORD", infisical, "dev", "/")
+			GetSecret("DOCKERHUB_PASSWORD", infisicalToken, "dev", "/")
 
 		// Deploy
 		deployOut, err := g.Deploy(ctx, dir, flyToken, netlifyToken, registryUser, registryPass)
@@ -164,23 +164,3 @@ func (g *Greetings) Ci(
 	return out, nil
 }
 
-// Run the whole CI pipeline for a particular commit
-func (g *Greetings) CiRemote(
-	ctx context.Context,
-	commit string,
-	release Optional[bool],
-	tag Optional[string],
-	infisicalToken Optional[*Secret],
-) (string, error) {
-	dir := dag.Git(fmt.Sprintf("https://%s", REPO)).
-		Commit(commit).
-		Tree()
-
-	return g.Ci(
-		ctx,
-		dir,
-		release,
-		tag,
-		infisicalToken,
-	)
-}
