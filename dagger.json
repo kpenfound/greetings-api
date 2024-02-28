@@ -20,7 +20,7 @@
     },
     {
       "name": "infisical",
-      "source": "github.com/kpenfound/jpadams-daggerverse/infisical@41df88428b5590db0975a3455c11e4b2517cd8ab"
+      "source": "github.com/jpadams/daggerverse/infisical@f89b7240f7e711a323dae5a66df9b78dfe6a4ec2"
     },
     {
       "name": "netlify",
@@ -36,5 +36,5 @@
     }
   ],
   "source": "ci",
-  "engineVersion": "v0.9.11"
+  "engineVersion": "v0.10.0"
 }

@@ -112,6 +112,8 @@ func (g *Greetings) Ci(
 	tag string,
 	// +optional
 	infisicalToken *Secret,
+	// +optional
+	infisicalProject string,
 ) (string, error) {
 	// Lint
 	out, err := g.Lint(ctx, dir)
@@ -129,7 +131,7 @@ func (g *Greetings) Ci(
 	// Release
 	if release && infisicalToken != nil {
 		ghToken := dag.Infisical().
-			GetSecret("GH_RELEASE_TOKEN", infisicalToken, "dev", "/")
+			GetSecret("GH_RELEASE_TOKEN", infisicalToken, infisicalProject, "dev", "/")
 
 		// Github Release
 		if tag != "" {
@@ -141,17 +143,17 @@ func (g *Greetings) Ci(
 		}
 
 		flyToken := dag.Infisical().
-			GetSecret("FLY_TOKEN", infisicalToken, "dev", "/")
+			GetSecret("FLY_TOKEN", infisicalToken, infisicalProject, "dev", "/")
 		netlifyToken := dag.Infisical().
-			GetSecret("NETLIFY_TOKEN", infisicalToken, "dev", "/")
+			GetSecret("NETLIFY_TOKEN", infisicalToken, infisicalProject, "dev", "/")
 		registryUser, err := dag.Infisical().
-			GetSecret("DOCKERHUB_USER", infisicalToken, "dev", "/").
+			GetSecret("DOCKERHUB_USER", infisicalToken, infisicalProject, "dev", "/").
 			Plaintext(ctx)
 		if err != nil {
 			return "", err
 		}
 		registryPass := dag.Infisical().
-			GetSecret("DOCKERHUB_PASSWORD", infisicalToken, "dev", "/")
+			GetSecret("DOCKERHUB_PASSWORD", infisicalToken, infisicalProject, "dev", "/")
 
 		// Deploy
 		deployOut, err := g.Deploy(ctx, dir, flyToken, netlifyToken, registryUser, registryPass)
