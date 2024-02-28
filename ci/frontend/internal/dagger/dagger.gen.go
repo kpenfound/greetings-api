@@ -17,7 +17,7 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 
-	"backend/querybuilder"
+	"frontend/internal/querybuilder"
 )
 
 // assertNotNil panic if the given value is nil.
@@ -153,6 +153,9 @@ type GitRepositoryID string
 // The `GolangID` scalar type represents an identifier for an object of type Golang.
 type GolangID string
 
+// The `HugoID` scalar type represents an identifier for an object of type Hugo.
+type HugoID string
+
 // The `InputTypeDefID` scalar type represents an identifier for an object of type InputTypeDef.
 type InputTypeDefID string
 
@@ -179,6 +182,9 @@ type ModuleID string
 
 // The `ModuleSourceID` scalar type represents an identifier for an object of type ModuleSource.
 type ModuleSourceID string
+
+// The `NetlifyID` scalar type represents an identifier for an object of type Netlify.
+type NetlifyID string
 
 // The `ObjectTypeDefID` scalar type represents an identifier for an object of type ObjectTypeDef.
 type ObjectTypeDefID string
@@ -3876,6 +3882,120 @@ func (r *Golang) WithProject(dir *Directory) *Golang {
 	}
 }
 
+type Hugo struct {
+	Query  *querybuilder.Selection
+	Client graphql.Client
+
+	id *HugoID
+}
+
+// HugoBuildOpts contains options for Hugo.Build
+type HugoBuildOpts struct {
+	//
+	// Base URL of the site, overrides from config if set
+	//
+	BaseURL string
+	//
+	// Environment to build for
+	//
+	HugoEnv string
+	//
+	// Whether to minify the output, overrides from config if set
+	//
+	Minify bool
+	//
+	// Version of Hugo to use (defaults to "latest")
+	//
+	HugoVersion string
+	//
+	// Version of Dart Sass to use (defaults to "latest")
+	//
+	DartSassVersion string
+}
+
+// Builds a Hugo site
+func (r *Hugo) Build(target *Directory, opts ...HugoBuildOpts) *Directory {
+	assertNotNil("target", target)
+	q := r.Query.Select("build")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `baseUrl` optional argument
+		if !querybuilder.IsZeroValue(opts[i].BaseURL) {
+			q = q.Arg("baseUrl", opts[i].BaseURL)
+		}
+		// `hugoEnv` optional argument
+		if !querybuilder.IsZeroValue(opts[i].HugoEnv) {
+			q = q.Arg("hugoEnv", opts[i].HugoEnv)
+		}
+		// `minify` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Minify) {
+			q = q.Arg("minify", opts[i].Minify)
+		}
+		// `hugoVersion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].HugoVersion) {
+			q = q.Arg("hugoVersion", opts[i].HugoVersion)
+		}
+		// `dartSassVersion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DartSassVersion) {
+			q = q.Arg("dartSassVersion", opts[i].DartSassVersion)
+		}
+	}
+	q = q.Arg("target", target)
+
+	return &Directory{
+		Query:  q,
+		Client: r.Client,
+	}
+}
+
+// A unique identifier for this Hugo.
+func (r *Hugo) ID(ctx context.Context) (HugoID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.Query.Select("id")
+
+	var response HugoID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx, r.Client)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *Hugo) XXX_GraphQLType() string {
+	return "Hugo"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *Hugo) XXX_GraphQLIDType() string {
+	return "HugoID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *Hugo) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *Hugo) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+func (r *Hugo) UnmarshalJSON(bs []byte) error {
+	var id string
+	err := json.Unmarshal(bs, &id)
+	if err != nil {
+		return err
+	}
+	*r = *dag.LoadHugoFromID(HugoID(id))
+	return nil
+}
+
 // A graphql input type, which is essentially just a group of named args.
 // This is currently only used to represent pre-existing usage of graphql input types
 // in the core API. It is not used by user modules and shouldn't ever be as user
@@ -5127,6 +5247,116 @@ func (r *ModuleSource) WithSourceSubpath(path string) *ModuleSource {
 	}
 }
 
+type Netlify struct {
+	Query  *querybuilder.Selection
+	Client graphql.Client
+
+	deploy  *string
+	id      *NetlifyID
+	list    *string
+	preview *string
+}
+
+// Deploy a site to production
+func (r *Netlify) Deploy(ctx context.Context, dir *Directory, token *Secret, site string) (string, error) {
+	assertNotNil("dir", dir)
+	assertNotNil("token", token)
+	if r.deploy != nil {
+		return *r.deploy, nil
+	}
+	q := r.Query.Select("deploy")
+	q = q.Arg("dir", dir)
+	q = q.Arg("token", token)
+	q = q.Arg("site", site)
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx, r.Client)
+}
+
+// A unique identifier for this Netlify.
+func (r *Netlify) ID(ctx context.Context) (NetlifyID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.Query.Select("id")
+
+	var response NetlifyID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx, r.Client)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *Netlify) XXX_GraphQLType() string {
+	return "Netlify"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *Netlify) XXX_GraphQLIDType() string {
+	return "NetlifyID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *Netlify) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *Netlify) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+func (r *Netlify) UnmarshalJSON(bs []byte) error {
+	var id string
+	err := json.Unmarshal(bs, &id)
+	if err != nil {
+		return err
+	}
+	*r = *dag.LoadNetlifyFromID(NetlifyID(id))
+	return nil
+}
+
+// List sites
+func (r *Netlify) List(ctx context.Context, token *Secret) (string, error) {
+	assertNotNil("token", token)
+	if r.list != nil {
+		return *r.list, nil
+	}
+	q := r.Query.Select("list")
+	q = q.Arg("token", token)
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx, r.Client)
+}
+
+// Deploy a preview site
+func (r *Netlify) Preview(ctx context.Context, dir *Directory, token *Secret, site string) (string, error) {
+	assertNotNil("dir", dir)
+	assertNotNil("token", token)
+	if r.preview != nil {
+		return *r.preview, nil
+	}
+	q := r.Query.Select("preview")
+	q = q.Arg("dir", dir)
+	q = q.Arg("token", token)
+	q = q.Arg("site", site)
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx, r.Client)
+}
+
 // A definition of a custom object defined in a Module.
 type ObjectTypeDef struct {
 	Query  *querybuilder.Selection
@@ -5440,6 +5670,17 @@ func (r *Client) Blob(digest string, size int, mediaType string, uncompressed st
 	}
 }
 
+// Retrieves a container builtin to the engine.
+func (r *Client) BuiltinContainer(digest string) *Container {
+	q := r.Query.Select("builtinContainer")
+	q = q.Arg("digest", digest)
+
+	return &Container{
+		Query:  q,
+		Client: r.Client,
+	}
+}
+
 // Constructs a cache volume for a given cache key.
 func (r *Client) CacheVolume(key string) *CacheVolume {
 	q := r.Query.Select("cacheVolume")
@@ -5706,6 +5947,15 @@ func (r *Client) HTTP(url string, opts ...HTTPOpts) *File {
 	}
 }
 
+func (r *Client) Hugo() *Hugo {
+	q := r.Query.Select("hugo")
+
+	return &Hugo{
+		Query:  q,
+		Client: r.Client,
+	}
+}
+
 // Load a CacheVolume from its ID.
 func (r *Client) LoadCacheVolumeFromID(id CacheVolumeID) *CacheVolume {
 	q := r.Query.Select("loadCacheVolumeFromID")
@@ -5882,6 +6132,17 @@ func (r *Client) LoadGolangFromID(id GolangID) *Golang {
 	}
 }
 
+// Load a Hugo from its ID.
+func (r *Client) LoadHugoFromID(id HugoID) *Hugo {
+	q := r.Query.Select("loadHugoFromID")
+	q = q.Arg("id", id)
+
+	return &Hugo{
+		Query:  q,
+		Client: r.Client,
+	}
+}
+
 // Load a InputTypeDef from its ID.
 func (r *Client) LoadInputTypeDefFromID(id InputTypeDefID) *InputTypeDef {
 	q := r.Query.Select("loadInputTypeDefFromID")
@@ -5965,6 +6226,17 @@ func (r *Client) LoadModuleSourceFromID(id ModuleSourceID) *ModuleSource {
 	q = q.Arg("id", id)
 
 	return &ModuleSource{
+		Query:  q,
+		Client: r.Client,
+	}
+}
+
+// Load a Netlify from its ID.
+func (r *Client) LoadNetlifyFromID(id NetlifyID) *Netlify {
+	q := r.Query.Select("loadNetlifyFromID")
+	q = q.Arg("id", id)
+
+	return &Netlify{
 		Query:  q,
 		Client: r.Client,
 	}
@@ -6104,6 +6376,15 @@ func (r *Client) ModuleSource(refString string, opts ...ModuleSourceOpts) *Modul
 	}
 }
 
+func (r *Client) Netlify() *Netlify {
+	q := r.Query.Select("netlify")
+
+	return &Netlify{
+		Query:  q,
+		Client: r.Client,
+	}
+}
+
 // PipelineOpts contains options for Client.Pipeline
 type PipelineOpts struct {
 	// Description of the sub-pipeline.
@@ -6133,9 +6414,20 @@ func (r *Client) Pipeline(name string, opts ...PipelineOpts) *Client {
 	}
 }
 
+// SecretOpts contains options for Client.Secret
+type SecretOpts struct {
+	Accessor string
+}
+
 // Reference a secret by name.
-func (r *Client) Secret(name string) *Secret {
+func (r *Client) Secret(name string, opts ...SecretOpts) *Secret {
 	q := r.Query.Select("secret")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `accessor` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Accessor) {
+			q = q.Arg("accessor", opts[i].Accessor)
+		}
+	}
 	q = q.Arg("name", name)
 
 	return &Secret{
