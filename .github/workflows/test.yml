@@ -11,6 +11,6 @@ jobs:
       - name: Dagger
         uses: kpenfound/dagger-action@main
         with:
-          args: ci --directory https://github.com/kpenfound/greetings-api\#${{ env.GITHUB_REF_NAME }}
+          args: ci --directory https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME}
           module: github.com/kpenfound/greetings-api
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
