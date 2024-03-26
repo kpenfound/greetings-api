@@ -14,3 +14,4 @@ jobs:
           args: ci --directory https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME}
           module: github.com/kpenfound/greetings-api
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          version: "0.10.2"
