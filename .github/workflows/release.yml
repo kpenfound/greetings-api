@@ -11,6 +11,6 @@ jobs:
       - name: Dagger
         uses: kpenfound/dagger-action@main
         with:
-          args: ci-remote --commit $GITHUB_REF_NAME --release --tag $GITHUB_REF_NAME --infisical-token ${{ secrets.INFISICAL_TOKEN }}
+          args: ci --directory https://github.com/kpenfound/greetings-api\#${{ env.GITHUB_REF_NAME }} --release --tag $GITHUB_REF_NAME --infisical-token ${{ secrets.INFISICAL_TOKEN }} --infisical-project 6545b34313c9b9239b0f7183
           module: github.com/kpenfound/greetings-api/ci
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
