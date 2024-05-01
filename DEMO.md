@@ -51,19 +51,19 @@ those together for a single project entrypoint.
 
 Run the unit tests for the project
 
-`dagger call -m ./ci test --dir "."`
+`dagger call test --dir "."`
 
 ### Build
 
 Build the project
 
-`dagger download -m ./ci build --dir "." --env dev`
+`dagger call build --dir "." --env dev export --path ./build`
 
 ### Serve
 
 Run and serve the project
 
-`dagger up -m ./ci -p 8080,8081 serve --dir "."`
+`dagger call serve --dir "." up`
 
 This serves the backend at `localhost:8080` and the frontend at `localhost:8081`. Once the
 ports are tunneled, open `localhost:8081` in a browser
@@ -72,7 +72,7 @@ ports are tunneled, open `localhost:8081` in a browser
 
 Deploy the project
 
-`dagger call -m ./ci deploy --dir "." --fly-token $FLY_TOKEN --netlify-token $NETLIFY_TOKEN`
+`dagger call deploy --dir "." --fly-token $FLY_TOKEN --netlify-token $NETLIFY_TOKEN`
 
 This deploys the backend to fly.io at https://dagger-demo.fly.dev/ and the frontend to
 Netlify at https://dagger-demo.netlify.app/
@@ -83,51 +83,10 @@ Secrets are retrieved at runtime from Infisical, a SaaS Secret Manager
 
 Create a release of the project
 
-`dagger call -m ./ci ci --dir . --release --infisical-token $TOKEN`
+`dagger call ci --dir . --release --infisical-token $TOKEN`
 
 ### CI without cloning the project/branch
 
 Run the CI without even checking out a branch
 
-`dagger call -m ./ci ci-remote --commit $COMMIT_SHA`
-
-## Demo
-
-Install Dagger CLI 0.9.3 or above
-
-Recording [on Drive](https://drive.google.com/file/d/1mWthDw6lFa_Z-WQgPvyinVodtn9ELl-d/view?usp=sharing)
-
-- Lead with [Daggerverse](https://daggerverse.dev)
-	- browse to Hugo module 🎥 0:52
-	- run module against `./frontend`: `dagger download -m github.com/jedevc/daggerverse/hugo build --target ./ci/frontend`
-- Now pull together multiple modules in `./ci`. This ci uses: 🎥 3:02
-    - hugo module in `ci/frontend/main.go`
-    - golang module in `ci/frontend/main.go` and `ci/backend/main.go` 🎥 4:20
-    - proxy module in `ci/main.go` <- written in python!
-    - netlify module in `ci/main.go` <- written in python!
-    - fly module in `ci/main.go` <- written in python!
-    - github releases in `ci/main.go`
-    - infisical in `ci/main.go` <- written in python!
-- Show in code:
-    - running in containers
-    - declarative environments
-    - secrets!
-    - services
-- Local runs 🎥 6:12
-    - `dagger functions -m ./ci`
-    - `dagger serve ./ci serve --help`
-    - `dagger serve -m ./ci -p 8080,8081 serve --dir "."`
-    - `curl localhost:8080` to show the result from the backend API
-    - navigate to [localhost:8081](http://localhost:8081/) in browser
-    - notice "Hello Kubecon!" greeting coming from backend API 🎥 8:12
-- CI
-	- push a commit
-    - show `.circleci/config.yml` 🎥 9:17
-    - show `.github/workflows/test.yml`
-	- see run in Github Actions 🎥 10:00
-- Cloud 🎥 10:25
-	- look at all runs
-	- look at [a run](https://dagger.cloud/runs/7b77ca7f-c408-4a9b-a493-8637986b0597)
-	- errors? debugging?
-	- caching
-
+`dagger -m github.com/kpenfound/greetings-api call ci --dir https://github.com/kpenfound/greetings-api#main --release --infisical-token $TOKEN`
