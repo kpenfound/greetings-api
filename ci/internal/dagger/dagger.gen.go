@@ -305,8 +305,8 @@ type BackendBinaryOpts struct {
 }
 
 // Return the compiled backend binary for a particular architecture
-func (r *Backend) Binary(dir *Directory, opts ...BackendBinaryOpts) *File {
-	assertNotNil("dir", dir)
+func (r *Backend) Binary(source *Directory, opts ...BackendBinaryOpts) *File {
+	assertNotNil("source", source)
 	q := r.query.Select("binary")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `arch` optional argument
@@ -314,7 +314,7 @@ func (r *Backend) Binary(dir *Directory, opts ...BackendBinaryOpts) *File {
 			q = q.Arg("arch", opts[i].Arch)
 		}
 	}
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	return &File{
 		query: q,
@@ -327,8 +327,8 @@ type BackendBuildOpts struct {
 }
 
 // Build the backend
-func (r *Backend) Build(dir *Directory, opts ...BackendBuildOpts) *Directory {
-	assertNotNil("dir", dir)
+func (r *Backend) Build(source *Directory, opts ...BackendBuildOpts) *Directory {
+	assertNotNil("source", source)
 	q := r.query.Select("build")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `arch` optional argument
@@ -336,7 +336,7 @@ func (r *Backend) Build(dir *Directory, opts ...BackendBuildOpts) *Directory {
 			q = q.Arg("arch", opts[i].Arch)
 		}
 	}
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	return &Directory{
 		query: q,
@@ -349,8 +349,8 @@ type BackendContainerOpts struct {
 }
 
 // Get a container ready to run the backend
-func (r *Backend) Container(dir *Directory, opts ...BackendContainerOpts) *Container {
-	assertNotNil("dir", dir)
+func (r *Backend) Container(source *Directory, opts ...BackendContainerOpts) *Container {
+	assertNotNil("source", source)
 	q := r.query.Select("container")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `arch` optional argument
@@ -358,7 +358,7 @@ func (r *Backend) Container(dir *Directory, opts ...BackendContainerOpts) *Conta
 			q = q.Arg("arch", opts[i].Arch)
 		}
 	}
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	return &Container{
 		query: q,
@@ -415,13 +415,13 @@ func (r *Backend) UnmarshalJSON(bs []byte) error {
 }
 
 // Lint the backend Go code
-func (r *Backend) Lint(ctx context.Context, dir *Directory) (string, error) {
-	assertNotNil("dir", dir)
+func (r *Backend) Lint(ctx context.Context, source *Directory) (string, error) {
+	assertNotNil("source", source)
 	if r.lint != nil {
 		return *r.lint, nil
 	}
 	q := r.query.Select("lint")
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	var response string
 
@@ -430,10 +430,10 @@ func (r *Backend) Lint(ctx context.Context, dir *Directory) (string, error) {
 }
 
 // Get a Service to run the backend
-func (r *Backend) Serve(dir *Directory) *Service {
-	assertNotNil("dir", dir)
+func (r *Backend) Serve(source *Directory) *Service {
+	assertNotNil("source", source)
 	q := r.query.Select("serve")
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	return &Service{
 		query: q,
@@ -441,13 +441,13 @@ func (r *Backend) Serve(dir *Directory) *Service {
 }
 
 // Run the unit tests for the backend
-func (r *Backend) UnitTest(ctx context.Context, dir *Directory) (string, error) {
-	assertNotNil("dir", dir)
+func (r *Backend) UnitTest(ctx context.Context, source *Directory) (string, error) {
+	assertNotNil("source", source)
 	if r.unitTest != nil {
 		return *r.unitTest, nil
 	}
 	q := r.query.Select("unitTest")
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	var response string
 
@@ -2944,8 +2944,8 @@ type FrontendBuildOpts struct {
 }
 
 // Build the frontend hugo static site
-func (r *Frontend) Build(dir *Directory, opts ...FrontendBuildOpts) *Directory {
-	assertNotNil("dir", dir)
+func (r *Frontend) Build(source *Directory, opts ...FrontendBuildOpts) *Directory {
+	assertNotNil("source", source)
 	q := r.query.Select("build")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `env` optional argument
@@ -2953,7 +2953,7 @@ func (r *Frontend) Build(dir *Directory, opts ...FrontendBuildOpts) *Directory {
 			q = q.Arg("env", opts[i].Env)
 		}
 	}
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	return &Directory{
 		query: q,
@@ -3010,13 +3010,13 @@ func (r *Frontend) UnmarshalJSON(bs []byte) error {
 }
 
 // Lint the frontend Go code
-func (r *Frontend) Lint(ctx context.Context, dir *Directory) (string, error) {
-	assertNotNil("dir", dir)
+func (r *Frontend) Lint(ctx context.Context, source *Directory) (string, error) {
+	assertNotNil("source", source)
 	if r.lint != nil {
 		return *r.lint, nil
 	}
 	q := r.query.Select("lint")
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	var response string
 
@@ -3025,10 +3025,10 @@ func (r *Frontend) Lint(ctx context.Context, dir *Directory) (string, error) {
 }
 
 // Get a service to run the frontend webservice
-func (r *Frontend) Serve(dir *Directory) *Service {
-	assertNotNil("dir", dir)
+func (r *Frontend) Serve(source *Directory) *Service {
+	assertNotNil("source", source)
 	q := r.query.Select("serve")
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	return &Service{
 		query: q,
@@ -3036,13 +3036,13 @@ func (r *Frontend) Serve(dir *Directory) *Service {
 }
 
 // Test the frontend
-func (r *Frontend) UnitTest(ctx context.Context, dir *Directory) (string, error) {
-	assertNotNil("dir", dir)
+func (r *Frontend) UnitTest(ctx context.Context, source *Directory) (string, error) {
+	assertNotNil("source", source)
 	if r.unitTest != nil {
 		return *r.unitTest, nil
 	}
 	q := r.query.Select("unitTest")
-	q = q.Arg("dir", dir)
+	q = q.Arg("source", source)
 
 	var response string
 
