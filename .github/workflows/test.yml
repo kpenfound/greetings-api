@@ -7,9 +7,9 @@ jobs:
     name: ci
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Dagger
-        uses: kpenfound/dagger-action@main
+        uses: kpenfound/dagger-action@v5
         with:
-          args: all --source https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME}
-          module: github.com/kpenfound/greetings-api
+          args: all --source .
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
