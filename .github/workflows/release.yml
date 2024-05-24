@@ -8,10 +8,9 @@ jobs:
     name: release
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Dagger
-        uses: kpenfound/dagger-action@main
+        uses: dagger/dagger-for-github@v5
         with:
-          args: all --source https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME} --release --tag $GITHUB_REF_NAME --infisical-token ${{ secrets.INFISICAL_TOKEN }} --infisical-project 6545b34313c9b9239b0f7183
-          module: github.com/kpenfound/greetings-api
+          args: all --source . --release --tag $GITHUB_REF_NAME --infisical-token ${{ secrets.INFISICAL_TOKEN }} --infisical-project 6545b34313c9b9239b0f7183
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-          version: "0.10.2"
