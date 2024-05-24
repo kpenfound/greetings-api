@@ -2,7 +2,6 @@ name: ci
 on:
   push:
     branches: ["**"]
-  pull_request:
 jobs:
   ci:
     name: ci
