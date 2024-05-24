@@ -11,7 +11,7 @@ jobs:
       - name: Dagger
         uses: kpenfound/dagger-action@main
         with:
-          args: ci --source https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME} --release --tag $GITHUB_REF_NAME --infisical-token ${{ secrets.INFISICAL_TOKEN }} --infisical-project 6545b34313c9b9239b0f7183
+          args: all --source https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME} --release --tag $GITHUB_REF_NAME --infisical-token ${{ secrets.INFISICAL_TOKEN }} --infisical-project 6545b34313c9b9239b0f7183
           module: github.com/kpenfound/greetings-api
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           version: "0.10.2"
