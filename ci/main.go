@@ -6,16 +6,16 @@ import (
 )
 
 const (
-	APP = "dagger-demo"
-	REPO = "github.com/kpenfound/greetings-api"
+	APP   = "dagger-demo"
+	REPO  = "github.com/kpenfound/greetings-api"
 	IMAGE = "kylepenfound/greetings-api:latest"
 )
 
 type Greetings struct{}
 
 // Run unit tests for the project
-func (g *Greetings) Test(ctx context.Context, dir *Directory) (string, error) {
-	backendResult, err := dag.Backend().UnitTest(ctx, dir)
+func (g *Greetings) Test(ctx context.Context, source *Directory) (string, error) {
+	backendResult, err := dag.Backend().UnitTest(ctx, source)
 	if err != nil {
 		return "", err
 	}
@@ -24,8 +24,8 @@ func (g *Greetings) Test(ctx context.Context, dir *Directory) (string, error) {
 }
 
 // Lint the Go code in the project
-func (g *Greetings) Lint(ctx context.Context, dir *Directory) (string, error) {
-	backendResult, err := dag.Backend().Lint(ctx, dir)
+func (g *Greetings) Lint(ctx context.Context, source *Directory) (string, error) {
+	backendResult, err := dag.Backend().Lint(ctx, source)
 	if err != nil {
 		return "", err
 	}
@@ -33,16 +33,16 @@ func (g *Greetings) Lint(ctx context.Context, dir *Directory) (string, error) {
 }
 
 // Build the backend and frontend for a specified environment
-func (g *Greetings) Build(dir *Directory, env string) *Directory {
+func (g *Greetings) Build(source *Directory, env string) *Directory {
 	return dag.Directory().
-		WithFile("/build/greetings-api", dag.Backend().Binary(dir)).
-		WithDirectory("build/website/", dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{Env: env}))
+		WithFile("/build/greetings-api", dag.Backend().Binary(source)).
+		WithDirectory("build/website/", dag.Frontend().Build(source.Directory("website"), FrontendBuildOpts{Env: env}))
 }
 
 // Serve the backend and frontend to 8080 and 8081 respectively
-func (g *Greetings) Serve(dir *Directory) *Service {
-	backendService := dag.Backend().Serve(dir)
-	frontendService := dag.Frontend().Serve(dir.Directory("website"))
+func (g *Greetings) Serve(source *Directory) *Service {
+	backendService := dag.Backend().Serve(source)
+	frontendService := dag.Frontend().Serve(source.Directory("website"))
 
 	return dag.Proxy().
 		WithService(backendService, "backend", 8080, 8080).
@@ -51,9 +51,9 @@ func (g *Greetings) Serve(dir *Directory) *Service {
 }
 
 // Create a GitHub release
-func (g *Greetings) Release(ctx context.Context, dir *Directory, tag string, ghToken *Secret) (string, error) {
+func (g *Greetings) Release(ctx context.Context, source *Directory, tag string, ghToken *Secret) (string, error) {
 	// Get build
-	build := g.Build(dir, "netlify")
+	build := g.Build(source, "netlify")
 	// Compress frontend build
 	assets := dag.Container().From("alpine:3.18").
 		WithDirectory("/assets", build).
@@ -68,10 +68,10 @@ func (g *Greetings) Release(ctx context.Context, dir *Directory, tag string, ghT
 }
 
 // Deploy the project to fly and netlify
-func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret, netlifyToken *Secret, registryUser string, registryPass *Secret) (string, error) {
+func (g *Greetings) Deploy(ctx context.Context, source *Directory, flyToken *Secret, netlifyToken *Secret, registryUser string, registryPass *Secret) (string, error) {
 	// Backend multiarch image
-	backendAmd64 := dag.Backend().Container(dir, BackendContainerOpts{Arch: "amd64"})
-	backendArm64 := dag.Backend().Container(dir, BackendContainerOpts{Arch: "arm64"})
+	backendAmd64 := dag.Backend().Container(source, BackendContainerOpts{Arch: "amd64"})
+	backendArm64 := dag.Backend().Container(source, BackendContainerOpts{Arch: "arm64"})
 	_, err := dag.Container().
 		WithRegistryAuth(
 			"index.docker.io",
@@ -83,7 +83,7 @@ func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret
 				backendAmd64,
 				backendArm64,
 			},
-	})
+		})
 	if err != nil {
 		return "", err
 	}
@@ -93,7 +93,7 @@ func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret
 		return "", err
 	}
 	// Frontend
-	frontend := dag.Frontend().Build(dir.Directory("website"), FrontendBuildOpts{Env: "netlify"})
+	frontend := dag.Frontend().Build(source.Directory("website"), FrontendBuildOpts{Env: "netlify"})
 	// Deploy frontend build to Netlify
 	frontendResult, err := dag.Netlify().Deploy(ctx, frontend, netlifyToken, APP)
 	if err != nil {
@@ -105,7 +105,7 @@ func (g *Greetings) Deploy(ctx context.Context, dir *Directory, flyToken *Secret
 // Run the whole CI pipeline
 func (g *Greetings) Ci(
 	ctx context.Context,
-	dir *Directory,
+	source *Directory,
 	// +optional
 	release bool,
 	// +optional
@@ -116,13 +116,13 @@ func (g *Greetings) Ci(
 	infisicalProject string,
 ) (string, error) {
 	// Lint
-	out, err := g.Lint(ctx, dir)
+	out, err := g.Lint(ctx, source)
 	if err != nil {
 		return "", err
 	}
 
 	// Test
-	testOut, err := g.Test(ctx, dir)
+	testOut, err := g.Test(ctx, source)
 	if err != nil {
 		return "", err
 	}
@@ -135,7 +135,7 @@ func (g *Greetings) Ci(
 
 		// Github Release
 		if tag != "" {
-			releaseOut, err := g.Release(ctx, dir, tag, ghToken)
+			releaseOut, err := g.Release(ctx, source, tag, ghToken)
 			if err != nil {
 				return "", err
 			}
@@ -156,7 +156,7 @@ func (g *Greetings) Ci(
 			GetSecret("DOCKERHUB_PASSWORD", infisicalToken, infisicalProject, "dev", "/")
 
 		// Deploy
-		deployOut, err := g.Deploy(ctx, dir, flyToken, netlifyToken, registryUser, registryPass)
+		deployOut, err := g.Deploy(ctx, source, flyToken, netlifyToken, registryUser, registryPass)
 		if err != nil {
 			return "", err
 		}
@@ -165,4 +165,3 @@ func (g *Greetings) Ci(
 
 	return out, nil
 }
-

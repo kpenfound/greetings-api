@@ -1,8 +1,7 @@
 name: ci
 on:
   push:
-    branches: [main]
-  pull_request:
+    branches: ["**"]
 jobs:
   ci:
     name: ci
@@ -11,7 +10,6 @@ jobs:
       - name: Dagger
         uses: kpenfound/dagger-action@main
         with:
-          args: ci --dir https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME}
+          args: ci --source https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME}
           module: github.com/kpenfound/greetings-api
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
-          version: "0.10.2"

@@ -2,7 +2,7 @@ name: release
 on:
   push:
     tags:
-      - '**'
+      - "**"
 jobs:
   release:
     name: release
@@ -11,7 +11,7 @@ jobs:
       - name: Dagger
         uses: kpenfound/dagger-action@main
         with:
-          args: ci --dir https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME} --release --tag $GITHUB_REF_NAME --infisical-token ${{ secrets.INFISICAL_TOKEN }} --infisical-project 6545b34313c9b9239b0f7183
+          args: ci --source https://github.com/kpenfound/greetings-api\#${GITHUB_REF_NAME} --release --tag $GITHUB_REF_NAME --infisical-token ${{ secrets.INFISICAL_TOKEN }} --infisical-project 6545b34313c9b9239b0f7183
           module: github.com/kpenfound/greetings-api
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           version: "0.10.2"

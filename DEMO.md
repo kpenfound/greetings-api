@@ -51,19 +51,19 @@ those together for a single project entrypoint.
 
 Run the unit tests for the project
 
-`dagger call test --dir "."`
+`dagger call test --source .`
 
 ### Build
 
 Build the project
 
-`dagger call build --dir "." --env dev export --path ./build`
+`dagger call build --source . --env dev export --path ./build`
 
 ### Serve
 
 Run and serve the project
 
-`dagger call serve --dir "." up`
+`dagger call serve --source . up`
 
 This serves the backend at `localhost:8080` and the frontend at `localhost:8081`. Once the
 ports are tunneled, open `localhost:8081` in a browser
@@ -72,7 +72,7 @@ ports are tunneled, open `localhost:8081` in a browser
 
 Deploy the project
 
-`dagger call deploy --dir "." --fly-token $FLY_TOKEN --netlify-token $NETLIFY_TOKEN`
+`dagger call deploy --source . --fly-token $FLY_TOKEN --netlify-token $NETLIFY_TOKEN`
 
 This deploys the backend to fly.io at https://dagger-demo.fly.dev/ and the frontend to
 Netlify at https://dagger-demo.netlify.app/
@@ -83,10 +83,10 @@ Secrets are retrieved at runtime from Infisical, a SaaS Secret Manager
 
 Create a release of the project
 
-`dagger call ci --dir . --release --infisical-token $TOKEN`
+`dagger call ci --source . --release --infisical-token $TOKEN`
 
 ### CI without cloning the project/branch
 
 Run the CI without even checking out a branch
 
-`dagger -m github.com/kpenfound/greetings-api call ci --dir https://github.com/kpenfound/greetings-api#main --release --infisical-token $TOKEN`
+`dagger -m github.com/kpenfound/greetings-api call ci --source https://github.com/kpenfound/greetings-api#main --release --infisical-token $TOKEN`
