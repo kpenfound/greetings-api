@@ -83,10 +83,10 @@ Secrets are retrieved at runtime from Infisical, a SaaS Secret Manager
 
 Create a release of the project
 
-`dagger call ci --source . --release --infisical-token $TOKEN`
+`dagger call all --source . --release --infisical-token $TOKEN`
 
 ### CI without cloning the project/branch
 
 Run the CI without even checking out a branch
 
-`dagger -m github.com/kpenfound/greetings-api call ci --source https://github.com/kpenfound/greetings-api#main --release --infisical-token $TOKEN`
+`dagger -m github.com/kpenfound/greetings-api call all --source https://github.com/kpenfound/greetings-api#main --release --infisical-token $TOKEN`

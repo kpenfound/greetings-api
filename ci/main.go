@@ -103,7 +103,7 @@ func (g *Greetings) Deploy(ctx context.Context, source *Directory, flyToken *Sec
 }
 
 // Run the whole CI pipeline
-func (g *Greetings) Ci(
+func (g *Greetings) All(
 	ctx context.Context,
 	source *Directory,
 	// +optional

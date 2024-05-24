@@ -13,7 +13,7 @@ jobs:
           command: cd /usr/local && { curl -L https://dl.dagger.io/dagger/install.sh | sudo sh; cd -; }
       - run:
           name: Dagger Test Pipeline
-          command: dagger call --progress plain ci --source https://github.com/kpenfound/greetings-api\#${CIRCLE_SHA1}
+          command: dagger call --progress plain all --source https://github.com/kpenfound/greetings-api\#${CIRCLE_SHA1}
 workflows:
   test:
     jobs:
