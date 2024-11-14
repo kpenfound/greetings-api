@@ -1,11 +1,14 @@
 package main
 
-import "context"
+import (
+	"context"
+	"frontend/internal/dagger"
+)
 
 type Frontend struct{}
 
 // Test the frontend
-func (f *Frontend) UnitTest(ctx context.Context, source *Directory) (string, error) {
+func (f *Frontend) UnitTest(ctx context.Context, source *dagger.Directory) (string, error) {
 	return dag.
 		Golang().
 		WithProject(source).
@@ -14,18 +17,18 @@ func (f *Frontend) UnitTest(ctx context.Context, source *Directory) (string, err
 
 // Build the frontend hugo static site
 func (f *Frontend) Build(
-	source *Directory,
+	source *dagger.Directory,
 	// +optional
 	// +default "dev"
 	env string,
-) *Directory {
+) *dagger.Directory {
 	return dag.
 		Hugo().
-		Build(source, HugoBuildOpts{HugoEnv: env})
+		Build(source, dagger.HugoBuildOpts{HugoEnv: env})
 }
 
 // Lint the frontend Go code
-func (f *Frontend) Lint(ctx context.Context, source *Directory) (string, error) {
+func (f *Frontend) Lint(ctx context.Context, source *dagger.Directory) (string, error) {
 	return dag.
 		Golang().
 		WithProject(source).
@@ -33,7 +36,7 @@ func (f *Frontend) Lint(ctx context.Context, source *Directory) (string, error) 
 }
 
 // Get a service to run the frontend webservice
-func (f *Frontend) Serve(source *Directory) *Service {
+func (f *Frontend) Serve(source *dagger.Directory) *dagger.Service {
 	build := f.Build(source, "dev")
 
 	return dag.Container().From("nginx").

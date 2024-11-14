@@ -1,40 +1,33 @@
 {
   "name": "greetings",
+  "engineVersion": "v0.14.0",
   "sdk": "go",
   "dependencies": [
     {
-      "name": "backend",
-      "source": "ci/backend"
+      "name": "infisical",
+      "source": "github.com/Infisical/infisical-dagger@98042321db6b3995f2f0d874c61990c3c73d7d30",
+      "pin": "98042321db6b3995f2f0d874c61990c3c73d7d30"
     },
     {
-      "name": "fly",
-      "source": "github.com/kpenfound/dagger-modules/fly@4c3063d4076efb4a566be779e92b837c507c2eac"
+      "name": "backend",
+      "source": ".dagger/backend",
+      "pin": ""
     },
     {
       "name": "frontend",
-      "source": "ci/frontend"
-    },
-    {
-      "name": "github-release",
-      "source": "github.com/kpenfound/jpadams-github-release@c6081b3210407d5ea49fce8874c5104afa8373cb"
-    },
-    {
-      "name": "infisical",
-      "source": "github.com/jpadams/daggerverse/infisical@f89b7240f7e711a323dae5a66df9b78dfe6a4ec2"
-    },
-    {
-      "name": "netlify",
-      "source": "github.com/kpenfound/dagger-modules/netlify@4c3063d4076efb4a566be779e92b837c507c2eac"
+      "source": ".dagger/frontend",
+      "pin": ""
     },
     {
       "name": "proxy",
-      "source": "github.com/kpenfound/dagger-modules/proxy@4c3063d4076efb4a566be779e92b837c507c2eac"
+      "source": "github.com/kpenfound/dagger-modules/proxy@4c3063d4076efb4a566be779e92b837c507c2eac",
+      "pin": "4c3063d4076efb4a566be779e92b837c507c2eac"
     },
     {
       "name": "utils",
-      "source": "github.com/kpenfound/dagger-modules/utils@4c3063d4076efb4a566be779e92b837c507c2eac"
+      "source": "github.com/kpenfound/dagger-modules/utils@4c3063d4076efb4a566be779e92b837c507c2eac",
+      "pin": "4c3063d4076efb4a566be779e92b837c507c2eac"
     }
   ],
-  "source": "ci",
-  "engineVersion": "v0.11.4"
+  "source": ".dagger"
 }

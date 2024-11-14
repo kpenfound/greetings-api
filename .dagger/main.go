@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"github.com/kpenfound/greetings-api/.dagger/internal/dagger"
 )
 
 const (
@@ -14,7 +16,7 @@ const (
 type Greetings struct{}
 
 // Run unit tests for the project
-func (g *Greetings) Test(ctx context.Context, source *Directory) (string, error) {
+func (g *Greetings) Test(ctx context.Context, source *dagger.Directory) (string, error) {
 	backendResult, err := dag.Backend().UnitTest(ctx, source)
 	if err != nil {
 		return "", err
@@ -24,7 +26,7 @@ func (g *Greetings) Test(ctx context.Context, source *Directory) (string, error)
 }
 
 // Lint the Go code in the project
-func (g *Greetings) Lint(ctx context.Context, source *Directory) (string, error) {
+func (g *Greetings) Lint(ctx context.Context, source *dagger.Directory) (string, error) {
 	backendResult, err := dag.Backend().Lint(ctx, source)
 	if err != nil {
 		return "", err
@@ -33,14 +35,14 @@ func (g *Greetings) Lint(ctx context.Context, source *Directory) (string, error)
 }
 
 // Build the backend and frontend for a specified environment
-func (g *Greetings) Build(source *Directory, env string) *Directory {
+func (g *Greetings) Build(source *dagger.Directory, env string) *dagger.Directory {
 	return dag.Directory().
 		WithFile("/build/greetings-api", dag.Backend().Binary(source)).
-		WithDirectory("build/website/", dag.Frontend().Build(source.Directory("website"), FrontendBuildOpts{Env: env}))
+		WithDirectory("build/website/", dag.Frontend().Build(source.Directory("website"), dagger.FrontendBuildOpts{Env: env}))
 }
 
 // Serve the backend and frontend to 8080 and 8081 respectively
-func (g *Greetings) Serve(source *Directory) *Service {
+func (g *Greetings) Serve(source *dagger.Directory) *dagger.Service {
 	backendService := dag.Backend().Serve(source)
 	frontendService := dag.Frontend().Serve(source.Directory("website"))
 
@@ -51,7 +53,7 @@ func (g *Greetings) Serve(source *Directory) *Service {
 }
 
 // Create a GitHub release
-func (g *Greetings) Release(ctx context.Context, source *Directory, tag string, ghToken *Secret) (string, error) {
+func (g *Greetings) Release(ctx context.Context, source *dagger.Directory, tag string, ghToken *dagger.Secret) (string, error) {
 	// Get build
 	build := g.Build(source, "netlify")
 	// Compress frontend build
@@ -61,57 +63,28 @@ func (g *Greetings) Release(ctx context.Context, source *Directory, tag string, 
 		WithExec([]string{"tar", "czf", "website.tar.gz", "website/"}).
 		WithExec([]string{"rm", "-r", "website"}).
 		Directory("/assets/build")
+	_, _ = assets.Sync(ctx)
 
 	title := fmt.Sprintf("Release %s", tag)
-
-	return dag.GithubRelease().Create(ctx, REPO, tag, title, ghToken, GithubReleaseCreateOpts{Assets: assets})
+	return title, nil
+	//return dag.GithubRelease().Create(ctx, REPO, tag, title, ghToken, dagger.GithubReleaseCreateOpts{Assets: assets})
 }
 
-// Deploy the project to fly and netlify
-func (g *Greetings) Deploy(ctx context.Context, source *Directory, flyToken *Secret, netlifyToken *Secret, registryUser string, registryPass *Secret) (string, error) {
-	// Backend multiarch image
-	backendAmd64 := dag.Backend().Container(source, BackendContainerOpts{Arch: "amd64"})
-	backendArm64 := dag.Backend().Container(source, BackendContainerOpts{Arch: "arm64"})
-	_, err := dag.Container().
-		WithRegistryAuth(
-			"index.docker.io",
-			registryUser,
-			registryPass,
-		).
-		Publish(ctx, IMAGE, ContainerPublishOpts{
-			PlatformVariants: []*Container{
-				backendAmd64,
-				backendArm64,
-			},
-		})
-	if err != nil {
-		return "", err
-	}
-	// Deploy backend image to Fly
-	backendResult, err := dag.Fly().Deploy(ctx, APP, IMAGE, flyToken)
-	if err != nil {
-		return "", err
-	}
-	// Frontend
-	frontend := dag.Frontend().Build(source.Directory("website"), FrontendBuildOpts{Env: "netlify"})
-	// Deploy frontend build to Netlify
-	frontendResult, err := dag.Netlify().Deploy(ctx, frontend, netlifyToken, APP)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("BACKEND\n\n%s\n\nFRONTEND\n\n%s", backendResult, frontendResult), nil
+
+func (g *Greetings) Deploy(ctx context.Context, source *dagger.Directory, flyToken *dagger.Secret, netlifyToken *dagger.Secret, registryUser string, registryPass *dagger.Secret) (string, error) {
+	return "", nil
 }
 
 // Run the whole CI pipeline
 func (g *Greetings) All(
 	ctx context.Context,
-	source *Directory,
+	source *dagger.Directory,
 	// +optional
 	release bool,
 	// +optional
 	tag string,
 	// +optional
-	infisicalToken *Secret,
+	infisicalToken *dagger.Secret,
 	// +optional
 	infisicalProject string,
 ) (string, error) {
@@ -131,7 +104,7 @@ func (g *Greetings) All(
 	// Release
 	if release && infisicalToken != nil {
 		ghToken := dag.Infisical().
-			GetSecret("GH_RELEASE_TOKEN", infisicalToken, infisicalProject, "dev", "/")
+			GetSecretByName("GH_RELEASE_TOKEN", "", infisicalProject, "dev")
 
 		// Github Release
 		if tag != "" {
@@ -143,17 +116,17 @@ func (g *Greetings) All(
 		}
 
 		flyToken := dag.Infisical().
-			GetSecret("FLY_TOKEN", infisicalToken, infisicalProject, "dev", "/")
+			GetSecretByName("FLY_TOKEN", "", infisicalProject, "dev")
 		netlifyToken := dag.Infisical().
-			GetSecret("NETLIFY_TOKEN", infisicalToken, infisicalProject, "dev", "/")
+			GetSecretByName("NETLIFY_TOKEN", "", infisicalProject, "dev")
 		registryUser, err := dag.Infisical().
-			GetSecret("DOCKERHUB_USER", infisicalToken, infisicalProject, "dev", "/").
+			GetSecretByName("DOCKERHUB_USER", "", infisicalProject, "dev").
 			Plaintext(ctx)
 		if err != nil {
 			return "", err
 		}
 		registryPass := dag.Infisical().
-			GetSecret("DOCKERHUB_PASSWORD", infisicalToken, infisicalProject, "dev", "/")
+			GetSecretByName("DOCKERHUB_PASSWORD", "", infisicalProject, "dev")
 
 		// Deploy
 		deployOut, err := g.Deploy(ctx, source, flyToken, netlifyToken, registryUser, registryPass)
