@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dagger
-        uses: dagger/dagger-for-github@v5
+        uses: dagger/dagger-for-github@v7
         with:
           args: all --source .
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
