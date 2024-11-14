@@ -1,0 +1,18 @@
+{
+  "name": "frontend",
+  "engineVersion": "v0.14.0",
+  "sdk": "go",
+  "dependencies": [
+    {
+      "name": "golang",
+      "source": "github.com/kpenfound/dagger-modules/golang@4c3063d4076efb4a566be779e92b837c507c2eac",
+      "pin": "4c3063d4076efb4a566be779e92b837c507c2eac"
+    },
+    {
+      "name": "hugo",
+      "source": "github.com/jedevc/daggerverse/hugo@7f98d184172317b0bbd06e0c2fbdc2347c33232a",
+      "pin": "7f98d184172317b0bbd06e0c2fbdc2347c33232a"
+    }
+  ],
+  "source": "."
+}
