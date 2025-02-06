@@ -3,8 +3,6 @@ jobs:
   test:
     docker:
       - image: cimg/go:1.21
-    environment:
-      DAGGER_MODULE: github.com/kpenfound/greetings-api
     steps:
       - checkout
       - setup_remote_docker
