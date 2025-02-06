@@ -7,27 +7,34 @@ import (
 	"backend/internal/dagger"
 )
 
-type Backend struct{}
+type Backend struct {
+	Source *dagger.Directory
+}
+
+func New(source *dagger.Directory) *Backend {
+	return &Backend{
+		Source: source,
+	}
+}
 
 // Run the unit tests for the backend
-func (b *Backend) UnitTest(ctx context.Context, source *dagger.Directory) (string, error) {
+func (b *Backend) UnitTest(ctx context.Context) (string, error) {
 	return dag.
 		Golang().
-		WithProject(source).
+		WithProject(b.Source).
 		Test(ctx)
 }
 
 // Lint the backend Go code
-func (b *Backend) Lint(ctx context.Context, source *dagger.Directory) (string, error) {
+func (b *Backend) Lint(ctx context.Context) (string, error) {
 	return dag.
 		Golang().
-		WithProject(source).
+		WithProject(b.Source).
 		GolangciLint(ctx)
 }
 
 // Build the backend
 func (b *Backend) Build(
-	source *dagger.Directory,
 	// +optional
 	arch string,
 ) *dagger.Directory {
@@ -36,30 +43,28 @@ func (b *Backend) Build(
 	}
 	return dag.
 		Golang().
-		WithProject(source).
+		WithProject(b.Source).
 		Build([]string{}, dagger.GolangBuildOpts{Arch: arch})
 }
 
 // Return the compiled backend binary for a particular architecture
 func (b *Backend) Binary(
-	source *dagger.Directory,
 	// +optional
 	arch string,
 ) *dagger.File {
-	d := b.Build(source, arch)
+	d := b.Build(arch)
 	return d.File("greetings-api")
 }
 
 // Get a container ready to run the backend
 func (b *Backend) Container(
-	source *dagger.Directory,
 	// +optional
 	arch string,
 ) *dagger.Container {
 	if arch == "" {
 		arch = runtime.GOARCH
 	}
-	bin := b.Binary(source, arch)
+	bin := b.Binary(arch)
 	return dag.
 		Container(dagger.ContainerOpts{Platform: dagger.Platform(arch)}).
 		From("cgr.dev/chainguard/wolfi-base:latest@sha256:a8c9c2888304e62c133af76f520c9c9e6b3ce6f1a45e3eaa57f6639eb8053c90").
@@ -69,6 +74,6 @@ func (b *Backend) Container(
 }
 
 // Get a Service to run the backend
-func (b *Backend) Serve(source *dagger.Directory) *dagger.Service {
-	return b.Container(source, runtime.GOARCH).AsService()
+func (b *Backend) Serve() *dagger.Service {
+	return b.Container(runtime.GOARCH).AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
