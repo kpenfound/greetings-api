@@ -8,7 +8,7 @@ pipeline {
     stage("dagger") {
       steps {
         sh '''
-            dagger call ci --dir "."
+            dagger call check
         '''
       }
     }
