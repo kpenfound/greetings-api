@@ -11,5 +11,5 @@ jobs:
       - name: Dagger
         uses: dagger/dagger-for-github@v7
         with:
-          args: all --source .
+          args: check
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}

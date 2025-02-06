@@ -1,6 +1,5 @@
 baseURL = 'http://localhost:8081/'
 languageCode = 'en-us'
 title = 'Dagger Demo'
-theme = ["github.com/theNewDynamic/gohugo-theme-ananke"]
 [Params]
-    backend = 'http://localhost:8080'
+backend = 'http://localhost:8080'

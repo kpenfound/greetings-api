@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "engineVersion": "v0.14.0",
+  "engineVersion": "v0.15.3",
   "sdk": "go",
   "dependencies": [
     {
@@ -10,8 +10,8 @@
     },
     {
       "name": "hugo",
-      "source": "github.com/jedevc/daggerverse/hugo@7f98d184172317b0bbd06e0c2fbdc2347c33232a",
-      "pin": "7f98d184172317b0bbd06e0c2fbdc2347c33232a"
+      "source": "github.com/camptocamp/daggerverse/hugo@hugo/v0.2.3",
+      "pin": "ccbbd94772b12cbd99a049550fa46b061ddc7e10"
     }
   ],
   "source": "."
