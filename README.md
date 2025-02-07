@@ -24,3 +24,4 @@ Hugo frontend located in the website/ directory
 Check it out with the `serve` function
 
 Here's a change for Hashitalks 2025
+Hello friday demos
