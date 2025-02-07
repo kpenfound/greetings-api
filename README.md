@@ -20,3 +20,5 @@ listening on :8080
 ## Frontend
 
 Hugo frontend located in the website/ directory
+
+Check it out with the `serve` function
