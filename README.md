@@ -22,3 +22,5 @@ listening on :8080
 Hugo frontend located in the website/ directory
 
 Check it out with the `serve` function
+
+Here's a change for Hashitalks 2025
