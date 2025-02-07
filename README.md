@@ -17,6 +17,6 @@ listening on :8080
 }
 ```
 
-## New Frontend!
+## Frontend
 
 Hugo frontend located in the website/ directory
