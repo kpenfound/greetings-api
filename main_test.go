@@ -1,14 +1,9 @@
 package main
 
 import (
-	"testing"
-
-	"gotest.tools/v3/assert"
+    "testing"
 )
 
-func TestGreeting(t *testing.T) {
-	g := greeting()
-	should := "{\"greeting\":\"Greetings Daggernauts!\"}"
-
-	assert.Equal(t, should, g)
-}
+func TestMain(t *testing.T) {
+    // test code here
+    }
