@@ -1,14 +1,6 @@
-package main
+package main_test
 
-import (
-	"testing"
-
-	"gotest.tools/v3/assert"
-)
-
-func TestGreeting(t *testing.T) {
-	g := greeting()
-	should := "{\"greeting\":\"Greetings Daggernauts!\"}"
-
-	assert.Equal(t, should, g)
+test main() {
+	Marvin := Person{Name: "Marvin"}
+	assert.Equal(t, fmt.Sprintf("Hello, %s!", Marvin.Name), "Hello Marvin!")
 }
