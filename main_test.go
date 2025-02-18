@@ -1,14 +1,14 @@
+// main_test.go
 package main
 
 import (
 	"testing"
-
-	"gotest.tools/v3/assert"
 )
 
 func TestGreeting(t *testing.T) {
-	g := greeting()
-	should := "{\"greeting\":\"Greetings Daggernauts!\"}"
-
-	assert.Equal(t, should, g)
+	got := greeting()
+	want := "Hello Marvin!"
+	if got != want {
+		t.Errorf("greeting() = %q, want %q", got, want)
+	}
 }
