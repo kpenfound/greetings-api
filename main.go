@@ -1,46 +1,33 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"os"
 
-	"github.com/rs/cors"
+	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
 )
 
-func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("got / request from %s\n", r.RemoteAddr)
-		w.Header().Set("Content-Type", "application/json")
-		_, err := w.Write([]byte(greeting()))
-		if err != nil {
-			panic(err)
-		}
-	})
-
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{
-			"http://greetings.kylepenfound.com",
-			"https://dagger-demo.netlify.app",
-			"http://localhost:8081",
-			"http://localhost:1313",
-		},
-		// Enable Debugging for testing, consider disabling in production
-		Debug: true,
-	})
-	handler := c.Handler(mux)
-	err := http.ListenAndServe(":8080", handler)
-	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Printf("server closed\n")
-	} else if err != nil {
-		fmt.Printf("error starting server: %s\n", err)
-		os.Exit(1)
-	}
+func englishGreeting(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hello, World!")
 }
 
-func greeting() string {
-	greeting := "Greetings Daggernauts!"
-	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting)
+func frenchGreeting(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Bonjour, le monde!")
+}
+
+func spanishGreeting(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "¡Hola, Mundo!")
+}
+
+func main() {
+	r := mux.NewRouter()
+	r.HandleFunc("/greet/en", englishGreeting).Methods("GET")
+	r.HandleFunc("/greet/fr", frenchGreeting).Methods("GET")
+	r.HandleFunc("/greet/es", spanishGreeting).Methods("GET")
+
+	fmt.Println("Starting server at port 8080")
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatal(err)
+	}
 }
