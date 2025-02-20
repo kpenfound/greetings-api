@@ -1,0 +1,6 @@
+=== RUN   TestGreeting
+--- PASS: TestGreeting (0.00s)
+=== RUN   TestFrenchGreeting
+--- PASS: TestFrenchGreeting (0.00s)
+PASS
+ok  	github.com/kpenfound/greetings-api	0.013s
