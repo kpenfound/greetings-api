@@ -19,14 +19,15 @@ func main() {
 			panic(err)
 		}
 	})
-  
+
 	mux.HandleFunc("/french", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("got /french request from %s\n", r.RemoteAddr)
 		w.Header().Set("Content-Type", "application/json")
 		_, err := w.Write([]byte(frenchGreeting()))
-    if err != nil {
+		if err != nil {
 			panic(err)
 		}
+	})
 
 	mux.HandleFunc("/italian-greeting", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("got /italian-greeting request from %s\n", r.RemoteAddr)
