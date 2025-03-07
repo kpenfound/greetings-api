@@ -13,9 +13,18 @@ func TestGreeting(t *testing.T) {
 	assert.Equal(t, should, g)
 }
 
+
+func TestFrenchGreeting(t *testing.T) {
+	fg := frenchGreeting()
+	should := "{\"greeting\":\"Salutations Daggernauts !\"}"
+
+	assert.Equal(t, should, fg)
+}
+
 func TestGreetingItalian(t *testing.T) {
 	g := greetingItalian()
 	should := "{\"greeting\":\"Saluti, Daggnauti!\"}"
 
 	assert.Equal(t, should, g)
+
 }
