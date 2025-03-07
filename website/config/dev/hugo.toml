@@ -1,5 +1,0 @@
-baseURL = 'http://localhost:8081/'
-languageCode = 'en-us'
-title = 'Dagger Demo'
-[Params]
-backend = 'http://localhost:8080'

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greetings App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .greeting {
+            font-size: 24px;
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            min-height: 50px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Daggernauts Greetings</h1>
+    <div class="greeting" id="greetingDisplay">
+        Click a button to see a greeting!
+    </div>
+    <div class="button-container">
+        <button onclick="getGreeting('/')">English</button>
+        <button onclick="getGreeting('/french')">French</button>
+        <button onclick="getGreeting('/italian-greeting')">Italian</button>
+    </div>
+
+    <script>
+        async function getGreeting(endpoint) {
+            try {
+                const response = await fetch('http://localhost:8080' + endpoint);
+                const data = await response.json();
+                document.getElementById('greetingDisplay').textContent = data.greeting;
+            } catch (error) {
+                console.error('Error fetching greeting:', error);
+                document.getElementById('greetingDisplay').textContent = 'Error fetching greeting';
+            }
+        }
+    </script>
+</body>
+</html>

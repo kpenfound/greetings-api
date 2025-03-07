@@ -1,5 +1,0 @@
-baseURL = 'https://greetings.kylepenfound.com/'
-languageCode = 'en-us'
-title = 'Dagger Demo'
-[Params]
-backend = 'http://greetingsapi.kylepenfound.com'
