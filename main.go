@@ -19,11 +19,20 @@ func main() {
 			panic(err)
 		}
 	})
-
+  
 	mux.HandleFunc("/french", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("got /french request from %s\n", r.RemoteAddr)
 		w.Header().Set("Content-Type", "application/json")
 		_, err := w.Write([]byte(frenchGreeting()))
+    if err != nil {
+			panic(err)
+		}
+
+	mux.HandleFunc("/italian-greeting", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("got /italian-greeting request from %s\n", r.RemoteAddr)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(greetingItalian()))
+
 		if err != nil {
 			panic(err)
 		}
@@ -57,4 +66,9 @@ func greeting() string {
 func frenchGreeting() string {
 	frenchGreeting := "Salutations Daggernauts !"
 	return fmt.Sprintf("{\"greeting\":\"%s\"}", frenchGreeting)
+}
+
+func greetingItalian() string {
+	greeting := "Saluti, Daggnauti!"
+	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting)
 }
