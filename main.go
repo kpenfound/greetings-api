@@ -20,6 +20,15 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("/italian-greeting", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("got /italian-greeting request from %s\n", r.RemoteAddr)
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(greetingItalian()))
+		if err != nil {
+			panic(err)
+		}
+	})
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://greetings.kylepenfound.com",
@@ -42,5 +51,10 @@ func main() {
 
 func greeting() string {
 	greeting := "Greetings Daggernauts!"
+	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting)
+}
+
+func greetingItalian() string {
+	greeting := "Saluti, Daggnauti!"
 	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting)
 }
