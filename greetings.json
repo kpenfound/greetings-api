@@ -1,0 +1,14 @@
+[
+  {
+    "language": "english",
+    "greeting": "Hello, World!"
+  },
+  {
+    "language": "french",
+    "greeting": "Bonjour, Monde !"
+  },
+  {
+    "language": "italian",
+    "greeting": "Ciao, Mondo!"
+  }
+]

@@ -3,6 +3,7 @@ module github.com/kpenfound/greetings-api
 go 1.18
 
 require (
+	github.com/gorilla/mux v1.8.1
 	github.com/rs/cors v1.10.1
 	gotest.tools/v3 v3.1.0
 )
