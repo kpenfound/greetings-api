@@ -13,3 +13,4 @@ jobs:
         with:
           args: check
           cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          version: 0.17.0-llm.8
