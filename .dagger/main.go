@@ -97,7 +97,7 @@ func (g *Greetings) Build(
 ) *dagger.Directory {
 	return dag.Directory().
 		WithFile("/build/greetings-api", g.Backend.Binary()).
-		WithDirectory("build/website/", g.Frontend.Build(dagger.FrontendBuildOpts{Env: env}))
+		WithDirectory("build/website/", g.Frontend.Build())
 }
 
 // Serve the backend and frontend to 8080 and 8081 respectively
