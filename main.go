@@ -34,6 +34,9 @@ func main() {
 		fmt.Printf("got / request from %s\n", r.RemoteAddr)
 		w.Header().Set("Content-Type", "application/json")
 		greeting, err := SelectGreeting(greetings, "random")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 		_, err = w.Write([]byte(FormatResponse(greeting)))
 		if err != nil {
 			panic(err)
@@ -45,6 +48,9 @@ func main() {
 		fmt.Printf("got /{language} request from %s\n", r.RemoteAddr)
 		w.Header().Set("Content-Type", "application/json")
 		greeting, err := SelectGreeting(greetings, language)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 		_, err = w.Write([]byte(FormatResponse(greeting)))
 		if err != nil {
 			panic(err)
