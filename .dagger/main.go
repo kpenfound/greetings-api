@@ -231,7 +231,6 @@ func (g *Greetings) DebugBrokenTestsPr(
 	codeSuggestions := parseDiff(suggestionDiff)
 
 	// For each suggestion, comment on PR
-	// FIXME: github-comment needs to find commit sha
 	for _, suggestion := range codeSuggestions {
 		markupSuggestion := "```suggestion\n" + strings.Join(suggestion.Suggestion, "\n") + "\n```"
 		err := dag.GithubIssue(githubToken).WritePullRequestCodeComment(
