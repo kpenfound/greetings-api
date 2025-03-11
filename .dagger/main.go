@@ -66,7 +66,7 @@ func (g *Greetings) Check(
 	if err != nil {
 		if githubToken != nil {
 			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
-			fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
+			return "", fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
 		}
 		return "", err
 	}
@@ -76,7 +76,7 @@ func (g *Greetings) Check(
 	if err != nil {
 		if githubToken != nil {
 			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
-			fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
+			return "", fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
 		}
 		return "", err
 	}
