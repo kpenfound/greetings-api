@@ -18,7 +18,7 @@ func TestSelectGreeting(t *testing.T) {
 	}
 
 	english := &Greeting{
-		Greeting: "Hello, World!!",
+		Greeting: "Hello, World!",
 		Language: "english",
 	}
 
