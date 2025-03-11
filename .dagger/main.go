@@ -62,7 +62,7 @@ func (g *Greetings) Check(ctx context.Context) (string, error) {
 	}
 
 	// Then Build
-	_, err = g.Build("dev").Sync(ctx)
+	_, err = g.Build().Sync(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +77,12 @@ func (g *Greetings) Test(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return backendResult, nil
+	frontendResult, err := g.Frontend.UnitTest(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return backendResult + "\n" + frontendResult, nil
 }
 
 // Lint the Go code in the project
@@ -86,15 +91,16 @@ func (g *Greetings) Lint(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return backendResult, nil
+
+	frontendResult, err := g.Frontend.Lint(ctx)
+	if err != nil {
+		return "", err
+	}
+	return backendResult + "\n" + frontendResult, nil
 }
 
 // Build the backend and frontend for a specified environment
-func (g *Greetings) Build(
-	// +optional
-	// +default="dev"
-	env string,
-) *dagger.Directory {
+func (g *Greetings) Build() *dagger.Directory {
 	return dag.Directory().
 		WithFile("/build/greetings-api", g.Backend.Binary()).
 		WithDirectory("build/website/", g.Frontend.Build())
@@ -114,7 +120,7 @@ func (g *Greetings) Serve() *dagger.Service {
 // Create a GitHub release
 func (g *Greetings) Release(ctx context.Context, tag string, ghToken *dagger.Secret) (string, error) {
 	// Get build
-	build := g.Build("netlify")
+	build := g.Build()
 	// Compress frontend build
 	assets := dag.Container().From("alpine:3.18").
 		WithDirectory("/assets", build).
@@ -127,3 +133,47 @@ func (g *Greetings) Release(ctx context.Context, tag string, ghToken *dagger.Sec
 	title := fmt.Sprintf("Release %s", tag)
 	return dag.GithubRelease().Create(ctx, g.Repo, tag, title, ghToken, dagger.GithubReleaseCreateOpts{Assets: assets})
 }
+
+// Debug broken tests
+func (g *Greetings) DebugTests(
+	ctx context.Context,
+	// The model to use to debug debug tests
+	// +optional
+	model string,
+) (string, error) {
+	opts := dagger.LlmOpts{}
+	if model != "" {
+		opts.Model = model
+	}
+	prompt := dag.CurrentModule().Source().File("prompts/fix_tests_backend.md")
+
+	// Check if backend is broken
+	if _, berr := g.Backend.Check(ctx, g.Backend.Source()); berr != nil {
+		ws := dag.Workspace(
+			g.Backend.Source(),
+			g.Backend.AsWorkspaceCheckable(),
+		)
+		return dag.Llm(opts).
+			WithWorkspace(ws).
+			WithPromptFile(prompt).
+			Workspace().
+			Diff(ctx)
+	}
+
+	// Check if frontend is broken
+	if _, ferr := g.Frontend.Check(ctx, g.Frontend.Source()); ferr != nil {
+		ws := dag.Workspace(
+			g.Frontend.Source(),
+			g.Frontend.AsWorkspaceCheckable(),
+		)
+		return dag.Llm(opts).
+			WithWorkspace(ws).
+			WithPromptFile(prompt).
+			Workspace().
+			Diff(ctx)
+	}
+
+	return "", fmt.Errorf("no broken tests found")
+}
+
+func (g *Greetings) DebugBrokenTestsPullRequest() {}
