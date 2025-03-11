@@ -54,9 +54,9 @@ func (g *Greetings) Check(
 	// Github token with permissions to comment on the pull request
 	// +optional
 	githubToken *dagger.Secret,
-	// Pull request number
+	// git commit in github
 	// +optional
-	pullRequestNumber int,
+	commit string,
 	// The model to use to debug debug tests
 	// +optional
 	model string,
@@ -65,7 +65,7 @@ func (g *Greetings) Check(
 	lintOut, err := g.Lint(ctx)
 	if err != nil {
 		if githubToken != nil {
-			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, pullRequestNumber, model)
+			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
 			fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
 		}
 		return "", err
@@ -75,7 +75,7 @@ func (g *Greetings) Check(
 	testOut, err := g.Test(ctx)
 	if err != nil {
 		if githubToken != nil {
-			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, pullRequestNumber, model)
+			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
 			fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
 		}
 		return "", err
@@ -201,19 +201,18 @@ func (g *Greetings) DebugBrokenTestsPr(
 	ctx context.Context,
 	// Github token with permissions to comment on the pull request
 	githubToken *dagger.Secret,
-	// Pull request number
-	pullRequestNumber int,
+	// Git commit in Github
+	commit string,
 	// The model to use to debug debug tests
 	// +optional
 	model string,
 ) error {
 	// Determine PR head
-	ref := fmt.Sprintf("pull/%d/head", pullRequestNumber)
-	gitRef := dag.Git(g.Repo).Ref(ref)
+	gitRef := dag.Git(g.Repo).Commit(commit)
 	gitSource := gitRef.Tree()
-	gitCommit, err := gitRef.Commit(ctx)
+	pr, err := dag.GithubIssue(githubToken).GetPrForCommit(ctx, g.Repo, commit)
 	if err != nil {
-		return fmt.Errorf("failed to determine commit of PR head: %v", err)
+		return err
 	}
 
 	// Set source to PR head
@@ -238,8 +237,8 @@ func (g *Greetings) DebugBrokenTestsPr(
 		err := dag.GithubIssue(githubToken).WritePullRequestCodeComment(
 			ctx,
 			g.Repo,
-			pullRequestNumber,
-			gitCommit,
+			pr,
+			commit,
 			markupSuggestion,
 			suggestion.File,
 			"RIGHT",

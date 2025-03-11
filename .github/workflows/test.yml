@@ -12,7 +12,7 @@ jobs:
         with:
           version: 0.17.0-llm.8
       - name: Check
-        run: dagger call check --github-token GITHUB_TOKEN --pull-request-number ${{ github.event.number }} --model gemini-2.0-flash
+        run: dagger call check --github-token GITHUB_TOKEN --model gemini-2.0-flash --commit $GITHUB_SHA
         env:
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
