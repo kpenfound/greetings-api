@@ -10,5 +10,9 @@
   {
     "language": "italian",
     "greeting": "Ciao, Mondo!"
+  },
+  {
+    "language": "spanish",
+    "greeting": "¡Hola, Mundo!"
   }
 ]
