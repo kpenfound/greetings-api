@@ -37,3 +37,7 @@ release                 Create a GitHub release
 serve                   Serve the backend and frontend to 8080 and 8081 respectively
 test                    Run unit tests for the project
 ```
+
+## Demos
+
+- [Debugger Agent](./DEBUGGER_AGENT.md)
