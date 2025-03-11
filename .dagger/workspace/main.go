@@ -75,11 +75,11 @@ func (w *Workspace) Check(ctx context.Context) (string, error) {
 	return w.Checker.Check(ctx, w.Work)
 }
 
-// Show the changes made to the workspace so far in diff format
+// Show the changes made to the workspace so far in unified diff format
 func (w *Workspace) Diff(ctx context.Context) (string, error) {
 	return dag.Container().From("alpine:3").
-		WithDirectory("/original", w.Start).
-		WithDirectory("/workspace", w.Work).
-		WithExec([]string{"diff", "-rN", "/original/", "/workspace/"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+		WithDirectory("/a", w.Start).
+		WithDirectory("/b", w.Work).
+		WithExec([]string{"diff", "-rN", "a/", "b/"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
 		Stdout(ctx)
 }
