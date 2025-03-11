@@ -1,15 +1,22 @@
 name: ci
 on:
   push:
-    branches: ["**"]
+    branches: ["**", "!main"]
 jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v4
-      - name: Dagger
-        uses: dagger/dagger-for-github@v7
+      - uses: dagger/dagger-for-github@8.0.0
         with:
-          args: check
-          cloud-token: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          version: 0.17.0-llm.8
+      - name: Check
+        run: dagger call check --github-token GH_TOKEN --model gemini-2.0-flash --commit $GITHUB_SHA
+        env:
+          DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

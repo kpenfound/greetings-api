@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/kpenfound/greetings-api/.dagger/internal/dagger"
 )
@@ -48,21 +49,40 @@ func New(
 }
 
 // Run the CI Checks for the project
-func (g *Greetings) Check(ctx context.Context) (string, error) {
+func (g *Greetings) Check(
+	ctx context.Context,
+	// Github token with permissions to comment on the pull request
+	// +optional
+	githubToken *dagger.Secret,
+	// git commit in github
+	// +optional
+	commit string,
+	// The model to use to debug debug tests
+	// +optional
+	model string,
+) (string, error) {
 	// Lint
 	lintOut, err := g.Lint(ctx)
 	if err != nil {
+		if githubToken != nil {
+			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
+			fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
+		}
 		return "", err
 	}
 
 	// Then Test
 	testOut, err := g.Test(ctx)
 	if err != nil {
+		if githubToken != nil {
+			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
+			fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
+		}
 		return "", err
 	}
 
 	// Then Build
-	_, err = g.Build("dev").Sync(ctx)
+	_, err = g.Build().Sync(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +97,12 @@ func (g *Greetings) Test(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return backendResult, nil
+	frontendResult, err := g.Frontend.UnitTest(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return backendResult + "\n" + frontendResult, nil
 }
 
 // Lint the Go code in the project
@@ -86,15 +111,16 @@ func (g *Greetings) Lint(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return backendResult, nil
+
+	frontendResult, err := g.Frontend.Lint(ctx)
+	if err != nil {
+		return "", err
+	}
+	return backendResult + "\n" + frontendResult, nil
 }
 
 // Build the backend and frontend for a specified environment
-func (g *Greetings) Build(
-	// +optional
-	// +default="dev"
-	env string,
-) *dagger.Directory {
+func (g *Greetings) Build() *dagger.Directory {
 	return dag.Directory().
 		WithFile("/build/greetings-api", g.Backend.Binary()).
 		WithDirectory("build/website/", g.Frontend.Build())
@@ -114,7 +140,7 @@ func (g *Greetings) Serve() *dagger.Service {
 // Create a GitHub release
 func (g *Greetings) Release(ctx context.Context, tag string, ghToken *dagger.Secret) (string, error) {
 	// Get build
-	build := g.Build("netlify")
+	build := g.Build()
 	// Compress frontend build
 	assets := dag.Container().From("alpine:3.18").
 		WithDirectory("/assets", build).
@@ -126,4 +152,100 @@ func (g *Greetings) Release(ctx context.Context, tag string, ghToken *dagger.Sec
 
 	title := fmt.Sprintf("Release %s", tag)
 	return dag.GithubRelease().Create(ctx, g.Repo, tag, title, ghToken, dagger.GithubReleaseCreateOpts{Assets: assets})
+}
+
+// Debug broken tests. Returns a unified diff of the test fixes
+func (g *Greetings) DebugTests(
+	ctx context.Context,
+	// The model to use to debug debug tests
+	// +optional
+	model string,
+) (string, error) {
+	opts := dagger.LlmOpts{}
+	if model != "" {
+		opts.Model = model
+	}
+	prompt := dag.CurrentModule().Source().File("prompts/fix_tests.md")
+
+	// Check if backend is broken
+	if _, berr := g.Backend.Check(ctx, g.Backend.Source()); berr != nil {
+		ws := dag.Workspace(
+			g.Backend.Source(),
+			g.Backend.AsWorkspaceCheckable(),
+		)
+		return dag.Llm(opts).
+			WithWorkspace(ws).
+			WithPromptFile(prompt).
+			Workspace().
+			Diff(ctx)
+	}
+
+	// Check if frontend is broken
+	if _, ferr := g.Frontend.Check(ctx, g.Frontend.Source()); ferr != nil {
+		ws := dag.Workspace(
+			g.Frontend.Source(),
+			g.Frontend.AsWorkspaceCheckable(),
+		)
+		return dag.Llm(opts).
+			WithWorkspace(ws).
+			WithPromptFile(prompt).
+			Workspace().
+			Diff(ctx)
+	}
+
+	return "", fmt.Errorf("no broken tests found")
+}
+
+// Debug broken tests on a pull request and comment fix suggestions
+func (g *Greetings) DebugBrokenTestsPr(
+	ctx context.Context,
+	// Github token with permissions to comment on the pull request
+	githubToken *dagger.Secret,
+	// Git commit in Github
+	commit string,
+	// The model to use to debug debug tests
+	// +optional
+	model string,
+) error {
+	// Determine PR head
+	gitRef := dag.Git(g.Repo).Commit(commit)
+	gitSource := gitRef.Tree()
+	pr, err := dag.GithubIssue(githubToken).GetPrForCommit(ctx, g.Repo, commit)
+	if err != nil {
+		return err
+	}
+
+	// Set source to PR head
+	g = New(gitSource, g.Repo, g.Image, g.App)
+
+	// Suggest fix
+	suggestionDiff, err := g.DebugTests(ctx, model)
+	if err != nil {
+		return err
+	}
+	if suggestionDiff == "" {
+		return fmt.Errorf("no suggestions found")
+	}
+
+	// Convert the diff to CodeSuggestions
+	codeSuggestions := parseDiff(suggestionDiff)
+
+	// For each suggestion, comment on PR
+	// FIXME: github-comment needs to find commit sha
+	for _, suggestion := range codeSuggestions {
+		markupSuggestion := "```suggestion\n" + strings.Join(suggestion.Suggestion, "\n") + "\n```"
+		err := dag.GithubIssue(githubToken).WritePullRequestCodeComment(
+			ctx,
+			g.Repo,
+			pr,
+			commit,
+			markupSuggestion,
+			suggestion.File,
+			"RIGHT",
+			suggestion.Line)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

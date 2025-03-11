@@ -1,29 +1,11 @@
 /**
  * A generated module for Frontend functions
- *
- * This module has been generated via dagger init and serves as a reference to
- * basic module structure as you get started with Dagger.
- *
- * Two functions have been pre-created. You can modify, delete, or add to them,
- * as needed. They demonstrate usage of arguments and return types using simple
- * echo and grep commands. The functions can be called from the dagger CLI or
- * from one of the SDKs.
- *
- * The first line in this comment block is a short description line and the
- * rest is a long description with more detail on the module's purpose or usage,
- * if appropriate. All modules should have a short description.
  */
-import {
-  dag,
-  Container,
-  Directory,
-  object,
-  func,
-  Service,
-} from "@dagger.io/dagger";
+import { dag, Directory, object, func, Service } from "@dagger.io/dagger";
 
 @object()
 export class Frontend {
+  @func()
   source: Directory;
 
   constructor(source: Directory) {
@@ -31,14 +13,21 @@ export class Frontend {
   }
 
   @func()
-  lint(): string {
+  async lint(): Promise<string> {
     return "PASS";
   }
 
   @func()
-  test(): string {
+  async unitTest(): Promise<string> {
     return "PASS";
   }
+
+  @func()
+  async check(source: Directory): Promise<string> {
+    this.source = source;
+    return (await this.lint()) + "\n" + (await this.unitTest());
+  }
+
   @func()
   build(): Directory {
     return this.source;
@@ -50,6 +39,6 @@ export class Frontend {
       .container()
       .from("nginx")
       .withDirectory("/usr/share/nginx/html", this.source)
-      .asService();
+      .asService({ useEntrypoint: true });
   }
 }

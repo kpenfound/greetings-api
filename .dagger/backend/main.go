@@ -33,6 +33,20 @@ func (b *Backend) Lint(ctx context.Context) (string, error) {
 		GolangciLint(ctx)
 }
 
+// Checker
+func (b *Backend) Check(ctx context.Context, source *dagger.Directory) (string, error) {
+	b.Source = source
+	lint, err := b.Lint(ctx)
+	if err != nil {
+		return "", err
+	}
+	test, err := b.UnitTest(ctx)
+	if err != nil {
+		return "", err
+	}
+	return lint + "\n" + test, nil
+}
+
 // Build the backend
 func (b *Backend) Build(
 	// +optional
