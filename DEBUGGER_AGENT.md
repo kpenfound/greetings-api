@@ -18,6 +18,9 @@ To get a useful agentic flow out of this function, there's another function call
 - Uses the `debug-tests` function to debug the broken tests
 - Uses the GitHub API to comment on the PR with suggestions of the fixes
 
+Check out the full demo below: 
+[![Watch the video](https://img.youtube.com/vi/VHUi9ABdASA/maxresdefault.jpg)](https://www.youtube.com/watch?v=VHUi9ABdASA)
+
 ### How do I try it?
 Start a dev Dagger Engine with LLM support using:
 https://docs.dagger.io/ai-agents#initial-setup
