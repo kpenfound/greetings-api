@@ -154,6 +154,16 @@ func (g *Greetings) Release(ctx context.Context, tag string, ghToken *dagger.Sec
 	return dag.GithubRelease().Create(ctx, g.Repo, tag, title, ghToken, dagger.GithubReleaseCreateOpts{Assets: assets})
 }
 
+// Check the workspace with a specific checkout of the code
+func (g *Greetings) CheckDirectory(
+	ctx context.Context,
+	// The source to check
+	source *dagger.Directory,
+) (string, error) {
+	g.Source = source
+	return g.Check(ctx, nil, "", "")
+}
+
 // Debug broken tests. Returns a unified diff of the test fixes
 func (g *Greetings) DebugTests(
 	ctx context.Context,
@@ -168,7 +178,7 @@ func (g *Greetings) DebugTests(
 	prompt := dag.CurrentModule().Source().File("prompts/fix_tests.md")
 
 	// Check if backend is broken
-	if _, berr := g.Backend.Check(ctx, g.Backend.Source()); berr != nil {
+	if _, berr := g.Backend.CheckDirectory(ctx, g.Backend.Source()); berr != nil {
 		ws := dag.Workspace(
 			g.Backend.Source(),
 			g.Backend.AsWorkspaceCheckable(),
@@ -181,7 +191,7 @@ func (g *Greetings) DebugTests(
 	}
 
 	// Check if frontend is broken
-	if _, ferr := g.Frontend.Check(ctx, g.Frontend.Source()); ferr != nil {
+	if _, ferr := g.Frontend.CheckDirectory(ctx, g.Frontend.Source()); ferr != nil {
 		ws := dag.Workspace(
 			g.Frontend.Source(),
 			g.Frontend.AsWorkspaceCheckable(),
