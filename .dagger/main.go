@@ -152,13 +152,3 @@ func (g *Greetings) Release(ctx context.Context, tag string, ghToken *dagger.Sec
 	title := fmt.Sprintf("Release %s", tag)
 	return dag.GithubRelease().Create(ctx, g.Repo, tag, title, ghToken, dagger.GithubReleaseCreateOpts{Assets: assets})
 }
-
-// Check the workspace with a specific checkout of the code
-func (g *Greetings) CheckDirectory(
-	ctx context.Context,
-	// The source to check
-	source *dagger.Directory,
-) (string, error) {
-	g.Source = source
-	return g.Check(ctx, nil, "", "")
-}

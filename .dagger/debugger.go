@@ -13,12 +13,9 @@ func (g *Greetings) DebugTests(
 	ctx context.Context,
 	// The model to use to debug debug tests
 	// +optional
+	// +default = "gemini-2.0-flash"
 	model string,
 ) (string, error) {
-	opts := dagger.LlmOpts{}
-	if model != "" {
-		opts.Model = model
-	}
 	prompt := dag.CurrentModule().Source().File("prompts/fix_tests.md")
 
 	// Check if backend is broken
@@ -27,7 +24,7 @@ func (g *Greetings) DebugTests(
 			g.Backend.Source(),
 			g.Backend.AsWorkspaceCheckable(),
 		)
-		return dag.Llm(opts).
+		return dag.Llm(dagger.LlmOpts{Model: model}).
 			WithWorkspace(ws).
 			WithPromptFile(prompt).
 			Workspace().
@@ -40,7 +37,7 @@ func (g *Greetings) DebugTests(
 			g.Frontend.Source(),
 			g.Frontend.AsWorkspaceCheckable(),
 		)
-		return dag.Llm(opts).
+		return dag.Llm(dagger.LlmOpts{Model: model}).
 			WithWorkspace(ws).
 			WithPromptFile(prompt).
 			Workspace().
@@ -59,6 +56,7 @@ func (g *Greetings) DebugBrokenTestsPr(
 	commit string,
 	// The model to use to debug debug tests
 	// +optional
+	// +default = "gemini-2.0-flash"
 	model string,
 ) error {
 	// Determine PR head

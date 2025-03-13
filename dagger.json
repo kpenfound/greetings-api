@@ -10,6 +10,11 @@
       "source": ".dagger/backend"
     },
     {
+      "name": "feature-branch",
+      "source": "github.com/kpenfound/dag/feature-branch",
+      "pin": "0f098cb485076bc839e1574f75e5da4eaea51a50"
+    },
+    {
       "name": "frontend",
       "source": ".dagger/frontend"
     },
