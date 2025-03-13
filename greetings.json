@@ -4,6 +4,10 @@
     "greeting": "Hello, World!"
   },
   {
+    "language": "british",
+    "greeting": "Hello, World! Cheers!"
+  },
+  {
     "language": "french",
     "greeting": "Bonjour, Monde !"
   },
