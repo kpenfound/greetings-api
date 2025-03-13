@@ -14,5 +14,9 @@
   {
     "language": "spanish",
     "greeting": "¡Hola, Mundo!"
+  },
+  {
+    "language": "german",
+    "greeting": "Hallo, Welt!"
   }
 ]
