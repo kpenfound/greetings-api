@@ -60,7 +60,7 @@ func (g *Greetings) DevelopPullRequest(
 		WithChanges(work)
 
 	// Create a pull request with the feature branch
-	body := fmt.Sprintf("%s\n\nCompleted by Agent\nFixes %d", assignment, issueId)
+	body := fmt.Sprintf("%s\n\nCompleted by Agent\nFixes https://%s/issues/%d\n", assignment, g.Repo, issueId)
 	title, err := dag.Llm(dagger.LlmOpts{Model: model}).
 		WithPrompt("Write an appropriate pull request title for the following assignment. It should be under 150 characters. Just tell me the title and nothing else.\nAssignment:\n" + assignment).
 		LastReply(ctx)

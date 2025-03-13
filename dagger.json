@@ -12,7 +12,7 @@
     {
       "name": "feature-branch",
       "source": "github.com/kpenfound/dag/feature-branch",
-      "pin": "0f098cb485076bc839e1574f75e5da4eaea51a50"
+      "pin": "ea7e256c6bd3f0d8685c524f3399c269b5683336"
     },
     {
       "name": "frontend",
