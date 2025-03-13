@@ -1,6 +1,6 @@
 {
   "name": "greetings",
-  "engineVersion": "v0.17.0-llm.6",
+  "engineVersion": "v0.17.0-llm.8",
   "sdk": {
     "source": "go"
   },
@@ -12,7 +12,7 @@
     {
       "name": "feature-branch",
       "source": "github.com/kpenfound/dag/feature-branch",
-      "pin": "26f689fa4a7f0feb2691cde2278d91a954843316"
+      "pin": "8312742a22c24168b1f482aea9980ecfaaef05eb"
     },
     {
       "name": "frontend",
@@ -21,7 +21,7 @@
     {
       "name": "github-issue",
       "source": "github.com/kpenfound/dag/github-issue",
-      "pin": "0f098cb485076bc839e1574f75e5da4eaea51a50"
+      "pin": "8312742a22c24168b1f482aea9980ecfaaef05eb"
     },
     {
       "name": "github-release",
