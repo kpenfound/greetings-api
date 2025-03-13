@@ -34,8 +34,7 @@ func (b *Backend) Lint(ctx context.Context) (string, error) {
 }
 
 // Checker
-func (b *Backend) Check(ctx context.Context, source *dagger.Directory) (string, error) {
-	b.Source = source
+func (b *Backend) Check(ctx context.Context) (string, error) {
 	lint, err := b.Lint(ctx)
 	if err != nil {
 		return "", err
@@ -90,4 +89,10 @@ func (b *Backend) Container(
 // Get a Service to run the backend
 func (b *Backend) Serve() *dagger.Service {
 	return b.Container(runtime.GOARCH).AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
+}
+
+// Checker
+func (b *Backend) CheckDirectory(ctx context.Context, source *dagger.Directory) (string, error) {
+	b.Source = source
+	return b.Check(ctx)
 }

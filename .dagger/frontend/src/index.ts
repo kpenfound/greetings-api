@@ -23,8 +23,7 @@ export class Frontend {
   }
 
   @func()
-  async check(source: Directory): Promise<string> {
-    this.source = source;
+  async check(): Promise<string> {
     return (await this.lint()) + "\n" + (await this.unitTest());
   }
 
@@ -40,5 +39,11 @@ export class Frontend {
       .from("nginx")
       .withDirectory("/usr/share/nginx/html", this.source)
       .asService({ useEntrypoint: true });
+  }
+
+  @func()
+  async checkDirectory(source: Directory): Promise<string> {
+    this.source = source;
+    return await this.check();
   }
 }

@@ -10,7 +10,7 @@ import (
 // Interface for something that can be checked
 type Checkable interface {
 	dagger.DaggerObject
-	Check(ctx context.Context, source *dagger.Directory) (string, error)
+	CheckDirectory(ctx context.Context, source *dagger.Directory) (string, error)
 }
 
 // Place to do work and check it
@@ -72,7 +72,7 @@ func (w *Workspace) Tree(ctx context.Context) (string, error) {
 
 // Run the tests in the workspace
 func (w *Workspace) Check(ctx context.Context) (string, error) {
-	return w.Checker.Check(ctx, w.Work)
+	return w.Checker.CheckDirectory(ctx, w.Work)
 }
 
 // Show the changes made to the workspace so far in unified diff format
