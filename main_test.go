@@ -22,10 +22,20 @@ func TestSelectGreeting(t *testing.T) {
 		Language: "english",
 	}
 
+	german := &Greeting{
+		Greeting: "Hallo, Welt!",
+		Language: "german",
+	}
+
 	// Test with a language
 	g, err := SelectGreeting(greetings, "english")
 	assert.NilError(t, err)
 	assert.Equal(t, *english, *g)
+
+	// Test german
+	g, err = SelectGreeting(greetings, "german")
+	assert.NilError(t, err)
+	assert.Equal(t, *german, *g)
 
 	// Test random
 	_, err = SelectGreeting(greetings, "random")
