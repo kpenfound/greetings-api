@@ -32,8 +32,8 @@ func TestSelectGreeting(t *testing.T) {
 	assert.NilError(t, err)
 
 	// Test invalid language
-	_, err = SelectGreeting(greetings, "foooooo")
-	assert.Error(t, err, "no greeting found for language 'foooooo'")
+	_, err = SelectGreeting(greetings, "FOOO")
+	assert.Error(t, err, "no greeting found for language 'FO0O'")
 
 	// Test empty language
 	_, err = SelectGreeting(greetings, "")
