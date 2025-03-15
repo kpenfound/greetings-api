@@ -19,7 +19,7 @@ To get a useful agentic flow out of this function, there's another function call
 - Uses the GitHub API to create a pull request with the completed work
 
 Check out the full demo below:
-TODO
+[Youtube demo](https://www.youtube.com/watch?v=B7P04M9c1m0)
 
 ### How do I try it?
 Start a dev Dagger Engine with LLM support using:
