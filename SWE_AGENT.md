@@ -32,6 +32,9 @@ To get a useful agentic flow out of this function, there's another function call
 - Uses the GitHub API to create a pull request with the completed work
 
 ## How do I try it?
+
+You can call the `develop` function with Dagger to see the agent complete a given assignment. The `develop` function takes an assignment as an argument and returns a `Container` (yes, like a Docker container). With that Container, you can get in a terminal, inspect the files, or just export the files to your local machine.
+
 The only dependency to run this agent is Dagger. Here are the [installation instructions](https://docs.dagger.io/ai-agents#initial-setup).
 
 Once you have Dagger, fork or clone this repository:
@@ -41,16 +44,23 @@ cd greetings-api
 ```
 
 Then, get in a Dagger shell to interact with the module:
+
 ```
 dagger
 ```
 
-⋈ Run agent to complete the asssignment:
+⋈ Run agent to complete the asssignment
+In the snippet below, the agent will complete the assignment "Add a new greeting in Portuguese".
+Because the `develop` function returns a Container, you can pipe it to the `terminal` function to get a terminal in the container.
+
 ```
 develop "Add a new greeting in Portuguese" | terminal
 ```
 
+
+
 ⋈ Run develop to let the agent complete the assignment with different models.
+
 ```
 develop "Add a new greeting in Portuguese" --model <any model, e.g. "gpt-4o"> | terminal
 ```
