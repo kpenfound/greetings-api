@@ -50,6 +50,7 @@ dagger
 ```
 
 ⋈ Run agent to complete the asssignment
+
 In the snippet below, the agent will complete the assignment "Add a new greeting in Portuguese".
 Because the `develop` function returns a Directory, you can pipe it to the `terminal` function to get a terminal in the directory.
 
