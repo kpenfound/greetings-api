@@ -18,7 +18,7 @@ Check out the full demo:
 This is a [Dagger](https://dagger.io) function that automatically writes new features for the project.
 Using Dagger to solve this is perfect because the agent can use the same code that developers and CI systems already use to test the code.
 
-In the dagger module under [.dagger](./.dagger) directory, there is a function called `Develop`.
+In the dagger module under [.dagger](./.dagger) directory, there is a new function called `Develop`.
 
 The `develop` function:
 - Creates a [Workspace](./.dagger/workspace) for an LLM to read and write the files in the project and run tests
