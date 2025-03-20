@@ -10,6 +10,7 @@ When the GitHub issue is labeled with `develop`, the agent will automatically ru
 producing a pull request with the completed work.
 
 Check out the full demo:
+
 [![A Simple SWE Agent with Dagger](https://img.youtube.com/vi/B7P04M9c1m0/0.jpg)](https://www.youtube.com/watch?v=B7P04M9c1m0)
 
 ## Implementation
