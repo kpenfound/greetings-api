@@ -33,7 +33,7 @@ To get a useful agentic flow out of this function, there's another function call
 
 ## How do I try it?
 
-You can call the `develop` function with Dagger to see the agent complete a given assignment. The `develop` function takes an assignment as an argument and returns a `Container` (yes, like a Docker container). With that Container, you can get in a terminal, inspect the files, or just export the files to your local machine.
+You can call the `develop` function with Dagger to see the agent complete a given assignment. The `develop` function takes an assignment as an argument and returns a `Directory` (yes, like a filesystem). With that Directory, you can get in a terminal, inspect the files, or just export the files to your local machine.
 
 The only dependency to run this agent is Dagger. Here are the [installation instructions](https://docs.dagger.io/ai-agents#initial-setup).
 
@@ -51,7 +51,7 @@ dagger
 
 ⋈ Run agent to complete the asssignment
 In the snippet below, the agent will complete the assignment "Add a new greeting in Portuguese".
-Because the `develop` function returns a Container, you can pipe it to the `terminal` function to get a terminal in the container.
+Because the `develop` function returns a Directory, you can pipe it to the `terminal` function to get a terminal in the directory.
 
 ```
 develop "Add a new greeting in Portuguese" | terminal
