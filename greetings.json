@@ -22,5 +22,9 @@
   {
     "language": "german",
     "greeting": "Hallo, Welt!"
+  },
+  {
+    "language": "klingon",
+    "greeting": "nuqneH, yIn!"
   }
 ]
