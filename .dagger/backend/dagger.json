@@ -1,13 +1,14 @@
 {
   "name": "backend",
-  "engineVersion": "v0.15.3",
-  "sdk": "go",
+  "engineVersion": "v0.17.1",
+  "sdk": {
+    "source": "go"
+  },
   "dependencies": [
     {
       "name": "golang",
       "source": "github.com/kpenfound/dagger-modules/golang@4c3063d4076efb4a566be779e92b837c507c2eac",
       "pin": "4c3063d4076efb4a566be779e92b837c507c2eac"
     }
-  ],
-  "source": "."
+  ]
 }

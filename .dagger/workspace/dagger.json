@@ -1,6 +1,6 @@
 {
   "name": "workspace",
-  "engineVersion": "v0.17.0-llm.6",
+  "engineVersion": "v0.17.1",
   "sdk": {
     "source": "go"
   }

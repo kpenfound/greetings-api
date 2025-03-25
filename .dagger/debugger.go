@@ -24,7 +24,7 @@ func (g *Greetings) DebugTests(
 			g.Backend.Source(),
 			g.Backend.AsWorkspaceCheckable(),
 		)
-		return dag.Llm(dagger.LlmOpts{Model: model}).
+		return dag.LLM(dagger.LLMOpts{Model: model}).
 			WithWorkspace(ws).
 			WithPromptFile(prompt).
 			Workspace().
@@ -37,7 +37,7 @@ func (g *Greetings) DebugTests(
 			g.Frontend.Source(),
 			g.Frontend.AsWorkspaceCheckable(),
 		)
-		return dag.Llm(dagger.LlmOpts{Model: model}).
+		return dag.LLM(dagger.LLMOpts{Model: model}).
 			WithWorkspace(ws).
 			WithPromptFile(prompt).
 			Workspace().
