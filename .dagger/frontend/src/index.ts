@@ -7,9 +7,11 @@ import { dag, Directory, object, func, Service } from "@dagger.io/dagger";
 export class Frontend {
   @func()
   source: Directory;
+  backend: Service;
 
-  constructor(source: Directory) {
+  constructor(source: Directory, backend: Service) {
     this.source = source;
+    this.backend = backend;
   }
 
   @func()
@@ -19,12 +21,25 @@ export class Frontend {
 
   @func()
   async unitTest(): Promise<string> {
-    return "PASS";
+    return await dag
+      .container()
+      .from("cypress/included:14.0.3")
+      .withMountedCache("/root/.npm", dag.cacheVolume("npm-cache"))
+      .withServiceBinding("localhost", this.backend)
+      .withServiceBinding("frontend", this.serve())
+      .withWorkdir("/app")
+      .withDirectory("/app", this.source)
+      .withExec(["npm", "ci"])
+      .withExec(["npm", "run", "test:e2e"])
+      .stdout();
   }
 
   @func()
   async check(): Promise<string> {
-    return (await this.lint()) + "\n" + (await this.unitTest());
+    const lint = await this.lint();
+    const test = await this.unitTest();
+
+    return lint + "\n" + test;
   }
 
   @func()

@@ -37,14 +37,15 @@ func New(
 	// +default="dagger-demo"
 	app string,
 ) *Greetings {
-	return &Greetings{
+	g := &Greetings{
 		Source:   source,
 		Repo:     repo,
 		Image:    image,
 		App:      app,
 		Backend:  dag.Backend(source.WithoutDirectory("website")),
-		Frontend: dag.Frontend(source.Directory("website")),
 	}
+	g.Frontend = dag.Frontend(source.Directory("website"), g.Backend.Serve())
+	return g
 }
 
 // Run the CI Checks for the project

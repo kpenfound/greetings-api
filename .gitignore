@@ -6,3 +6,4 @@ output/
 build/
 # Local Netlify folder
 .netlify
+**/node_modules
