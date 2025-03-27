@@ -1,0 +1,27 @@
+{
+  "name": "greetings",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "cypress run --e2e",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.8.0",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/jsdom": "^21.1.6",
+    "@types/node": "^20.12.5",
+    "@vue/tsconfig": "^0.5.1",
+    "concurrently": "^9.1.2",
+    "cypress": "^13.7.2",
+    "eslint": "^8.57.0",
+    "eslint-plugin-cypress": "^2.15.1",
+    "jsdom": "^24.0.0",
+    "npm-run-all2": "^6.1.2",
+    "prettier": "^3.2.5",
+    "start-server-and-test": "^2.0.3",
+    "typescript": "~5.4.0"
+  }
+}
