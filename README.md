@@ -1,25 +1,14 @@
 # greetings-api
 
-A simple greeting api
+A simple greeting api with a beatuiful frontend.
 
 ## Try it out!
 
 ```
-> go run main.go
-...
-listening on :8080
+dagger call serve up
 ```
 
-```
-> curl -s http://localhost:8080 | jq
-{
-  "greeting": "Hello"
-}
-```
-
-## New Frontend!
-
-Website located in the website/ directory
+The frontend will be available at http://localhost:8081/
 
 
 ## Daggerized!
