@@ -6,30 +6,27 @@
     <title>Greetings App</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-purple-900 text-white font-sans">
+<body class="bg-purple-900 text-white font-sans flex flex-col items-center justify-center min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-3xl font-bold mb-4">Greetings Daggernauts</h1>
         <div id="greetingDisplay" class="greeting bg-purple-700 rounded shadow p-4 min-h-20 flex items-center justify-center">
-            Click a button to see a greeting!
+            Click the button to see a greeting!
         </div>
-        <div class="button-container flex justify-center gap-4 mt-4">
-            <button class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded" onclick="getGreeting('/english')">English</button>
-            <button class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded" onclick="getGreeting('/french')">French</button>
-            <button class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded" onclick="getGreeting('/italian')">Italian</button>
-        </div>
+        <button id="randomGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded mt-4">👋</button>
     </div>
 
     <script>
-        async function getGreeting(endpoint) {
+        async function getRandomGreeting() {
             try {
-                const response = await fetch('http://localhost:8080' + endpoint);
+                const response = await fetch('http://localhost:8080/random');
                 const data = await response.json();
                 document.getElementById('greetingDisplay').textContent = data.greeting;
             } catch (error) {
                 console.error('Error fetching greeting:', error);
                 document.getElementById('greetingDisplay').textContent = 'Error fetching greeting';
-            }
-        }
+            }        }
+
+        document.getElementById('randomGreetingButton').addEventListener('click', getRandomGreeting);
     </script>
 </body>
 </html>
