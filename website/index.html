@@ -6,27 +6,44 @@
     <title>Greetings App</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-purple-900 text-white font-sans flex flex-col items-center justify-center min-h-screen">
+<body class="bg-purple-900 text-white font-sans flex items-center justify-center min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-4">Greetings Daggernauts</h1>
-        <div id="greetingDisplay" class="greeting bg-purple-700 rounded shadow p-4 min-h-20 flex items-center justify-center">
+        <h1 class="text-3xl font-bold mb-4 text-center">Greetings Daggernauts</h1>
+
+        <div class="mb-4">
+            <label for="languageSelect" class="block text-sm font-medium text-white">Select Language:</label>
+            <select id="languageSelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-purple-700 text-white">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+            </select>
+        </div>
+
+        <div id="greetingDisplay" class="greeting bg-purple-700 rounded shadow p-4 min-h-20 flex items-center justify-center text-center">
             Click the button to see a greeting!
         </div>
-        <button id="randomGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded mt-4">👋</button>
+
+        <button id="getGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded mt-4 w-full">Get Greeting</button>
     </div>
 
     <script>
-        async function getRandomGreeting() {
+        async function getGreeting() {
+            const language = document.getElementById('languageSelect').value;
+            const greetingDisplay = document.getElementById('greetingDisplay');
+            greetingDisplay.textContent = 'Loading...';
+
             try {
-                const response = await fetch('http://localhost:8080/random');
+                const response = await fetch(`http://localhost:8080/greeting?language=${language}`);
                 const data = await response.json();
-                document.getElementById('greetingDisplay').textContent = data.greeting;
+                greetingDisplay.textContent = data.greeting;
             } catch (error) {
                 console.error('Error fetching greeting:', error);
-                document.getElementById('greetingDisplay').textContent = 'Error fetching greeting';
-            }        }
+                greetingDisplay.textContent = 'Error fetching greeting';
+            }
+        }
 
-        document.getElementById('randomGreetingButton').addEventListener('click', getRandomGreeting);
+        document.getElementById('getGreetingButton').addEventListener('click', getGreeting);
     </script>
 </body>
 </html>
