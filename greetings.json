@@ -1,1 +1,19 @@
-[{"language": "english", "greeting": "Hello, World!"}, {"language": "british", "greeting": "Hello, World! Cheers!"}, {"language": "french", "greeting": "Bonjour, Monde !"}, {"language": "italian", "greeting": "Ciao, Mondo!"}, {"language": "spanish", "greeting": "¡Hola, Mundo!"}, {"language": "german", "greeting": "Hallo, Welt!"}, {"language": "mandarin", "greeting": "你好，世界！"}, {"language": "hindi", "greeting": "नमस्ते दुनिया!"}, {"language": "arabic", "greeting": "مرحبا بالعالم!"}, {"language": "bengali", "greeting": "ওহে বিশ্ব!"}, {"language": "russian", "greeting": "Привет, мир!"}, {"language": "portuguese", "greeting": "Olá, Mundo!"}, {"language": "urdu", "greeting": "ہیلو، دنیا!"}, {"language": "indonesian", "greeting": "Halo Dunia!"}, {"language": "japanese", "greeting": "こんにちは世界！"}, {"language": "marathi", "greeting": "नमस्कार जग!"}, {"language": "telugu", "greeting": "హలో ప్రపంచం!"}]
+[
+  { "language": "english", "greeting": "Hello, World!" },
+  { "language": "british", "greeting": "Hello, World! Cheers!" },
+  { "language": "french", "greeting": "Bonjour, Monde !" },
+  { "language": "italian", "greeting": "Ciao, Mondo!" },
+  { "language": "spanish", "greeting": "¡Hola, Mundo!" },
+  { "language": "german", "greeting": "Hallo, Welt!" },
+  { "language": "mandarin", "greeting": "你好，世界！" },
+  { "language": "hindi", "greeting": "नमस्ते दुनिया!" },
+  { "language": "arabic", "greeting": "مرحبا بالعالم!" },
+  { "language": "bengali", "greeting": "ওহে বিশ্ব!" },
+  { "language": "russian", "greeting": "Привет, мир!" },
+  { "language": "portuguese", "greeting": "Olá, Mundo!" },
+  { "language": "urdu", "greeting": "ہیلو، دنیا!" },
+  { "language": "indonesian", "greeting": "Halo Dunia!" },
+  { "language": "japanese", "greeting": "こんにちは世界！" },
+  { "language": "marathi", "greeting": "नमस्कार जग!" },
+  { "language": "telugu", "greeting": "హలో ప్రపంచం!" }
+]
