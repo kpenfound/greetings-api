@@ -24,10 +24,15 @@ func (g *Greetings) DebugTests(
 			g.Backend.Source(),
 			g.Backend.AsWorkspaceCheckable(),
 		)
+		env := dag.Env().
+			WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+			WithWorkspaceOutput("fixed", "workspace with fixed tests")
 		return dag.LLM(dagger.LLMOpts{Model: model}).
-			WithWorkspace(ws).
+			WithEnv(env).
 			WithPromptFile(prompt).
-			Workspace().
+			Env().
+			Output("fixed").
+			AsWorkspace().
 			Diff(ctx)
 	}
 
@@ -37,10 +42,15 @@ func (g *Greetings) DebugTests(
 			g.Frontend.Source(),
 			g.Frontend.AsWorkspaceCheckable(),
 		)
+		env := dag.Env().
+			WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+			WithWorkspaceOutput("fixed", "workspace with fixed tests")
 		return dag.LLM(dagger.LLMOpts{Model: model}).
-			WithWorkspace(ws).
+			WithEnv(env).
 			WithPromptFile(prompt).
-			Workspace().
+			Env().
+			Output("fixed").
+			AsWorkspace().
 			Diff(ctx)
 	}
 

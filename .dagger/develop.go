@@ -24,12 +24,18 @@ func (g *Greetings) Develop(
 		g.Backend.AsWorkspaceCheckable(),
 	)
 
+	env := dag.Env().
+		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+		WithStringInput("assignment", assignment, "the assignment to complete").
+		WithWorkspaceOutput("fixed", "workspace with developed solution")
 	work := dag.LLM(dagger.LLMOpts{Model: model}).
-		WithPromptVar("assignment", assignment).
+		WithEnv(env).
 		WithPromptFile(prompt).
-		WithWorkspace(ws)
+		Env().
+		Output("fixed").
+		AsWorkspace()
 
-	return work.Workspace().Work()
+	return work.Work()
 }
 
 func (g *Greetings) DevelopPullRequest(
