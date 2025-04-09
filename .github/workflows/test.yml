@@ -12,7 +12,8 @@ jobs:
         with:
           version: 0.18.0
       - name: Check
-        run: dagger call check --github-token GH_TOKEN --model gemini-2.0-flash --commit $GITHUB_SHA
+        run: check
+        shell: dagger
         env:
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
