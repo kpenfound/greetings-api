@@ -12,8 +12,8 @@ jobs:
         with:
           version: 0.18.0
       - name: Check
-        run: check
-        shell: dagger -c < {0}
+        run: container | from-alpine | file /etc/os-release | contents
+        shell: dagger {0}
         env:
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
