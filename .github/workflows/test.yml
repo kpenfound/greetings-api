@@ -12,7 +12,7 @@ jobs:
         with:
           version: 0.18.0
       - name: Check
-        run: container | from-alpine | file /etc/os-release | contents
+        run: container | from alpine | file /etc/os-release | contents
         shell: dagger {0}
         env:
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
