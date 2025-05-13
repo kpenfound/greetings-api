@@ -9,6 +9,7 @@ import (
 
 // Complete an assignment for the greetings project and get back the completed work
 func (g *Greetings) Develop(
+	ctx context.Context,
 	// The assignment to complete
 	assignment string,
 	// The model to use to complete the assignment
@@ -28,10 +29,15 @@ func (g *Greetings) Develop(
 		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
 		WithStringInput("assignment", assignment, "the assignment to complete").
 		WithWorkspaceOutput("fixed", "workspace with developed solution")
-	work := dag.LLM(dagger.LLMOpts{Model: model}).
+	agent := dag.LLM(dagger.LLMOpts{Model: model}).
 		WithEnv(env).
 		WithPromptFile(prompt).
-		Env().
+		Loop()
+	totalTokens, err := agent.TokenUsage().TotalTokens(ctx)
+	if err == nil {
+		fmt.Printf("Total token usage: %d\n", totalTokens)
+	}
+	work := agent.Env().
 		Output("fixed").
 		AsWorkspace()
 
@@ -59,7 +65,7 @@ func (g *Greetings) DevelopPullRequest(
 	}
 
 	// Pass the assignment to the develop function
-	work := g.Develop(assignment, model)
+	work := g.Develop(ctx, assignment, model)
 
 	// Create a pull request with the feature branch
 	body := fmt.Sprintf("%s\n\nCompleted by Agent\nFixes https://%s/issues/%d\n", assignment, g.Repo, issueId)
