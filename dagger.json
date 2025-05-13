@@ -1,6 +1,6 @@
 {
   "name": "greetings",
-  "engineVersion": "v0.18.0",
+  "engineVersion": "v0.18.7",
   "sdk": {
     "source": "go"
   },
@@ -10,18 +10,13 @@
       "source": ".dagger/backend"
     },
     {
-      "name": "feature-branch",
-      "source": "github.com/kpenfound/dag/feature-branch",
-      "pin": "8312742a22c24168b1f482aea9980ecfaaef05eb"
-    },
-    {
       "name": "frontend",
       "source": ".dagger/frontend"
     },
     {
       "name": "github-issue",
       "source": "github.com/kpenfound/dag/github-issue",
-      "pin": "8312742a22c24168b1f482aea9980ecfaaef05eb"
+      "pin": "b316e472d3de5bb0e54fe3991be68dc85e33ef38"
     },
     {
       "name": "github-release",
