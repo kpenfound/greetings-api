@@ -11,6 +11,7 @@ import (
 type Checkable interface {
 	dagger.DaggerObject
 	CheckDirectory(ctx context.Context, source *dagger.Directory) (string, error)
+	FormatDirectory(source *dagger.Directory) *dagger.Directory
 }
 
 // Place to do work and check it
@@ -52,7 +53,10 @@ func (w *Workspace) Write(
 	// Contents to write to the file
 	contents string,
 ) *Workspace {
+	// Write new file
 	w.Work = w.Work.WithNewFile(path, contents)
+	// Apply formatting
+	w.Work = w.Checker.FormatDirectory(w.Work)
 	return w
 }
 

@@ -21,7 +21,7 @@ func New(source *dagger.Directory) *Backend {
 func (b *Backend) UnitTest(ctx context.Context) (string, error) {
 	return dag.
 		Golang().
-		WithProject(b.Source).
+		WithSource(b.Source).
 		Test(ctx)
 }
 
@@ -29,8 +29,17 @@ func (b *Backend) UnitTest(ctx context.Context) (string, error) {
 func (b *Backend) Lint(ctx context.Context) (string, error) {
 	return dag.
 		Golang().
-		WithProject(b.Source).
+		WithSource(b.Source).
 		GolangciLint(ctx)
+}
+
+// Formatter
+func (b *Backend) Format() *dagger.Directory {
+	return dag.
+		Golang().
+		WithSource(b.Source).
+		Fmt().
+		GolangciLintFix()
 }
 
 // Checker
@@ -56,7 +65,7 @@ func (b *Backend) Build(
 	}
 	return dag.
 		Golang().
-		WithProject(b.Source).
+		WithSource(b.Source).
 		Build([]string{}, dagger.GolangBuildOpts{Arch: arch})
 }
 
@@ -91,8 +100,20 @@ func (b *Backend) Serve() *dagger.Service {
 	return b.Container(runtime.GOARCH).AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
-// Checker
-func (b *Backend) CheckDirectory(ctx context.Context, source *dagger.Directory) (string, error) {
+// Stateless checker
+func (b *Backend) CheckDirectory(
+	ctx context.Context,
+	// Directory to run checks on
+	source *dagger.Directory) (string, error) {
 	b.Source = source
 	return b.Check(ctx)
+}
+
+// Stateless formatter
+func (b *Backend) FormatDirectory(
+	// Directory to format
+	source *dagger.Directory,
+) *dagger.Directory {
+	b.Source = source
+	return b.Format()
 }

@@ -69,10 +69,11 @@ func (g *Greetings) DebugBrokenTestsPr(
 	// +default = "gemini-2.0-flash"
 	model string,
 ) error {
+	gh := dag.GithubIssue(dagger.GithubIssueOpts{Token: githubToken})
 	// Determine PR head
 	gitRef := dag.Git(g.Repo).Commit(commit)
 	gitSource := gitRef.Tree()
-	pr, err := dag.GithubIssue(githubToken).GetPrForCommit(ctx, g.Repo, commit)
+	pr, err := gh.GetPrForCommit(ctx, g.Repo, commit)
 	if err != nil {
 		return err
 	}
@@ -95,7 +96,7 @@ func (g *Greetings) DebugBrokenTestsPr(
 	// For each suggestion, comment on PR
 	for _, suggestion := range codeSuggestions {
 		markupSuggestion := "```suggestion\n" + strings.Join(suggestion.Suggestion, "\n") + "\n```"
-		err := dag.GithubIssue(githubToken).WritePullRequestCodeComment(
+		err := gh.WritePullRequestCodeComment(
 			ctx,
 			g.Repo,
 			pr,
