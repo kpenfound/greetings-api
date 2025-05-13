@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/kpenfound/greetings-api/.dagger/internal/dagger"
 )
 
 // Complete an assignment for the greetings project and get back the completed work
 func (g *Greetings) Develop(
+	ctx context.Context,
 	// The assignment to complete
 	assignment string,
 	// The model to use to complete the assignment
@@ -28,10 +28,15 @@ func (g *Greetings) Develop(
 		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
 		WithStringInput("assignment", assignment, "the assignment to complete").
 		WithWorkspaceOutput("fixed", "workspace with developed solution")
-	work := dag.LLM(dagger.LLMOpts{Model: model}).
+	agent := dag.LLM(dagger.LLMOpts{Model: model}).
 		WithEnv(env).
 		WithPromptFile(prompt).
-		Env().
+		Loop()
+	totalTokens, err := agent.TokenUsage().TotalTokens(ctx)
+	if err == nil {
+		fmt.Printf("Total token usage: %d\n", totalTokens)
+	}
+	work := agent.Env().
 		Output("fixed").
 		AsWorkspace()
 
@@ -48,22 +53,18 @@ func (g *Greetings) DevelopPullRequest(
 	// +optional
 	// +default = "gemini-2.0-flash"
 	model string,
-) error {
+) (string, error) {
+	gh := dag.GithubIssue(dagger.GithubIssueOpts{Token: githubToken})
 	// Get the issue body
-	issue := dag.GithubIssue(githubToken).Read(g.Repo, issueId)
+	issue := gh.Read(g.Repo, issueId)
 
 	assignment, err := issue.Body(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Pass the assignment to the develop function
-	work := g.Develop(assignment, model)
-
-	// Create a branch with the completed work
-	branch := fmt.Sprintf("bot_solves_%d_%d", issueId, time.Now().Unix())
-	featureBranch := dag.FeatureBranch(githubToken, g.Repo, branch).
-		WithChanges(work)
+	work := g.Develop(ctx, assignment, model)
 
 	// Create a pull request with the feature branch
 	body := fmt.Sprintf("%s\n\nCompleted by Agent\nFixes https://%s/issues/%d\n", assignment, g.Repo, issueId)
@@ -71,9 +72,10 @@ func (g *Greetings) DevelopPullRequest(
 		WithPrompt("Write an appropriate pull request title for the following assignment. It should be under 150 characters. Just tell me the title and nothing else.\nAssignment:\n" + assignment).
 		LastReply(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to come up with pull request title: %v", err)
+		return "", fmt.Errorf("failed to come up with pull request title: %v", err)
 	}
 
-	_, err = featureBranch.PullRequest(ctx, title, body)
-	return err
+	// Open the pull request
+	pr := gh.CreatePullRequest(g.Repo, title, body, work)
+	return pr.URL(ctx)
 }
