@@ -16,7 +16,28 @@ export class Frontend {
 
   @func()
   async lint(): Promise<string> {
-    return "PASS";
+    return dag
+      .container()
+      .from("node")
+      .withMountedCache("/root/.npm", dag.cacheVolume("npm-cache"))
+      .withWorkdir("/app")
+      .withDirectory("/app", this.source)
+      .withExec(["npm", "ci"])
+      .withExec(["npm", "run", "lint"])
+      .stdout();
+  }
+
+  @func()
+  format(): Directory {
+    return dag
+      .container()
+      .from("node")
+      .withMountedCache("/root/.npm", dag.cacheVolume("npm-cache"))
+      .withWorkdir("/app")
+      .withDirectory("/app", this.source)
+      .withExec(["npm", "ci"])
+      .withExec(["npm", "run", "lint"])
+      .directory("/app");
   }
 
   @func()
@@ -60,5 +81,11 @@ export class Frontend {
   async checkDirectory(source: Directory): Promise<string> {
     this.source = source;
     return await this.check();
+  }
+
+  @func()
+  formatDirectory(source: Directory): Directory {
+    this.source = source;
+    return this.format();
   }
 }

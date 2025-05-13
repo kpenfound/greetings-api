@@ -21,6 +21,7 @@ func (g *Greetings) Develop(
 
 	ws := dag.Workspace(
 		g.Source,
+		// FIXME: no great way to determine which checker without submodule or self calls
 		g.Backend.AsWorkspaceCheckable(),
 	)
 
