@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -48,4 +50,60 @@ func TestFormatResponse(t *testing.T) {
 
 	formatted := FormatResponse(g)
 	assert.Equal(t, "{\"greeting\":\"Hello, World!\"}", formatted)
+}
+
+func TestGreetingsEndpoint(t *testing.T) {
+	// Create a request to pass to our handler.
+	req, err := http.NewRequest("GET", "/greetings", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter)
+	// to record the response.
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var greetings []*Greeting
+		err := json.Unmarshal(greetingsJson, &greetings)
+		if err != nil {
+			t.Errorf("error loading greetings: %v", err)
+			return
+		}
+		jsonGreetings, err := json.Marshal(greetings)
+		if err != nil {
+			t.Errorf("Error marshalling greetings: %v", err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, err = w.Write(jsonGreetings)
+		if err != nil {
+			t.Errorf("Error writing response: %v", err)
+			return
+		}
+	})
+
+	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
+	// directly and pass in our Request and ResponseRecorder.
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+
+	// Check the response body is what we expect.
+
+	var expectedGreetings []*Greeting
+	err = json.Unmarshal(greetingsJson, &expectedGreetings)
+	if err != nil {
+		t.Fatalf("Error unmarshalling expected greetings: %v", err)
+	}
+
+	marshaledExpectedGreetings, err := json.Marshal(expectedGreetings)
+	if err != nil {
+		t.Fatalf("Error marshalling expected greetings: %v", err)
+	}
+
+	assert.Equal(t, string(marshaledExpectedGreetings), rr.Body.String())
 }
