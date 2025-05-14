@@ -79,14 +79,14 @@ func (g *Greetings) PullRequestReview(
 		return err
 	}
 
-	baseRef, err := issue.BaseRef(ctx)
+	baseSha, err := issue.BaseSha(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Get the source trees
 	head := dag.Git(g.Repo).Ref(headRef).Tree()
-	base := dag.Git(g.Repo).Ref(baseRef).Tree()
+	base := dag.Git(g.Repo).Commit(baseSha).Tree()
 
 	// Run the agent
 	review, err := g.DevelopReview(ctx, base, head, description, model)
