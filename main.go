@@ -57,6 +57,20 @@ func main() {
 		}
 	}).Methods("GET")
 
+	router.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("got /all request from %s\n", r.RemoteAddr)
+		w.Header().Set("Content-Type", "application/json")
+		jsonGreetings, err := json.Marshal(greetings)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_, err = w.Write(jsonGreetings)
+		if err != nil {
+			panic(err)
+		}
+	}).Methods("GET")
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://greetings.kylepenfound.com",
