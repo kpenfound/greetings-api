@@ -45,6 +45,7 @@ func (g *Greetings) Develop(
 	return work.Work()
 }
 
+// Develop changes based on a Github issue and open a pull request
 func (g *Greetings) DevelopPullRequest(
 	ctx context.Context,
 	// Github token with permissions to create a pull request
@@ -83,6 +84,61 @@ func (g *Greetings) DevelopPullRequest(
 	return pr.URL(ctx)
 }
 
+// Agent to develop changes based on feedback on changes made in a Directory
+func (g *Greetings) DevelopFeedback(
+	ctx context.Context,
+	// Base directory to compare without the developed changes
+	base *dagger.Directory,
+	// Source directory containing the developed changes
+	source *dagger.Directory,
+	// Original assignment being developed
+	assignment string,
+	// Feedback given to the changes done so far
+	feedback string,
+	// The model to use to complete the assignment
+	// +optional
+	// +default = "gemini-2.0-flash"
+	model string,
+) (*dagger.Directory, error) {
+	// Get the diff between the trees
+	diff, err := dag.Container().
+		From("alpine/git").
+		WithWorkdir("/app").
+		WithDirectory("/app", base).
+		WithDirectory("/app", source.WithoutDirectory(".git")).
+		WithExec([]string{"git", "diff"}).
+		Stdout(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Run the agent
+	prompt := dag.CurrentModule().Source().File("prompts/feedback.md")
+
+	ws := dag.Workspace(
+		source,
+		// FIXME: no great way to determine which checker without submodule or self calls
+		g.Backend.AsWorkspaceCheckable(),
+	)
+
+	env := dag.Env().
+		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+		WithStringInput("description", assignment, "the description of the pull request").
+		WithStringInput("feedback", feedback, "the feedback on the pull request").
+		WithStringInput("diff", diff, "the git diff of the pull request code changes so far").
+		WithWorkspaceOutput("completed", "workspace result with the feedback implemented")
+	agent := dag.LLM(dagger.LLMOpts{Model: model}).
+		WithEnv(env).
+		WithPromptFile(prompt).
+		Loop()
+	completed := agent.Env().
+		Output("completed").
+		AsWorkspace().
+		Work()
+	return completed, nil
+}
+
+// Receive feedback on an open pull request via slash command
 func (g *Greetings) PullRequestFeedback(
 	ctx context.Context,
 	// Github token with permissions to create a pull request
@@ -97,7 +153,7 @@ func (g *Greetings) PullRequestFeedback(
 	model string,
 ) error {
 	// Strip out slash command
-	feedback = strings.ReplaceAll(feedback, "/agent", "")
+	feedback = strings.ReplaceAll(feedback, "/agent ", "")
 
 	// Get the pull request information
 	gh := dag.GithubIssue(dagger.GithubIssueOpts{Token: githubToken})
@@ -121,42 +177,11 @@ func (g *Greetings) PullRequestFeedback(
 	head := dag.Git(g.Repo).Ref(headRef).Tree()
 	base := dag.Git(g.Repo).Ref(baseRef).Tree()
 
-	// Get the diff between the trees
-	diff, err := dag.Container().
-		From("alpine/git").
-		WithWorkdir("/app").
-		WithDirectory("/app", base).
-		WithDirectory("/app", head.WithoutDirectory(".git")).
-		WithExec([]string{"git", "diff"}).
-		Stdout(ctx)
+	// Run the agent
+	completed, err := g.DevelopFeedback(ctx, base, head, description, feedback, model)
 	if err != nil {
 		return err
 	}
-
-	// Run the agent
-	prompt := dag.CurrentModule().Source().File("prompts/feedback.md")
-
-	ws := dag.Workspace(
-		head,
-		// FIXME: no great way to determine which checker without submodule or self calls
-		g.Backend.AsWorkspaceCheckable(),
-	)
-
-	env := dag.Env().
-		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
-		WithStringInput("description", description, "the description of the pull request").
-		WithStringInput("feedback", feedback, "the feedback on the pull request").
-		WithStringInput("diff", diff, "the git diff of the pull request code changes so far").
-		WithWorkspaceOutput("completed", "workspace result with the feedback implemented")
-	agent := dag.LLM(dagger.LLMOpts{Model: model}).
-		WithEnv(env).
-		WithPromptFile(prompt).
-		Loop()
-	completed := agent.Env().
-		Output("completed").
-		AsWorkspace().
-		Work()
-
 	// Push the changes
 	return gh.CreatePullRequestCommit(ctx, g.Repo, completed, headRef)
 }
