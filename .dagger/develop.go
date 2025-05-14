@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/kpenfound/greetings-api/.dagger/internal/dagger"
 )
@@ -28,7 +29,7 @@ func (g *Greetings) Develop(
 	env := dag.Env().
 		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
 		WithStringInput("assignment", assignment, "the assignment to complete").
-		WithWorkspaceOutput("fixed", "workspace with developed solution")
+		WithWorkspaceOutput("completed", "workspace with developed solution")
 	agent := dag.LLM(dagger.LLMOpts{Model: model}).
 		WithEnv(env).
 		WithPromptFile(prompt).
@@ -38,7 +39,7 @@ func (g *Greetings) Develop(
 		fmt.Printf("Total token usage: %d\n", totalTokens)
 	}
 	work := agent.Env().
-		Output("fixed").
+		Output("completed").
 		AsWorkspace()
 
 	return work.Work()
@@ -79,4 +80,82 @@ func (g *Greetings) DevelopPullRequest(
 	// Open the pull request
 	pr := gh.CreatePullRequest(g.Repo, title, body, work)
 	return pr.URL(ctx)
+}
+
+func (g *Greetings) PullRequestFeedback(
+	ctx context.Context,
+	// Github token with permissions to create a pull request
+	githubToken *dagger.Secret,
+	// The github issue to complete
+	issueId int,
+	// The feedback recieved on the pull request
+	feedback string,
+	// The model to use to complete the assignment
+	// +optional
+	// +default = "gemini-2.0-flash"
+	model string,
+) error {
+	// Strip out slash command
+	feedback = strings.ReplaceAll(feedback, "/agent", "")
+
+	// Get the pull request information
+	gh := dag.GithubIssue(dagger.GithubIssueOpts{Token: githubToken})
+	issue := gh.Read(g.Repo, issueId)
+	description, err := issue.Body(ctx)
+	if err != nil {
+		return err
+	}
+
+	headRef, err := issue.HeadRef(ctx)
+	if err != nil {
+		return err
+	}
+
+	baseRef, err := issue.BaseRef(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Get the source trees
+	head := dag.Git(g.Repo).Ref(headRef).Tree()
+	base := dag.Git(g.Repo).Ref(baseRef).Tree()
+
+	// Get the diff between the trees
+	diff, err := dag.Container().
+		From("alpine/git").
+		WithWorkdir("/app").
+		WithDirectory("/app", base).
+		WithDirectory("/app", head.WithoutDirectory(".git")).
+		WithExec([]string{"git", "diff"}).
+		Stdout(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Run the agent
+	prompt := dag.CurrentModule().Source().File("prompts/feedback.md")
+
+	ws := dag.Workspace(
+		head,
+		// FIXME: no great way to determine which checker without submodule or self calls
+		g.Backend.AsWorkspaceCheckable(),
+	)
+
+	env := dag.Env().
+		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+		WithStringInput("description", description, "the description of the pull request").
+		WithStringInput("feedback", feedback, "the feedback on the pull request").
+		WithStringInput("diff", diff, "the git diff of the pull request code changes so far").
+		WithWorkspaceOutput("completed", "workspace result with the feedback implemented")
+	agent := dag.LLM(dagger.LLMOpts{Model: model}).
+		WithEnv(env).
+		WithPromptFile(prompt).
+		Loop()
+	completed := agent.Env().
+		Output("completed").
+		AsWorkspace().
+		Work()
+
+	// Push the changes
+	return gh.CreatePullRequestCommit(ctx, g.Repo, completed, headRef)
 }
