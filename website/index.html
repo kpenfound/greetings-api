@@ -9,6 +9,13 @@
 <body class="bg-purple-900 text-white font-sans flex flex-col items-center justify-center min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-screen-md">
         <h1 class="text-3xl font-bold mb-4">Greetings Daggernauts</h1>
+
+        <div class="mb-4">
+            <label for="nameInput" class="block text-sm font-medium text-white">Your Name:</label>
+            <input type="text" id="nameInput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter your name">
+        </div>
+        <button id="personalizedGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded mt-4">Get Personalized Greeting</button>
+
         <div id="greetingDisplay" class="greeting bg-purple-700 rounded shadow p-4 min-h-20 flex items-center justify-center">
             Click the button to see a greeting!
         </div>
@@ -26,7 +33,20 @@
                 document.getElementById('greetingDisplay').textContent = 'Error fetching greeting';
             }        }
 
+        async function getPersonalizedGreeting() {
+            const name = document.getElementById('nameInput').value;
+            try {
+                const response = await fetch(`http://localhost:8080/hello?name=${name}`);
+                const data = await response.json();
+                document.getElementById('greetingDisplay').textContent = data.greeting;
+            } catch (error) {
+                console.error('Error fetching greeting:', error);
+                document.getElementById('greetingDisplay').textContent = 'Error fetching greeting';
+            }
+        }
+
         document.getElementById('randomGreetingButton').addEventListener('click', getRandomGreeting);
+        document.getElementById('personalizedGreetingButton').addEventListener('click', getPersonalizedGreeting);
     </script>
 </body>
 </html>
