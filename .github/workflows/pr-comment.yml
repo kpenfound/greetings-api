@@ -1,15 +1,15 @@
-name: PR Agent Task
+name: PR Slash Commands
 on:
   issue_comment:
     types: [created]
 jobs:
-  echo-hello:
+  comment-created:
     runs-on: ubuntu-latest
     if: github.event.issue.pull_request && contains(github.event.comment.body, '/agent')
     steps:
       - uses: actions/checkout@v4
       - uses: dagger/dagger-for-github@8.0.0
-      - name: Check
+      - name: PR Feedback
         run: dagger call pull-request-feedback --github-token GH_TOKEN --issue-id ${{ github.event.issue.number }} --feedback "${{ github.event.comment.body }}"
         env:
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
