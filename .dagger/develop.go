@@ -87,12 +87,12 @@ func (g *Greetings) DevelopPullRequest(
 // Agent to develop changes based on feedback on changes made in a Directory
 func (g *Greetings) DevelopFeedback(
 	ctx context.Context,
-	// Base directory to compare without the developed changes
-	base *dagger.Directory,
 	// Source directory containing the developed changes
 	source *dagger.Directory,
 	// Original assignment being developed
 	assignment string,
+	// Diff of the changes done so far
+	diff string,
 	// Feedback given to the changes done so far
 	feedback string,
 	// The model to use to complete the assignment
@@ -100,18 +100,6 @@ func (g *Greetings) DevelopFeedback(
 	// +default = "gemini-2.0-flash"
 	model string,
 ) (*dagger.Directory, error) {
-	// Get the diff between the trees
-	diff, err := dag.Container().
-		From("alpine/git").
-		WithWorkdir("/app").
-		WithDirectory("/app", base).
-		WithDirectory("/app", source.WithoutDirectory(".git")).
-		WithExec([]string{"git", "diff"}).
-		Stdout(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// Run the agent
 	prompt := dag.CurrentModule().Source().File("prompts/feedback.md")
 
@@ -168,17 +156,20 @@ func (g *Greetings) PullRequestFeedback(
 		return err
 	}
 
-	baseRef, err := issue.BaseRef(ctx)
+	diffURL, err := issue.DiffURL(ctx)
+	if err != nil {
+		return err
+	}
+	diff, err := dag.HTTP(diffURL).Contents(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Get the source trees
 	head := dag.Git(g.Repo).Ref(headRef).Tree()
-	base := dag.Git(g.Repo).Ref(baseRef).Tree()
 
 	// Run the agent
-	completed, err := g.DevelopFeedback(ctx, base, head, description, feedback, model)
+	completed, err := g.DevelopFeedback(ctx, head, description, diff, feedback, model)
 	if err != nil {
 		return err
 	}

@@ -9,29 +9,17 @@ import (
 // Agent to review changes made in a Directory
 func (g *Greetings) DevelopReview(
 	ctx context.Context,
-	// Base directory to compare without the developed changes
-	base *dagger.Directory,
 	// Source directory containing the developed changes
 	source *dagger.Directory,
 	// Original assignment being developed
 	assignment string,
+	// Git diff of the changes so far
+	diff string,
 	// The model to use to complete the assignment
 	// +optional
 	// +default = "gemini-2.0-flash"
 	model string,
 ) (string, error) {
-	// Get the diff between the trees
-	diff, err := dag.Container().
-		From("alpine/git").
-		WithWorkdir("/app").
-		WithDirectory("/app", base).
-		WithDirectory("/app", source.WithoutDirectory(".git")).
-		WithExec([]string{"git", "diff"}).
-		Stdout(ctx)
-	if err != nil {
-		return "", err
-	}
-
 	// Run the agent
 	prompt := dag.CurrentModule().Source().File("prompts/review.md")
 
@@ -79,17 +67,19 @@ func (g *Greetings) PullRequestReview(
 		return err
 	}
 
-	baseSha, err := issue.BaseSha(ctx)
+	diffURL, err := issue.DiffURL(ctx)
 	if err != nil {
 		return err
 	}
-
+	diff, err := dag.HTTP(diffURL).Contents(ctx)
+	if err != nil {
+		return err
+	}
 	// Get the source trees
 	head := dag.Git(g.Repo).Ref(headRef).Tree()
-	base := dag.Git(g.Repo).Commit(baseSha).Tree()
 
 	// Run the agent
-	review, err := g.DevelopReview(ctx, base, head, description, model)
+	review, err := g.DevelopReview(ctx, head, description, diff, model)
 	if err != nil {
 		return err
 	}
