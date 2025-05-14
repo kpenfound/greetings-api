@@ -76,6 +76,7 @@ func (g *Greetings) DevelopPullRequest(
 	if err != nil {
 		return "", fmt.Errorf("failed to come up with pull request title: %v", err)
 	}
+	title = strings.TrimSpace(title)
 
 	// Open the pull request
 	pr := gh.CreatePullRequest(g.Repo, title, body, work)
