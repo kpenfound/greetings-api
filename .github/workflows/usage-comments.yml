@@ -1,4 +1,4 @@
-name: PR Comment
+name: PR Usage Comment
 on:
   pull_request:
     types: [opened]

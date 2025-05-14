@@ -1,16 +1,16 @@
-name: ci
+name: PR Agent Task
 on:
-  push:
-    branches: ["**", "!main"]
+  issue_comment:
+    types: [created]
 jobs:
-  ci:
-    name: ci
+  echo-hello:
     runs-on: ubuntu-latest
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/agent')
     steps:
       - uses: actions/checkout@v4
       - uses: dagger/dagger-for-github@8.0.0
       - name: Check
-        run: dagger call check --github-token GH_TOKEN --model gemini-2.0-flash --commit $GITHUB_SHA
+        run: dagger call pull-request-feedback --github-token GH_TOKEN --issue-id ${{ github.event.issue.number }} --feedback "${{ github.event.comment.body }}"
         env:
           DAGGER_CLOUD_TOKEN: ${{ secrets.DAGGER_CLOUD_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
