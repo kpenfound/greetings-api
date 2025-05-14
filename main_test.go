@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"gotest.tools/v3/assert"
 )
 
@@ -14,7 +16,7 @@ func TestSelectGreeting(t *testing.T) {
 	err := json.Unmarshal(greetingsJson, &greetings)
 	if err != nil {
 		fmt.Printf("error loading greetings: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	english := &Greeting{
@@ -48,4 +50,47 @@ func TestFormatResponse(t *testing.T) {
 
 	formatted := FormatResponse(g)
 	assert.Equal(t, "{\"greeting\":\"Hello, World!\"}", formatted)
+}
+
+func TestAllEndpoint(t *testing.T) {
+	var greetings []*Greeting
+	err := json.Unmarshal(greetingsJson, &greetings)
+	if err != nil {
+		fmt.Printf("error loading greetings: %s\n", err)
+		panic(err)
+	}
+
+	router := mux.NewRouter()
+	router.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jsonGreetings, err := json.Marshal(greetings)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_, err = w.Write(jsonGreetings)
+		if err != nil {
+			panic(err)
+		}
+	}).Methods("GET")
+
+	rec := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/all", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status OK; got %v", rec.Code)
+	}
+
+	var actualGreetings []*Greeting
+	err = json.Unmarshal(rec.Body.Bytes(), &actualGreetings)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.DeepEqual(t, greetings, actualGreetings)
 }
