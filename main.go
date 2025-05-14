@@ -57,6 +57,29 @@ func main() {
 		}
 	}).Methods("GET")
 
+	router.HandleFunc("/greetings", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var newGreeting Greeting
+		err := json.NewDecoder(r.Body).Decode(&newGreeting)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		greetings = append(greetings, &newGreeting)
+
+		w.WriteHeader(http.StatusCreated)
+		_, err = fmt.Fprintf(w, "Greeting added successfully")
+		if err != nil {
+			http.Error(w, "Failed to write response", http.StatusInternalServerError)
+			return
+		}
+	}).Methods("POST")
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://greetings.kylepenfound.com",
