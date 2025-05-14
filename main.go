@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -19,6 +20,30 @@ var greetingsJson []byte
 type Greeting struct {
 	Language string `json:"language"`
 	Greeting string `json:"greeting"`
+}
+
+func AuthMiddleware(apiKey string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		authHeaderParts := strings.Split(authHeader, " ")
+		if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		token := authHeaderParts[1]
+		if token != apiKey {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	}
 }
 
 func main() {
@@ -57,7 +82,7 @@ func main() {
 		}
 	}).Methods("GET")
 
-	router.HandleFunc("/greetings", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/greetings", AuthMiddleware(os.Getenv("ADMIN_API_KEY"), func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -78,7 +103,7 @@ func main() {
 			http.Error(w, "Failed to write response", http.StatusInternalServerError)
 			return
 		}
-	}).Methods("POST")
+	})).Methods("POST")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
