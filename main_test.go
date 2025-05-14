@@ -54,7 +54,7 @@ func TestFormatResponse(t *testing.T) {
 
 func TestGreetingsEndpoint(t *testing.T) {
 	// Create a request to pass to our handler.
-	req, err := http.NewRequest("GET", "/greetings", nil)
+	req, err := http.NewRequest("GET", "/all", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

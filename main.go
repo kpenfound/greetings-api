@@ -57,8 +57,8 @@ func main() {
 		}
 	}).Methods("GET")
 
-	router.HandleFunc("/greetings", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("got /greetings request from %s\n", r.RemoteAddr)
+	router.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("got /all request from %s\n", r.RemoteAddr)
 		w.Header().Set("Content-Type", "application/json")
 		jsonGreetings, err := json.Marshal(greetings)
 		if err != nil {
