@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -17,7 +16,7 @@ func TestSelectGreeting(t *testing.T) {
 	err := json.Unmarshal(greetingsJson, &greetings)
 	if err != nil {
 		fmt.Printf("error loading greetings: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	english := &Greeting{
@@ -58,7 +57,7 @@ func TestAllEndpoint(t *testing.T) {
 	err := json.Unmarshal(greetingsJson, &greetings)
 	if err != nil {
 		fmt.Printf("error loading greetings: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 
 	router := mux.NewRouter()

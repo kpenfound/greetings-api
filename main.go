@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -26,7 +25,7 @@ func main() {
 	err := json.Unmarshal(greetingsJson, &greetings)
 	if err != nil {
 		fmt.Printf("error loading greetings: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	router := mux.NewRouter()
 
@@ -84,7 +83,7 @@ func main() {
 		fmt.Printf("server closed\n")
 	} else if err != nil {
 		fmt.Printf("error starting server: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 }
 
