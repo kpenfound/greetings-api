@@ -16,7 +16,7 @@
     {
       "name": "github-issue",
       "source": "github.com/kpenfound/dag/github-issue",
-      "pin": "1bcb65d1f1b234021bcaa9c740692b6e00ae75ac"
+      "pin": "0d795ef58fa1f6fd544d6d497f22bc35d4f88e35"
     },
     {
       "name": "github-release",
