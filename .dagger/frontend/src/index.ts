@@ -88,4 +88,16 @@ export class Frontend {
     this.source = source;
     return this.format();
   }
+
+  @func()
+  formatFile(source: Directory, path: string): Directory {
+    return dag
+      .container()
+      .from("node:23")
+      .withExec(["npm", "install", "--global", "prettier"])
+      .withWorkdir("/src")
+      .withDirectory("/src", source)
+      .withExec(["prettier", "--write", path])
+      .directory("/src");
+  }
 }
