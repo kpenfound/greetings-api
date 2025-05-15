@@ -95,5 +95,5 @@ func SelectGreeting(greetings []*Greeting, language string) (*Greeting, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("no greeting found for language '%s'", language)
+	return nil, fmt.Errorf("greeting not found for language: '%s'", language)
 }
