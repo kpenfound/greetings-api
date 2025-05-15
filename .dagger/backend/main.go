@@ -117,3 +117,21 @@ func (b *Backend) FormatDirectory(
 	b.Source = source
 	return b.Format()
 }
+
+// Stateless formatter
+func (b *Backend) FormatFile(
+	// Directory with go module
+	source *dagger.Directory,
+	// File path to format
+	path string,
+) *dagger.Directory {
+	return dag.
+		Container().
+		From("golang:1.24").
+		WithExec([]string{"go", "install", "golang.org/x/tools/gopls@latest"}).
+		WithWorkdir("/app").
+		WithDirectory("/app", source).
+		WithExec([]string{"gopls", "format", "-w", path}).
+		WithExec([]string{"gopls", "imports", "-w", path}).
+		Directory("/app")
+}
