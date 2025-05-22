@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -26,7 +25,7 @@ func main() {
 	err := json.Unmarshal(greetingsJson, &greetings)
 	if err != nil {
 		fmt.Printf("error loading greetings: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 	router := mux.NewRouter()
 
@@ -57,6 +56,20 @@ func main() {
 		}
 	}).Methods("GET")
 
+	router.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("got /all request from %s\n", r.RemoteAddr)
+		w.Header().Set("Content-Type", "application/json")
+		jsonGreetings, err := json.Marshal(greetings)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		_, err = w.Write(jsonGreetings)
+		if err != nil {
+			panic(err)
+		}
+	}).Methods("GET")
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://greetings.kylepenfound.com",
@@ -70,7 +83,7 @@ func main() {
 		fmt.Printf("server closed\n")
 	} else if err != nil {
 		fmt.Printf("error starting server: %s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 }
 
