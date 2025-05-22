@@ -57,6 +57,20 @@ func main() {
 		}
 	}).Methods("GET")
 
+	router.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
+		name := r.URL.Query().Get("name")
+		fmt.Printf("got /hello request from %s with name %s\n", r.RemoteAddr, name)
+		w.Header().Set("Content-Type", "application/json")
+		greeting, err := SelectGreeting(greetings, "random")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		_, err = w.Write([]byte(FormatPersonalizedResponse(greeting, name)))
+		if err != nil {
+			panic(err)
+		}
+	}).Methods("GET")
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://greetings.kylepenfound.com",
@@ -76,6 +90,10 @@ func main() {
 
 func FormatResponse(greeting *Greeting) string {
 	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting.Greeting)
+}
+
+func FormatPersonalizedResponse(greeting *Greeting, name string) string {
+	return fmt.Sprintf("{\"greeting\":\"%s, %s\"}", greeting.Greeting, name)
 }
 
 func SelectGreeting(greetings []*Greeting, language string) (*Greeting, error) {
