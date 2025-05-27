@@ -30,11 +30,11 @@ To get a useful agentic flow out of this function, there's another function call
 
 The only dependency to run this agent is Dagger. Here are the [installation instructions](https://docs.dagger.io/ai-agents#initial-setup).
 
-$ Fork or clone this repository and checkout the broken-tests branch:
+$ Fork or clone this repository and checkout the tricky_broken_tests branch:
 ```
 git clone https://github.com/kpenfound/greetings-api
 cd greetings-api
-git checkout broken-tests
+git checkout tricky_broken_tests
 ```
 
 $ Get in a Dagger shell:
