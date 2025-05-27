@@ -38,11 +38,11 @@ func New(
 	app string,
 ) *Greetings {
 	g := &Greetings{
-		Source:   source,
-		Repo:     repo,
-		Image:    image,
-		App:      app,
-		Backend:  dag.Backend(source.WithoutDirectory("website")),
+		Source:  source,
+		Repo:    repo,
+		Image:   image,
+		App:     app,
+		Backend: dag.Backend(source.WithoutDirectory("website")),
 	}
 	g.Frontend = dag.Frontend(source.Directory("website"), g.Backend.Serve())
 	return g
@@ -57,27 +57,16 @@ func (g *Greetings) Check(
 	// git commit in github
 	// +optional
 	commit string,
-	// The model to use to debug debug tests
-	// +optional
-	model string,
 ) (string, error) {
 	// Lint
 	lintOut, err := g.Lint(ctx)
 	if err != nil {
-		if githubToken != nil {
-			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
-			return "", fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
-		}
 		return "", err
 	}
 
 	// Then Test
 	testOut, err := g.Test(ctx)
 	if err != nil {
-		if githubToken != nil {
-			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
-			return "", fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
-		}
 		return "", err
 	}
 
