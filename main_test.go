@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -48,4 +50,50 @@ func TestFormatResponse(t *testing.T) {
 
 	formatted := FormatResponse(g)
 	assert.Equal(t, "{\"greeting\":\"Hello, World!\"}", formatted)
+}
+
+func TestRootHandler(t *testing.T) {
+	req, err := http.NewRequest("GET", "/", nil)
+	assert.NilError(t, err)
+
+	rr := httptest.NewRecorder()
+
+	var greetings []*Greeting
+	err = json.Unmarshal(greetingsJson, &greetings)
+	assert.NilError(t, err)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		greeting, err := SelectGreeting(greetings, "random")
+		assert.NilError(t, err)
+		_, err = w.Write([]byte(FormatResponse(greeting)))
+		assert.NilError(t, err)
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusOK)
+}
+
+func TestLanguageHandler(t *testing.T) {
+	req, err := http.NewRequest("GET", "/english", nil)
+	assert.NilError(t, err)
+
+	rr := httptest.NewRecorder()
+
+	var greetings []*Greeting
+	err = json.Unmarshal(greetingsJson, &greetings)
+	assert.NilError(t, err)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		language := "english"
+		greeting, err := SelectGreeting(greetings, language)
+		assert.NilError(t, err)
+		_, err = w.Write([]byte(FormatResponse(greeting)))
+		assert.NilError(t, err)
+	})
+
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, rr.Code, http.StatusOK)
+	assert.Equal(t, rr.Body.String(), "{\"greeting\":\"Hello, World!\"}")
 }
