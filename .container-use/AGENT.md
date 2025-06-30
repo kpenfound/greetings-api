@@ -1,1 +1,1 @@
-No instructions found. Please look around the filesystem and update me
+This is a Go backend API for greetings. The main.go file contains the HTTP server with endpoints for greeting selection. Current test coverage exists in main_test.go but needs improvement. Use 'go test -v' to run tests and 'go test -cover' to check coverage. The project has go.mod and go.sum files with dependencies already configured.

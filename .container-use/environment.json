@@ -1,4 +1,4 @@
 {
   "workdir": "/workdir",
-  "base_image": "ubuntu:24.04"
+  "base_image": "golang:1.21"
 }
