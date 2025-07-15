@@ -16,9 +16,17 @@ import (
 //go:embed greetings.json
 var greetingsJson []byte
 
+//go:embed farewells.json
+var farewellsJson []byte
+
 type Greeting struct {
 	Language string `json:"language"`
 	Greeting string `json:"greeting"`
+}
+
+type Farewell struct {
+	Language string `json:"language"`
+	Farewell string `json:"farewell"`
 }
 
 func main() {
@@ -28,6 +36,14 @@ func main() {
 		fmt.Printf("error loading greetings: %s\n", err)
 		os.Exit(1)
 	}
+
+	var farewells []*Farewell
+	err = json.Unmarshal(farewellsJson, &farewells)
+	if err != nil {
+		fmt.Printf("error loading farewells: %s\n", err)
+		os.Exit(1)
+	}
+
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +73,34 @@ func main() {
 		}
 	}).Methods("GET")
 
+	// Farewell endpoints
+	router.HandleFunc("/farewell", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("got /farewell request from %s\n", r.RemoteAddr)
+		w.Header().Set("Content-Type", "application/json")
+		farewell, err := SelectFarewell(farewells, "random")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		_, err = w.Write([]byte(FormatFarewellResponse(farewell)))
+		if err != nil {
+			panic(err)
+		}
+	}).Methods("GET")
+
+	router.HandleFunc("/farewell/{language}", func(w http.ResponseWriter, r *http.Request) {
+		language := mux.Vars(r)["language"]
+		fmt.Printf("got /farewell/{language} request from %s\n", r.RemoteAddr)
+		w.Header().Set("Content-Type", "application/json")
+		farewell, err := SelectFarewell(farewells, language)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		_, err = w.Write([]byte(FormatFarewellResponse(farewell)))
+		if err != nil {
+			panic(err)
+		}
+	}).Methods("GET")
+
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://greetings.kylepenfound.com",
@@ -78,6 +122,10 @@ func FormatResponse(greeting *Greeting) string {
 	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting.Greeting)
 }
 
+func FormatFarewellResponse(farewell *Farewell) string {
+	return fmt.Sprintf("{\"farewell\":\"%s\"}", farewell.Farewell)
+}
+
 func SelectGreeting(greetings []*Greeting, language string) (*Greeting, error) {
 	if len(greetings) == 0 {
 		return nil, errors.New("no greetings available")
@@ -96,4 +144,24 @@ func SelectGreeting(greetings []*Greeting, language string) (*Greeting, error) {
 	}
 
 	return nil, fmt.Errorf("no greeting found for language '%s'", language)
+}
+
+func SelectFarewell(farewells []*Farewell, language string) (*Farewell, error) {
+	if len(farewells) == 0 {
+		return nil, errors.New("no farewells available")
+	}
+
+	if language == "random" {
+		// Get random item from farewells slice
+		randomIndex := rand.Intn(len(farewells))
+		return farewells[randomIndex], nil
+	}
+
+	for _, farewell := range farewells {
+		if farewell.Language == language {
+			return farewell, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no farewell found for language '%s'", language)
 }
