@@ -5,27 +5,190 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Greetings App</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body class="bg-purple-900 text-white font-sans flex flex-col items-center justify-center min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-screen-md">
-        <h1 class="text-3xl font-bold mb-4">Greetings Daggernauts</h1>
-        <div id="greetingDisplay" class="greeting bg-purple-700 rounded shadow p-4 min-h-20 flex items-center justify-center">
-            Click the button to see a greeting!
+    <div class="container mx-auto px-4 py-8 max-w-screen-lg">
+        <h1 class="text-3xl font-bold mb-4 text-center">Greetings Daggernauts</h1>
+        
+        <div class="flex flex-col lg:flex-row gap-8 items-center">
+            <!-- Greeting Display -->
+            <div class="flex-1 min-w-0">
+                <div id="greetingDisplay" class="greeting bg-purple-700 rounded shadow p-4 min-h-20 flex items-center justify-center text-center">
+                    Click the button to see a greeting!
+                </div>
+                <button id="randomGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded mt-4 w-full">
+                    👋 Get Random Greeting
+                </button>
+            </div>
+            
+            <!-- 3D Globe -->
+            <div class="flex-1 min-w-0">
+                <div id="globeContainer" class="w-full h-96 bg-purple-800 rounded shadow overflow-hidden">
+                    <div id="globeCanvas" class="w-full h-full"></div>
+                </div>
+                <div id="countryDisplay" class="text-center mt-2 text-sm opacity-75">
+                    Country will appear here
+                </div>
+            </div>
         </div>
-        <button id="randomGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded mt-4">👋</button>
     </div>
 
     <script>
+        // Country coordinates and names mapping
+        const countryData = {
+            'US': { name: 'United States', lat: 39.8283, lng: -98.5795 },
+            'GB': { name: 'United Kingdom', lat: 55.3781, lng: -3.4360 },
+            'FR': { name: 'France', lat: 46.6034, lng: 1.8883 },
+            'IT': { name: 'Italy', lat: 41.8719, lng: 12.5674 },
+            'ES': { name: 'Spain', lat: 40.4637, lng: -3.7492 },
+            'DE': { name: 'Germany', lat: 51.1657, lng: 10.4515 },
+            'CN': { name: 'China', lat: 35.8617, lng: 104.1954 },
+            'IN': { name: 'India', lat: 20.5937, lng: 78.9629 },
+            'SA': { name: 'Saudi Arabia', lat: 23.8859, lng: 45.0792 },
+            'BD': { name: 'Bangladesh', lat: 23.6850, lng: 90.3563 },
+            'RU': { name: 'Russia', lat: 61.5240, lng: 105.3188 },
+            'PT': { name: 'Portugal', lat: 39.3999, lng: -8.2245 },
+            'PK': { name: 'Pakistan', lat: 30.3753, lng: 69.3451 },
+            'ID': { name: 'Indonesia', lat: -0.7893, lng: 113.9213 },
+            'JP': { name: 'Japan', lat: 36.2048, lng: 138.2529 }
+        };
+
+        // Globe setup
+        let scene, camera, renderer, globe, marker;
+        let controls;
+        
+        function initGlobe() {
+            const container = document.getElementById('globeCanvas');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Scene setup
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+            
+            // Globe geometry
+            const geometry = new THREE.SphereGeometry(5, 32, 32);
+            
+            // Load earth texture or create simple material
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x4a90e2,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            globe = new THREE.Mesh(geometry, material);
+            scene.add(globe);
+            
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            // Add directional light
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enableZoom = true;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+            
+            // Camera position
+            camera.position.z = 15;
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
+                camera.aspect = newWidth / newHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(newWidth, newHeight);
+            });
+        }
+        
+        function addCountryMarker(locale) {
+            // Remove existing marker
+            if (marker) {
+                scene.remove(marker);
+            }
+            
+            const country = countryData[locale];
+            if (!country) return;
+            
+            // Convert lat/lng to 3D coordinates
+            const phi = (90 - country.lat) * (Math.PI / 180);
+            const theta = (country.lng + 180) * (Math.PI / 180);
+            
+            const radius = 5.1; // Slightly larger than globe radius
+            const x = -(radius * Math.sin(phi) * Math.cos(theta));
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            
+            // Create marker
+            const markerGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+            const markerMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xff6b6b,
+                emissive: 0xff6b6b,
+                emissiveIntensity: 0.3
+            });
+            
+            marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            marker.position.set(x, y, z);
+            scene.add(marker);
+            
+            // Update country display
+            document.getElementById('countryDisplay').textContent = `🌍 ${country.name}`;
+            
+            // Animate camera to focus on the marker
+            const targetPosition = {
+                x: x * 2,
+                y: y * 2,
+                z: z * 2
+            };
+            
+            // Smoothly move camera towards the marker
+            controls.target.set(x, y, z);
+        }
+        
         async function getRandomGreeting() {
             try {
                 const response = await fetch('http://localhost:8080/random');
                 const data = await response.json();
                 document.getElementById('greetingDisplay').textContent = data.greeting;
+                
+                // Add marker for the locale
+                if (data.locale) {
+                    addCountryMarker(data.locale);
+                }
             } catch (error) {
                 console.error('Error fetching greeting:', error);
                 document.getElementById('greetingDisplay').textContent = 'Error fetching greeting';
-            }        }
-
+            }
+        }
+        
+        // Initialize globe when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initGlobe();
+        });
+        
         document.getElementById('randomGreetingButton').addEventListener('click', getRandomGreeting);
     </script>
 </body>

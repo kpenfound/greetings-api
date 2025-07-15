@@ -19,6 +19,7 @@ var greetingsJson []byte
 type Greeting struct {
 	Language string `json:"language"`
 	Greeting string `json:"greeting"`
+	Locale   string `json:"locale"`
 }
 
 func main() {
@@ -36,6 +37,7 @@ func main() {
 		greeting, err := SelectGreeting(greetings, "random")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		_, err = w.Write([]byte(FormatResponse(greeting)))
 		if err != nil {
@@ -50,6 +52,7 @@ func main() {
 		greeting, err := SelectGreeting(greetings, language)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		_, err = w.Write([]byte(FormatResponse(greeting)))
 		if err != nil {
@@ -75,7 +78,12 @@ func main() {
 }
 
 func FormatResponse(greeting *Greeting) string {
-	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting.Greeting)
+	response := map[string]interface{}{
+		"greeting": greeting.Greeting,
+		"locale":   greeting.Locale,
+	}
+	jsonData, _ := json.Marshal(response)
+	return string(jsonData)
 }
 
 func SelectGreeting(greetings []*Greeting, language string) (*Greeting, error) {
