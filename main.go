@@ -60,22 +60,7 @@ func main() {
 		}
 	}).Methods("GET")
 
-	router.HandleFunc("/{language}", func(w http.ResponseWriter, r *http.Request) {
-		language := mux.Vars(r)["language"]
-		fmt.Printf("got /{language} request from %s\n", r.RemoteAddr)
-		w.Header().Set("Content-Type", "application/json")
-		greeting, err := SelectGreeting(greetings, language)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		_, err = w.Write([]byte(FormatGreetingResponse(greeting)))
-		if err != nil {
-			panic(err)
-		}
-	}).Methods("GET")
-
-	// New farewell endpoints
+	// Farewell endpoints - must be defined before /{language} to avoid conflicts
 	router.HandleFunc("/farewell", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("got /farewell request from %s\n", r.RemoteAddr)
 		w.Header().Set("Content-Type", "application/json")
@@ -100,6 +85,22 @@ func main() {
 			return
 		}
 		_, err = w.Write([]byte(FormatFarewellResponse(farewell)))
+		if err != nil {
+			panic(err)
+		}
+	}).Methods("GET")
+
+	// Language-specific greeting endpoint - must be last to avoid conflicts
+	router.HandleFunc("/{language}", func(w http.ResponseWriter, r *http.Request) {
+		language := mux.Vars(r)["language"]
+		fmt.Printf("got /{language} request from %s\n", r.RemoteAddr)
+		w.Header().Set("Content-Type", "application/json")
+		greeting, err := SelectGreeting(greetings, language)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		_, err = w.Write([]byte(FormatGreetingResponse(greeting)))
 		if err != nil {
 			panic(err)
 		}
