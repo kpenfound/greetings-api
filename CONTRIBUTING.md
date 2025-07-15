@@ -64,8 +64,9 @@ greetings-api/
 
 - **Language**: Go
 - **Framework**: Gorilla Mux for routing, CORS middleware
-- **Structure**: Simple REST API with two endpoints:
+- **Structure**: Simple REST API with endpoints:
   - `GET /` - Returns a random greeting
+  - `GET /random` - Returns a random greeting (alternative endpoint)
   - `GET /{language}` - Returns a greeting in the specified language
 - **Data**: Greetings are stored in `greetings.json` and embedded in the binary
 - **Testing**: Uses `gotest.tools` for unit tests
@@ -76,6 +77,7 @@ greetings-api/
 - **Testing**: Cypress for end-to-end tests
 - **Linting**: ESLint with TypeScript support
 - **Build**: Managed through Dagger modules
+- **Visualization**: Uses Three.js for 3D globe rendering
 
 ### CI/CD Architecture
 
@@ -154,6 +156,27 @@ npm run lint
 - **TypeScript**: Follow the ESLint configuration in the project
 - **Commits**: Use clear, descriptive commit messages
 
+### API Development Guidelines
+
+- **Endpoint Consistency**: Maintain consistency with existing API endpoints
+- **Backward Compatibility**: Preserve existing endpoints when adding new ones
+- **Response Format**: When modifying API responses, update both Go structs and JSON formatting
+- **Error Handling**: Always include proper error handling and meaningful error messages
+
+### Frontend Development Guidelines
+
+- **Progressive Enhancement**: New UI components should be initially hidden and show after user interaction
+- **Error Handling**: Always include proper error handling for API calls
+- **Performance**: Consider performance implications when adding external libraries
+- **Accessibility**: Include accessibility features where appropriate
+- **Resource Management**: Clean up resources (like animation frames) when components are no longer needed
+
+### Data File Guidelines
+
+- **File Format**: Always include trailing newlines in JSON files
+- **Data Consistency**: When adding new fields, ensure they're reflected in both data files and Go structs
+- **Internationalization**: Use appropriate locale codes (ISO country codes) for international features
+
 ### Documentation
 
 - **Developer Docs**: Update CONTRIBUTING.md with any architectural changes
@@ -161,9 +184,12 @@ npm run lint
 
 ### Testing Requirements
 
-- All new Go code should include unit tests
-- Frontend changes should not break existing E2E tests
-- Run the full test suite before submitting PRs: `dagger call check`
+- **Unit Tests**: All new Go code should include unit tests
+- **API Tests**: Test both successful API responses and error cases
+- **Frontend Tests**: Use Cypress intercepts for predictable testing of API-dependent features
+- **Comprehensive Coverage**: Test UI component visibility, API response validation, error handling, and edge cases
+- **Test Updates**: Update existing tests when changing API response formats
+- **Full Suite**: Run the complete test suite before submitting PRs: `dagger call check`
 
 ### Pull Request Process
 
@@ -190,6 +216,7 @@ npm run lint
    - Clear description of changes
    - Reference to any related issues
    - Screenshots if UI changes are involved
+   - Confirmation that all tests pass
 
 ## Getting Help
 

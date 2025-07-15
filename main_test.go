@@ -20,6 +20,7 @@ func TestSelectGreeting(t *testing.T) {
 	english := &Greeting{
 		Greeting: "Hello, World!",
 		Language: "english",
+		Locale:   "US",
 	}
 
 	// Test with a language
@@ -44,8 +45,9 @@ func TestFormatResponse(t *testing.T) {
 	g := &Greeting{
 		Greeting: "Hello, World!",
 		Language: "english",
+		Locale:   "US",
 	}
 
 	formatted := FormatResponse(g)
-	assert.Equal(t, "{\"greeting\":\"Hello, World!\"}", formatted)
+	assert.Equal(t, "{\"greeting\":\"Hello, World!\",\"locale\":\"US\"}", formatted)
 }
