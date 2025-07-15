@@ -1,6 +1,6 @@
 {
   "name": "greetings",
-  "engineVersion": "v0.18.7",
+  "engineVersion": "v0.18.12",
   "sdk": {
     "source": "go"
   },
@@ -16,7 +16,7 @@
     {
       "name": "github-issue",
       "source": "github.com/kpenfound/dag/github-issue",
-      "pin": "46246adc2083c59db0076730e86b6fda2db8261a"
+      "pin": "2b76331a92be6da3fead95305e7bf2a70726c1e6"
     },
     {
       "name": "github-release",

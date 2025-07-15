@@ -1,0 +1,92 @@
+# Greetings API Documentation
+
+Welcome to the Greetings API! This simple service allows you to retrieve greetings in various languages.
+
+## Using the REST API
+
+The Greetings API provides two main endpoints for retrieving greetings:
+
+### Get a Random Greeting
+
+```
+GET http://locahost:8080/
+```
+
+**Example Response:**
+```json
+{
+  "greeting": "Hello, World!"
+}
+```
+
+### Get a Greeting in a Specific Language
+
+```
+GET http://locahost:8080/{language}
+```
+
+Replace `{language}` with one of the supported language codes.
+
+**Example Request:**
+```
+GET http://locahost:8080/french
+```
+
+**Example Response:**
+```json
+{
+  "greeting": "Bonjour, Monde !"
+}
+```
+
+## Supported Languages
+
+The API currently supports the following languages:
+
+| Language Code | Greeting |
+|---------------|----------|
+| english       | Hello, World! |
+| british       | Hello, World! Cheers! |
+| french        | Bonjour, Monde ! |
+| italian       | Ciao, Mondo! |
+| spanish       | ¡Hola, Mundo! |
+| german        | Hallo, Welt! |
+| mandarin      | 你好，世界！ |
+| hindi         | नमस्ते दुनिया! |
+| arabic        | مرحبا بالعالم! |
+| bengali       | ওহে বিশ্ব! |
+| russian       | Привет, мир! |
+| portuguese    | Olá, Mundo! |
+| urdu          | ہیلو، دنیا! |
+| indonesian    | Halo Dunia! |
+| japanese      | こんにちは世界！ |
+| marathi       | नमस्कार जग! |
+| telugu        | హలో ప్రపంచం! |
+
+## Using the Greetings Website
+
+If you prefer a web interface, you can visit the website at http://locahost:8081/ where you can:
+
+1. View random greetings with a simple click
+2. Experience our user-friendly interface
+
+Simply click the greeting button (👋) to get a new random greeting displayed on the screen.
+
+## API Limits
+
+Currently, there are no rate limits on the API usage, but please be respectful of our resources.
+
+## Error Handling
+
+If you request a language that doesn't exist, the API will return an appropriate error message with a 400 status code.
+
+Example error response:
+```json
+{
+  "error": "no greeting found for language 'klingon'"
+}
+```
+
+## Need Help?
+
+If you have any questions or need assistance with the Greetings API, please open an issue on our GitHub repository.
