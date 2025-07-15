@@ -91,6 +91,12 @@ export class Frontend {
 
   @func()
   formatFile(source: Directory, path: string): Directory {
+    if (
+      !(path.endsWith(".ts") || path.endsWith(".html") || path.endsWith(".js"))
+    ) {
+      return source;
+    }
+
     return dag
       .container()
       .from("node:23")
