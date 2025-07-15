@@ -1,0 +1,19 @@
+[
+  { "language": "english", "farewell": "Goodbye, World!" },
+  { "language": "british", "farewell": "Goodbye, World! Cheerio!" },
+  { "language": "french", "farewell": "Au revoir, Monde !" },
+  { "language": "italian", "farewell": "Arrivederci, Mondo!" },
+  { "language": "spanish", "farewell": "¡Adiós, Mundo!" },
+  { "language": "german", "farewell": "Auf Wiedersehen, Welt!" },
+  { "language": "mandarin", "farewell": "再见，世界！" },
+  { "language": "hindi", "farewell": "अलविदा दुनिया!" },
+  { "language": "arabic", "farewell": "وداعا أيها العالم!" },
+  { "language": "bengali", "farewell": "বিদায় বিশ্ব!" },
+  { "language": "russian", "farewell": "До свидания, мир!" },
+  { "language": "portuguese", "farewell": "Tchau, Mundo!" },
+  { "language": "urdu", "farewell": "الوداع، دنیا!" },
+  { "language": "indonesian", "farewell": "Selamat tinggal Dunia!" },
+  { "language": "japanese", "farewell": "さようなら世界！" },
+  { "language": "marathi", "farewell": "निरोप जग!" },
+  { "language": "telugu", "farewell": "వీడ్కోలు ప్రపంచం!" }
+]
