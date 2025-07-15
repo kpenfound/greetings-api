@@ -85,6 +85,9 @@ func (g *Greetings) PullRequestReview(
 		return err
 	}
 
+	// Write the review
+	commentErr := gh.WriteComment(ctx, g.Repo, issueId, review)
+
 	// Feedback loop: improve agent
 	author, err := issue.Author(ctx)
 	if err != nil {
@@ -104,6 +107,5 @@ func (g *Greetings) PullRequestReview(
 		}
 	}
 
-	// Write the review
-	return gh.WriteComment(ctx, g.Repo, issueId, review)
+	return commentErr
 }
