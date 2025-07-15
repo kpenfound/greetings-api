@@ -19,6 +19,7 @@ var greetingsJson []byte
 type Greeting struct {
 	Language string `json:"language"`
 	Greeting string `json:"greeting"`
+	Locale   string `json:"locale"`
 }
 
 func main() {
@@ -75,7 +76,7 @@ func main() {
 }
 
 func FormatResponse(greeting *Greeting) string {
-	return fmt.Sprintf("{\"greeting\":\"%s\"}", greeting.Greeting)
+	return fmt.Sprintf("{\"greeting\":\"%s\",\"locale\":\"%s\"}", greeting.Greeting, greeting.Locale)
 }
 
 func SelectGreeting(greetings []*Greeting, language string) (*Greeting, error) {
