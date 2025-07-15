@@ -90,11 +90,12 @@ func (g *Greetings) PullRequestReview(
 	if err != nil {
 		return err
 	}
-	if author == "app/agent-kal" {
+	if author == "agent-kal[bot]" {
 		feedback := fmt.Sprintf(`
 			You have recieved the following feedback on your pull request:
 			\n<feedback>%s\n</feedback>\n
-			If there is any feedback on your solution to the problem, update .dagger/prompts/assignment.md to provide a more accurate solution next time
+			If there is any actional feedback on the solution to the problem, make the required changes.
+			If there is any feedback on how you solved the problem, update .dagger/prompts/assignment.md to provide a more accurate solution next time.
 			If there is feedback relevant to all contributors of the project, make sure it is reflected in CONTRIBUTING.md
 			Do not change any other files.`, review)
 		err = g.PullRequestFeedback(ctx, githubToken, issueId, feedback, model)
