@@ -45,16 +45,19 @@ greetings-api/
 ├── main.go              # Go backend server
 ├── main_test.go         # Go backend tests
 ├── greetings.json       # Greeting data in multiple languages
-├── go.mod              # Go module dependencies
-├── website/            # Frontend application
+├── go.mod               # Go module dependencies
+├── CONTRIBUTING.md      # Developer documentation
+├── docs/                # Product documentation
+│   ├── index.mdx       # Main docs file
+├── website/             # Frontend application
 │   ├── index.html      # Main HTML file
 │   ├── package.json    # Frontend dependencies
 │   └── cypress/        # E2E tests
-├── .dagger/            # Dagger CI/CD modules
+├── .dagger/             # Dagger CI/CD modules
 │   ├── backend/        # Backend build module
 │   ├── frontend/       # Frontend build module
 │   └── workspace/      # Workspace configuration
-└── dagger.json         # Dagger configuration
+└── dagger.json          # Dagger configuration
 ```
 
 ### Backend Architecture
@@ -150,6 +153,11 @@ npm run lint
 - **Go**: Follow standard Go formatting (`go fmt`)
 - **TypeScript**: Follow the ESLint configuration in the project
 - **Commits**: Use clear, descriptive commit messages
+
+### Documentation
+
+- **Developer Docs**: Update CONTRIBUTING.md with any architectural changes
+- **Product Docs**: Update docs/ with relevant product changes
 
 ### Testing Requirements
 

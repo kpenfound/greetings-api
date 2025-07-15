@@ -15,7 +15,7 @@ func (g *Greetings) Develop(
 	assignment string,
 	// The model to use to complete the assignment
 	// +optional
-	// +default = "gemini-2.0-flash"
+	// +default = "claude-sonnet-4-0"
 	model string,
 ) *dagger.Directory {
 	prompt := dag.CurrentModule().Source().File("prompts/assignment.md")
@@ -54,7 +54,7 @@ func (g *Greetings) DevelopPullRequest(
 	issueId int,
 	// The model to use to complete the assignment
 	// +optional
-	// +default = "gemini-2.0-flash"
+	// +default = "claude-sonnet-4-0"
 	model string,
 ) (string, error) {
 	gh := dag.GithubIssue(dagger.GithubIssueOpts{Token: githubToken})
@@ -81,6 +81,16 @@ func (g *Greetings) DevelopPullRequest(
 
 	// Open the pull request
 	pr := gh.CreatePullRequest(g.Repo, title, body, work)
+
+	// Automatically trigger an agent review. Discard error if it fails
+	id, err := pr.IssueNumber(ctx)
+	if err == nil {
+		err = g.PullRequestReview(ctx, githubToken, id, model)
+		if err != nil {
+			fmt.Printf("failed to trigger agent review: %v", err)
+		}
+	}
+
 	return pr.URL(ctx)
 }
 
@@ -97,7 +107,7 @@ func (g *Greetings) DevelopFeedback(
 	feedback string,
 	// The model to use to complete the assignment
 	// +optional
-	// +default = "gemini-2.0-flash"
+	// +default = "claude-sonnet-4-0"
 	model string,
 ) (*dagger.Directory, error) {
 	// Run the agent
@@ -137,7 +147,7 @@ func (g *Greetings) PullRequestFeedback(
 	feedback string,
 	// The model to use to complete the assignment
 	// +optional
-	// +default = "gemini-2.0-flash"
+	// +default = "claude-sonnet-4-0"
 	model string,
 ) error {
 	// Strip out slash command

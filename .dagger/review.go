@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kpenfound/greetings-api/.dagger/internal/dagger"
 )
@@ -17,7 +18,7 @@ func (g *Greetings) DevelopReview(
 	diff string,
 	// The model to use to complete the assignment
 	// +optional
-	// +default = "gemini-2.0-flash"
+	// +default = "claude-sonnet-4-0"
 	model string,
 ) (string, error) {
 	// Run the agent
@@ -51,7 +52,7 @@ func (g *Greetings) PullRequestReview(
 	issueId int,
 	// The model to use to complete the assignment
 	// +optional
-	// +default = "gemini-2.0-flash"
+	// +default = "claude-sonnet-4-0"
 	model string,
 ) error {
 	// Get the pull request information
@@ -83,6 +84,25 @@ func (g *Greetings) PullRequestReview(
 	if err != nil {
 		return err
 	}
+
+	// Feedback loop: improve agent
+	author, err := issue.Author(ctx)
+	if err != nil {
+		return err
+	}
+	if author == "app/agent-kal" {
+		feedback := fmt.Sprintf(`
+			You have recieved the following feedback on your pull request:
+			\n<feedback>%s\n</feedback>\n
+			If there is any feedback on your solution to the problem, update .dagger/prompts/assignment.md to provide a more accurate solution next time
+			If there is feedback relevant to all contributors of the project, make sure it is reflected in CONTRIBUTING.md
+			Do not change any other files.`, review)
+		err = g.PullRequestFeedback(ctx, githubToken, issueId, feedback, model)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Write the review
 	return gh.WriteComment(ctx, g.Repo, issueId, review)
 }

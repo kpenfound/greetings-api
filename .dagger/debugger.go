@@ -13,7 +13,7 @@ func (g *Greetings) DebugTests(
 	ctx context.Context,
 	// The model to use to debug debug tests
 	// +optional
-	// +default = "gemini-2.0-flash"
+	// +default = "claude-sonnet-4-0"
 	model string,
 ) (string, error) {
 	prompt := dag.CurrentModule().Source().File("prompts/fix_tests.md")
@@ -66,7 +66,7 @@ func (g *Greetings) DebugBrokenTestsPr(
 	commit string,
 	// The model to use to debug debug tests
 	// +optional
-	// +default = "gemini-2.0-flash"
+	// +default = "claude-sonnet-4-0"
 	model string,
 ) error {
 	gh := dag.GithubIssue(dagger.GithubIssueOpts{Token: githubToken})
