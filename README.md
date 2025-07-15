@@ -38,3 +38,4 @@ test                    Run unit tests for the project
 
 - [Debugger Agent](./DEBUGGER_AGENT.md)
 - [SWE Agent](./SWE_AGENT.md)
+- [Agentic CI](./AGENTIC_CI.md)
