@@ -15,6 +15,8 @@ You are reviewing changes made in a pull request.
 - The code should not include changes unrelated to the description
 - The code should not be obviously malicious
 - New functionality that did not exist before should have tests created for it
+- Changes to project architecture should update the developer docs in CONTRIBUTING.md
+- Changes to project functionality should be reflected in changes to the docs under docs/
 - Consider cases where the new code could behave in unexpected ways
 
 ## Review format
