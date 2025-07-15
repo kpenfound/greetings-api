@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"runtime"
+	"strings"
 
 	"backend/internal/dagger"
 )
@@ -125,6 +126,10 @@ func (b *Backend) FormatFile(
 	// File path to format
 	path string,
 ) *dagger.Directory {
+	// Only format go files
+	if !strings.HasSuffix(path, ".go") {
+		return source
+	}
 	return dag.
 		Container().
 		From("golang:1.24").
