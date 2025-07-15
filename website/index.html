@@ -227,7 +227,7 @@
 
         async function getRandomGreeting() {
             try {
-                const response = await fetch('http://localhost:8080/');
+                const response = await fetch('http://localhost:8080/random');
                 const data = await response.json();
                 document.getElementById('greetingDisplay').textContent = data.greeting;
                 

@@ -44,6 +44,19 @@ func main() {
 		}
 	}).Methods("GET")
 
+	router.HandleFunc("/random", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("got /random request from %s\n", r.RemoteAddr)
+		w.Header().Set("Content-Type", "application/json")
+		greeting, err := SelectGreeting(greetings, "random")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		_, err = w.Write([]byte(FormatResponse(greeting)))
+		if err != nil {
+			panic(err)
+		}
+	}).Methods("GET")
+
 	router.HandleFunc("/{language}", func(w http.ResponseWriter, r *http.Request) {
 		language := mux.Vars(r)["language"]
 		fmt.Printf("got /{language} request from %s\n", r.RemoteAddr)
