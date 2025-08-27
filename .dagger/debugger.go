@@ -21,7 +21,7 @@ func (g *Greetings) DebugTests(
 	// Check if backend is broken
 	if _, berr := g.Backend.CheckDirectory(ctx, g.Backend.Source()); berr != nil {
 		ws := dag.Workspace(
-			g.Backend.Source(),
+			g.Source,
 			g.Backend.AsWorkspaceCheckable(),
 		)
 		env := dag.Env().
@@ -39,7 +39,7 @@ func (g *Greetings) DebugTests(
 	// Check if frontend is broken
 	if _, ferr := g.Frontend.CheckDirectory(ctx, g.Frontend.Source()); ferr != nil {
 		ws := dag.Workspace(
-			g.Frontend.Source(),
+			g.Source,
 			g.Frontend.AsWorkspaceCheckable(),
 		)
 		env := dag.Env().
