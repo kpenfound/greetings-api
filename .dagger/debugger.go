@@ -43,7 +43,7 @@ func (g *Greetings) DebugTests(
 			g.Frontend.AsWorkspaceCheckable(),
 		)
 		env := dag.Env().
-			WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+			WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code. Pass website subdirectory to checkDirectory").
 			WithWorkspaceOutput("fixed", "workspace with fixed tests")
 		return dag.LLM(dagger.LLMOpts{Model: model}).
 			WithEnv(env).
