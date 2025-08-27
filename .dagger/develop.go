@@ -24,6 +24,7 @@ func (g *Greetings) Develop(
 		g.Source,
 		// FIXME: no great way to determine which checker without submodule or self calls
 		g.Backend.AsWorkspaceCheckable(),
+		".",
 	)
 
 	env := dag.Env().
@@ -117,6 +118,7 @@ func (g *Greetings) DevelopFeedback(
 		source,
 		// FIXME: no great way to determine which checker without submodule or self calls
 		g.Backend.AsWorkspaceCheckable(),
+		".",
 	)
 
 	env := dag.Env().

@@ -16,7 +16,8 @@ type Checkable interface {
 
 // Place to do work and check it
 type Workspace struct {
-	Work *dagger.Directory
+	Work           *dagger.Directory
+	CheckDirectory string
 	// +private
 	Start *dagger.Directory
 	// +private
@@ -28,11 +29,14 @@ func New(
 	source *dagger.Directory,
 	// Checker to use for testing
 	checker Checkable,
+	// Path to execute checker on
+	checkDirectory string,
 ) *Workspace {
 	return &Workspace{
-		Start:   source,
-		Work:    source,
-		Checker: checker,
+		Start:          source,
+		Work:           source,
+		Checker:        checker,
+		CheckDirectory: checkDirectory,
 	}
 }
 
@@ -76,7 +80,7 @@ func (w *Workspace) Tree(ctx context.Context) (string, error) {
 
 // Run the tests in the workspace
 func (w *Workspace) Check(ctx context.Context) (string, error) {
-	return w.Checker.CheckDirectory(ctx, w.Work)
+	return w.Checker.CheckDirectory(ctx, w.Work.Directory(w.CheckDirectory))
 }
 
 // Show the changes made to the workspace so far in unified diff format
