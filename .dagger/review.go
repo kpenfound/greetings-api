@@ -28,6 +28,7 @@ func (g *Greetings) DevelopReview(
 		source,
 		// FIXME: no great way to determine which checker without submodule or self calls
 		g.Backend.AsWorkspaceCheckable(),
+		".",
 	)
 
 	env := dag.Env().
