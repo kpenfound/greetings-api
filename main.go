@@ -36,6 +36,7 @@ func main() {
 		greeting, err := SelectGreeting(greetings, "random")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return // Add this line
 		}
 		_, err = w.Write([]byte(FormatResponse(greeting)))
 		if err != nil {
