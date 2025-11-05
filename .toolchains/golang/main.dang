@@ -1,0 +1,83 @@
+type Golang {
+  """
+  The source directory for the project.
+  """
+  pub source: Directory! @defaultPath(path: "/")
+
+  """
+  The Golang image to use
+  """
+  pub golangImage: Container! = container().from("golang:1.24")
+
+  """
+  Build the project
+  """
+  pub build(
+    """
+    The package to build.
+    """
+    package: String! = "."
+  ): Changeset! {
+    base.withExec(["go", "build", package]).directory("/src").
+    changes(source)
+  }
+
+  """
+  Test the project
+  """
+  pub test(
+    """
+    The package to test.
+    """
+    package: String! = "."
+  ): CheckStatus! {
+    base.withExec(["go", "test", package]).directory("/src").
+    sync
+    let foo = CheckStatus.COMPLETED
+    if foo != null {
+      foo
+    }
+  }
+
+  """
+  Lint the project
+  """
+  pub lint(
+    """
+    Golangci-lint image to use
+    """
+    image: String! = "golangci/golangci-lint:v2.1"
+  ): CheckStatus! {
+    container().from(image).
+    withWorkdir("/src").
+    withDirectory("/src", source).
+    withExec(["golangci-lint", "run", "-v", "--timeout", "10m"]).
+    sync
+    let foo = CheckStatus.COMPLETED
+    if foo != null {
+      foo
+    }
+  }
+
+  """
+  Lint the project and return fixes
+  """
+  pub lintFix: Changeset! {
+    container().from("golangci/golangci-lint:v2.1").
+    withWorkdir("/src").
+    withDirectory("/src", source).
+    withExec(["golangci-lint", "run", "-v", "--timeout", "10m", "--fix"]).
+    directory("/src").
+    changes(source)
+  }
+
+  let base: Container! {
+    golangImage.
+      withMountedCache("/go/pkg/mod", cacheVolume("go-mod")).
+      withEnvVariable("GOMODCACHE", "/go/pkg/mod").
+      withMountedCache("/go/build-cache", cacheVolume("go-build")).
+      withEnvVariable("GOCACHE", "/go/build-cache").
+      withDirectory("/src", source).
+      withWorkdir("/src")
+  }
+}

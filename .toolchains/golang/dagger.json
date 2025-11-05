@@ -1,0 +1,7 @@
+{
+  "name": "golang",
+  "engineVersion": "v0.19.6-251105123015-1e35751b9b80",
+  "sdk": {
+    "source": "github.com/vito/dang/dagger-sdk"
+  }
+}
