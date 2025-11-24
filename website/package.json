@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test:e2e": "cypress run --e2e",
-    "lint": "eslint --fix ."
+    "lint": "eslint --fix .",
+    "build": "mkdir -p dist && cp -r *.html dist/"
   },
   "devDependencies": {
     "@eslint/css": "^0.7.0",

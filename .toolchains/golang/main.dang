@@ -7,7 +7,7 @@ type Golang {
   """
   The Golang image to use
   """
-  pub golangImage: Container! = container().from("golang:1.24")
+  pub golangImage: Container! = container.from("golang:1.24")
 
   """
   Build the project
@@ -18,7 +18,8 @@ type Golang {
     """
     package: String! = "."
   ): Changeset! {
-    base.withExec(["go", "build", package]).directory("/src").
+    base.withExec(["go", "build", package]).
+    directory("/src").
     changes(source)
   }
 
@@ -30,13 +31,11 @@ type Golang {
     The package to test.
     """
     package: String! = "."
-  ): CheckStatus! {
-    base.withExec(["go", "test", package]).directory("/src").
+  ): Void @check {
+    base.withExec(["go", "test", package]).
     sync
-    let foo = CheckStatus.COMPLETED
-    if foo != null {
-      foo
-    }
+
+    null
   }
 
   """
@@ -47,28 +46,37 @@ type Golang {
     Golangci-lint image to use
     """
     image: String! = "golangci/golangci-lint:v2.1"
-  ): CheckStatus! {
-    container().from(image).
+  ): Void @check {
+    container.from(image).
     withWorkdir("/src").
     withDirectory("/src", source).
     withExec(["golangci-lint", "run", "-v", "--timeout", "10m"]).
     sync
-    let foo = CheckStatus.COMPLETED
-    if foo != null {
-      foo
-    }
+
+    null
   }
 
   """
   Lint the project and return fixes
   """
   pub lintFix: Changeset! {
-    container().from("golangci/golangci-lint:v2.1").
+    container.from("golangci/golangci-lint:v2.1").
     withWorkdir("/src").
     withDirectory("/src", source).
     withExec(["golangci-lint", "run", "-v", "--timeout", "10m", "--fix"]).
     directory("/src").
     changes(source)
+  }
+
+  """
+  Run the project as a Service
+  """
+  pub serve(
+    port: Int! = 8080
+  ): Service! {
+    base.withDefaultArgs(["go", "run", "."]).
+    withExposedPort(port).
+    asService
   }
 
   let base: Container! {

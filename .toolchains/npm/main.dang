@@ -1,0 +1,63 @@
+type Npm {
+  """
+  The source directory for the project.
+  """
+  pub source: Directory! @defaultPath(path: "/")
+
+  """
+  The Node image to use
+  """
+  pub nodeImage: Container! = container.from("node:25-alpine")
+
+  """
+  Build the project
+  """
+  pub build: Changeset! {
+    base.withExec(["npm", "run", "build"]).
+    directory("/src").
+    changes(source)
+  }
+
+  """
+  Test the project
+  """
+  pub test: Void @check {
+    base.withExec(["npm", "run", "test"]).
+    sync
+
+    null
+  }
+
+  """
+  Lint the project
+  """
+  pub lint: Void @check {
+    base.withExec(["npm", "run", "lint"]).
+    sync
+
+    null
+  }
+
+  """
+  Run the project as a Service
+  """
+  pub serveStatic(
+    port: Int! = 80
+  ): Service! {
+    let b = base.withExec(["npm", "run", "build"]).directory("dist")
+
+    container.from("nginx").
+    withDirectory("/usr/share/nginx/html", b).
+    withDefaultArgs(["nginx", "-g", "daemon off;"]).
+    withExposedPort(port).
+    asService
+  }
+
+  let base: Container! {
+    nodeImage.
+      withMountedCache("/root/.npm", cacheVolume("node-modules")).
+      withDirectory("/src", source).
+      withWorkdir("/src").
+      withExec(["npm", "install"])
+  }
+}

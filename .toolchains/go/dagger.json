@@ -1,8 +1,0 @@
-{
-  "name": "go",
-  "engineVersion": "v0.19.4-251027152700-cf08cdeb8e85",
-  "sdk": {
-    "source": "go"
-  },
-  "disableDefaultFunctionCaching": true
-}

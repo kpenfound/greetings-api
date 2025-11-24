@@ -1,0 +1,28 @@
+type GreetingsAPI {
+  pub source: Directory! @defaultPath(path: "/")
+  """
+  Run the whole stack
+  """
+  pub serve: Service! {
+    proxy.
+    withService(golang(source: source).serve, "api", 8080, 8080).
+    withService(npm(source: source.directory("website")).serveStatic, "web", 8081, 80).
+    service
+  }
+
+  """
+  Test the website
+  """
+  pub testWebsite: String! @check {
+    container.
+    from("cypress/included:14.0.3").
+    withMountedCache("/root/.npm", cacheVolume("npm-cache")).
+    withServiceBinding("localhost", golang(source: source).serve).
+    withServiceBinding("frontend", npm(source: source.directory("website")).serveStatic).
+    withWorkdir("/app").
+    withDirectory("/app", source.directory("website")).
+    withExec(["npm", "ci"]).
+    withExec(["npm", "run", "test:e2e"]).
+    stdout
+  }
+}

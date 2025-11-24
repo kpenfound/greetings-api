@@ -1,10 +1,31 @@
 {
   "name": "greetings-api",
-  "engineVersion": "v0.19.4-251027152700-cf08cdeb8e85",
+  "engineVersion": "v0.19.7",
+  "sdk": {
+    "source": "github.com/vito/dang/dagger-sdk"
+  },
   "toolchains": [
     {
-      "name": "go",
-      "source": ".toolchains/go"
+      "name": "golang",
+      "source": ".toolchains/golang"
+    },
+    {
+      "name": "npm",
+      "source": ".toolchains/npm",
+      "arguments": [
+        {
+          "name": "source",
+          "defaultPath": "/website"
+        }
+      ]
     }
-  ]
+  ],
+  "dependencies": [
+    {
+      "name": "proxy",
+      "source": "github.com/kpenfound/dagger-modules/proxy@main",
+      "pin": "428ffe16f0a2e3c9e4d0d9debf6420db29d3cb64"
+    }
+  ],
+  "source": ".dagger"
 }
