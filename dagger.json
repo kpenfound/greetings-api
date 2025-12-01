@@ -12,12 +12,13 @@
     {
       "name": "npm",
       "source": ".toolchains/npm",
-      "arguments": [
+      "customizations": [
         {
-          "name": "source",
+          "argument": "source",
           "defaultPath": "/website"
         }
-      ]
+      ],
+      "ignoreChecks": ["test"]
     }
   ],
   "dependencies": [
