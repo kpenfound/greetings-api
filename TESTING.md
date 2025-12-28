@@ -1,5 +1,7 @@
 # Test Documentation
 
+> **Note**: For general contribution guidelines including testing requirements, see [CONTRIBUTING.md](./CONTRIBUTING.md)
+
 This document describes the comprehensive testing approach for the Greetings API project.
 
 ## Overview
@@ -35,7 +37,6 @@ Current test coverage includes:
 - ✅ Error handling for invalid languages
 - ✅ Error handling for empty language strings
 - ✅ Response formatting
-- ✅ Empty greetings slice handling
 
 ## Frontend Tests
 
@@ -114,4 +115,4 @@ When adding new tests:
 3. Test both happy paths and error cases
 4. Keep tests isolated and independent
 5. Run `dagger call check` before committing
-6. Update this documentation when adding new test scenarios
+6. Update TESTING.md when adding new test files or significantly changing test structure
