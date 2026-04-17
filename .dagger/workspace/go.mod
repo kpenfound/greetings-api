@@ -1,4 +1,4 @@
-module dagger/workspace
+module dagger/code-workspace
 
 go 1.23.6
 

@@ -1,6 +1,6 @@
 {
   "name": "greetings",
-  "engineVersion": "v0.18.12",
+  "engineVersion": "v0.20.6",
   "sdk": {
     "source": "go"
   },
@@ -15,7 +15,7 @@
     },
     {
       "name": "github-issue",
-      "source": "github.com/kpenfound/dag/github-issue",
+      "source": "github.com/kpenfound/dag/github-issue@main",
       "pin": "2b76331a92be6da3fead95305e7bf2a70726c1e6"
     },
     {
@@ -29,9 +29,10 @@
       "pin": "3e9129a119151eb122e5fe380bd2d4313d8fc001"
     },
     {
-      "name": "workspace",
+      "name": "code-workspace",
       "source": ".dagger/workspace"
     }
   ],
-  "source": ".dagger"
+  "source": ".dagger",
+  "disableDefaultFunctionCaching": true
 }
