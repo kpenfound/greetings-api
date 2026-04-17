@@ -20,16 +20,16 @@ func (g *Greetings) Develop(
 ) *dagger.Directory {
 	prompt := dag.CurrentModule().Source().File("prompts/assignment.md")
 
-	ws := dag.Workspace(
+	ws := dag.CodeWorkspace(
 		g.Source,
 		// FIXME: no great way to determine which checker without submodule or self calls
-		g.Backend.AsWorkspaceCheckable(),
+		g.Backend.AsCodeWorkspaceCheckable(),
 	)
 
 	env := dag.Env().
-		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+		WithCodeWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
 		WithStringInput("assignment", assignment, "the assignment to complete").
-		WithWorkspaceOutput("completed", "workspace with developed solution")
+		WithCodeWorkspaceOutput("completed", "workspace with developed solution")
 	agent := dag.LLM(dagger.LLMOpts{Model: model}).
 		WithEnv(env).
 		WithPromptFile(prompt).
@@ -40,7 +40,7 @@ func (g *Greetings) Develop(
 	}
 	work := agent.Env().
 		Output("completed").
-		AsWorkspace()
+		AsCodeWorkspace()
 
 	return work.Work()
 }
@@ -113,25 +113,25 @@ func (g *Greetings) DevelopFeedback(
 	// Run the agent
 	prompt := dag.CurrentModule().Source().File("prompts/feedback.md")
 
-	ws := dag.Workspace(
+	ws := dag.CodeWorkspace(
 		source,
 		// FIXME: no great way to determine which checker without submodule or self calls
-		g.Backend.AsWorkspaceCheckable(),
+		g.Backend.AsCodeWorkspaceCheckable(),
 	)
 
 	env := dag.Env().
-		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+		WithCodeWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
 		WithStringInput("description", assignment, "the description of the pull request").
 		WithStringInput("feedback", feedback, "the feedback on the pull request").
 		WithStringInput("diff", diff, "the git diff of the pull request code changes so far").
-		WithWorkspaceOutput("completed", "workspace result with the feedback implemented")
+		WithCodeWorkspaceOutput("completed", "workspace result with the feedback implemented")
 	agent := dag.LLM(dagger.LLMOpts{Model: model}).
 		WithEnv(env).
 		WithPromptFile(prompt).
 		Loop()
 	completed := agent.Env().
 		Output("completed").
-		AsWorkspace().
+		AsCodeWorkspace().
 		Work()
 	return completed, nil
 }

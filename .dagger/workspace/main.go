@@ -1,10 +1,10 @@
-// A generated module for Workspace functions
+// A generated module for CodeWorkspace functions
 
 package main
 
 import (
 	"context"
-	"dagger/workspace/internal/dagger"
+	"dagger/code-workspace/internal/dagger"
 )
 
 // Interface for something that can be checked
@@ -15,7 +15,7 @@ type Checkable interface {
 }
 
 // Place to do work and check it
-type Workspace struct {
+type CodeWorkspace struct {
 	Work *dagger.Directory
 	// +private
 	Start *dagger.Directory
@@ -28,8 +28,8 @@ func New(
 	source *dagger.Directory,
 	// Checker to use for testing
 	checker Checkable,
-) *Workspace {
-	return &Workspace{
+) *CodeWorkspace {
+	return &CodeWorkspace{
 		Start:   source,
 		Work:    source,
 		Checker: checker,
@@ -37,7 +37,7 @@ func New(
 }
 
 // Read the contents of a file in the workspace at the given path
-func (w *Workspace) Read(
+func (w *CodeWorkspace) Read(
 	ctx context.Context,
 	// Path to read the file at
 	path string,
@@ -46,13 +46,13 @@ func (w *Workspace) Read(
 }
 
 // Write the contents of a file in the workspace at the given path
-func (w *Workspace) Write(
+func (w *CodeWorkspace) Write(
 	ctx context.Context,
 	// Path to write the file to
 	path string,
 	// Contents to write to the file
 	contents string,
-) *Workspace {
+) *CodeWorkspace {
 	// Write new file
 	w.Work = w.Work.WithNewFile(path, contents)
 	// Apply formatting
@@ -61,13 +61,13 @@ func (w *Workspace) Write(
 }
 
 // Reset the workspace to the original state
-func (w *Workspace) Reset() *Workspace {
+func (w *CodeWorkspace) Reset() *CodeWorkspace {
 	w.Work = w.Start
 	return w
 }
 
 // List the files in the workspace in tree format
-func (w *Workspace) Tree(ctx context.Context) (string, error) {
+func (w *CodeWorkspace) Tree(ctx context.Context) (string, error) {
 	return dag.Container().From("alpine:3").
 		WithDirectory("/workspace", w.Work).
 		WithExec([]string{"tree", "/workspace"}).
@@ -75,12 +75,12 @@ func (w *Workspace) Tree(ctx context.Context) (string, error) {
 }
 
 // Run the tests in the workspace
-func (w *Workspace) Check(ctx context.Context) (string, error) {
+func (w *CodeWorkspace) Check(ctx context.Context) (string, error) {
 	return w.Checker.CheckDirectory(ctx, w.Work)
 }
 
 // Show the changes made to the workspace so far in unified diff format
-func (w *Workspace) Diff(ctx context.Context) (string, error) {
+func (w *CodeWorkspace) Diff(ctx context.Context) (string, error) {
 	return dag.Container().From("alpine:3").
 		WithDirectory("/a", w.Start).
 		WithDirectory("/b", w.Work).

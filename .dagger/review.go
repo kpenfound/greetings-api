@@ -24,14 +24,14 @@ func (g *Greetings) DevelopReview(
 	// Run the agent
 	prompt := dag.CurrentModule().Source().File("prompts/review.md")
 
-	ws := dag.Workspace(
+	ws := dag.CodeWorkspace(
 		source,
 		// FIXME: no great way to determine which checker without submodule or self calls
-		g.Backend.AsWorkspaceCheckable(),
+		g.Backend.AsCodeWorkspaceCheckable(),
 	)
 
 	env := dag.Env().
-		WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+		WithCodeWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
 		WithStringInput("description", assignment, "the description of the pull request").
 		WithStringInput("diff", diff, "the git diff of the pull request code changes so far").
 		WithStringOutput("review", "the resulting review of the pull request")

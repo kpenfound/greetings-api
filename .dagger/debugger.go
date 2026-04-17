@@ -20,37 +20,37 @@ func (g *Greetings) DebugTests(
 
 	// Check if backend is broken
 	if _, berr := g.Backend.CheckDirectory(ctx, g.Backend.Source()); berr != nil {
-		ws := dag.Workspace(
+		ws := dag.CodeWorkspace(
 			g.Backend.Source(),
-			g.Backend.AsWorkspaceCheckable(),
+			g.Backend.AsCodeWorkspaceCheckable(),
 		)
 		env := dag.Env().
-			WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
-			WithWorkspaceOutput("fixed", "workspace with fixed tests")
+			WithCodeWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+			WithCodeWorkspaceOutput("fixed", "workspace with fixed tests")
 		return dag.LLM(dagger.LLMOpts{Model: model}).
 			WithEnv(env).
 			WithPromptFile(prompt).
 			Env().
 			Output("fixed").
-			AsWorkspace().
+			AsCodeWorkspace().
 			Diff(ctx)
 	}
 
 	// Check if frontend is broken
 	if _, ferr := g.Frontend.CheckDirectory(ctx, g.Frontend.Source()); ferr != nil {
-		ws := dag.Workspace(
+		ws := dag.CodeWorkspace(
 			g.Frontend.Source(),
-			g.Frontend.AsWorkspaceCheckable(),
+			g.Frontend.AsCodeWorkspaceCheckable(),
 		)
 		env := dag.Env().
-			WithWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
-			WithWorkspaceOutput("fixed", "workspace with fixed tests")
+			WithCodeWorkspaceInput("workspace", ws, "workspace to read, write, and test code").
+			WithCodeWorkspaceOutput("fixed", "workspace with fixed tests")
 		return dag.LLM(dagger.LLMOpts{Model: model}).
 			WithEnv(env).
 			WithPromptFile(prompt).
 			Env().
 			Output("fixed").
-			AsWorkspace().
+			AsCodeWorkspace().
 			Diff(ctx)
 	}
 
