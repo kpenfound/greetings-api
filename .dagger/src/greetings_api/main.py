@@ -24,17 +24,22 @@ class GreetingsApi:
         return build.changes(self.source)
 
     @function
-    @check
-    async def go_test(self) -> None:
+    async def go_test(self) -> str:
         """Test the go project"""
-        await (
+        return await (
             dag.container()
             .from_("golang:latest")
             .with_mounted_directory("/app", self.source)
             .with_workdir("/app")
             .with_exec(["go", "test", "./..."])
-            .sync()
+            .stdout()
         )
+
+    @function
+    @check
+    async def check_test(self) -> None:
+        """Check the go tests are passing"""
+        await self.go_test()
 
     @function
     @generate
@@ -53,6 +58,14 @@ class GreetingsApi:
         return fmt.changes(self.source)
 
     @function
+    @check
+    async def check_fmt(self) -> None:
+        """Check go is formatted correctly"""
+        fmt_empty = await self.go_fmt().is_empty()
+        if not fmt_empty:
+            raise Exception("go needs formatting")
+
+    @function
     @up
     def api_service(self) -> dagger.Service:
         """Serves the API"""
@@ -62,7 +75,25 @@ class GreetingsApi:
     @up
     def web_service(self) -> dagger.Service:
         """Serves the frontend"""
-        return self.frontend_container().as_service(use_entrypoint=True)
+        return (
+            dag.container()
+            .from_("nginx:latest")
+            .with_new_file(
+                "/etc/nginx/conf.d/default.conf",
+                """
+                server {
+                    listen 8081;
+                    root /website;
+
+                    location / {
+                    }
+                }
+            """,
+            )
+            .with_exposed_port(8081)
+            .with_mounted_directory("/website", self.source.directory("website"))
+            .as_service(use_entrypoint=True)
+        )
 
     @function
     def api_container(self) -> dagger.Container:
@@ -73,15 +104,4 @@ class GreetingsApi:
             .with_mounted_directory("/usr/bin", self.go_build().layer())
             .with_entrypoint(["/usr/bin/greetings-api"])
             .with_exposed_port(8080)
-        )
-
-    @function
-    def frontend_container(self) -> dagger.Container:
-        """Returns the frontend container"""
-        return (
-            dag.container()
-            .from_("nginx:latest")
-            .with_mounted_directory(
-                "/usr/share/nginx/html", self.source.directory("website")
-            )
         )

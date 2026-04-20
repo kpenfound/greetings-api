@@ -4,38 +4,55 @@ A simple greeting api with a beatuiful frontend.
 
 ## Try it out!
 
-```
-dagger call serve up
-```
+### Functions
 
-or without even cloning this repo:
+List all functions:
 ```
-dagger -m github.com/kpenfound/greetings-api call serve up
+dagger functions
 ```
 
-The frontend will be available at http://localhost:8081/
-
-
-## Daggerized!
-
-Dagger functions:
-
+Run go tests:
 ```
-Name                    Description
-build                   Build the backend and frontend for a specified environment
-check                   Run the CI Checks for the project
-debug-broken-tests-pr   Debug broken tests on a pull request and comment fix suggestions
-debug-tests             Debug broken tests. Returns a unified diff of the test fixes
-develop                 Complete an assignment for the greetings project and get back the completed work
-develop-pull-request    -
-lint                    Lint the Go code in the project
-release                 Create a GitHub release
-serve                   Serve the backend and frontend to 8080 and 8081 respectively
-test                    Run unit tests for the project
+dagger call go-test
 ```
 
-## Demos
+### Checks
+A module can define pass/fail functions to validate the codebase with the `@check` decorator. These are the types of functions you would run pre-push and in CI.
 
-- [Debugger Agent](./DEBUGGER_AGENT.md)
-- [SWE Agent](./SWE_AGENT.md)
-- [Agentic CI](./AGENTIC_CI.md)
+List all checks:
+```
+dagger check -l
+```
+
+Run all checks concurrently:
+```
+dagger check
+```
+
+### Generators
+A module can define code generation functions with the `@generate` decorator. Generators could be formatters, linters that can auto fix, generated code, or generated assets.
+
+List all generators:
+```
+dagger generate -l
+```
+
+Run all generators concurrently:
+```
+dagger generate
+```
+
+### Services
+A module can define services to be available with the `@up` decorator. These are similar to what you'd define in a docker compose.
+
+List all services:
+```
+dagger up -l
+```
+
+Run all services concurrently:
+```
+dagger up
+```
+
+Navigate to [localhost:8081](http://localhost:8081)
