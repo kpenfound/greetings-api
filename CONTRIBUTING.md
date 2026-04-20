@@ -64,10 +64,12 @@ greetings-api/
 
 - **Language**: Go
 - **Framework**: Gorilla Mux for routing, CORS middleware
-- **Structure**: Simple REST API with two endpoints:
+- **Structure**: Simple REST API with endpoints for greetings and farewells:
   - `GET /` - Returns a random greeting
   - `GET /{language}` - Returns a greeting in the specified language
-- **Data**: Greetings are stored in `greetings.json` and embedded in the binary
+  - `GET /farewell` - Returns a random farewell
+  - `GET /farewell/{language}` - Returns a farewell in the specified language
+- **Data**: Greetings are stored in `greetings.json` and farewells in `farewells.json`, both embedded in the binary
 - **Testing**: Uses `gotest.tools` for unit tests
 
 ### Frontend Architecture
@@ -154,10 +156,17 @@ npm run lint
 - **TypeScript**: Follow the ESLint configuration in the project
 - **Commits**: Use clear, descriptive commit messages
 
-### Documentation
+### Documentation Requirements
+
+**⚠️ CRITICAL**: Changes to project functionality MUST be reflected in documentation updates.
 
 - **Developer Docs**: Update CONTRIBUTING.md with any architectural changes
-- **Product Docs**: Update docs/ with relevant product changes
+- **Product Docs**: Update `docs/index.mdx` with any new endpoints, functionality, or changes that affect users
+- **API Documentation**: When adding new endpoints, ensure they are properly documented with:
+  - Endpoint paths and HTTP methods
+  - Example requests and responses
+  - Updated supported languages table if applicable
+  - Error handling examples
 
 ### Testing Requirements
 
@@ -174,22 +183,25 @@ npm run lint
 
 2. **Make your changes** following the code style guidelines
 
-3. **Test your changes** thoroughly:
+3. **Update documentation** as required (see Documentation Requirements above)
+
+4. **Test your changes** thoroughly:
    ```bash
    dagger call check
    ```
 
-4. **Commit your changes** with clear commit messages
+5. **Commit your changes** with clear commit messages
 
-5. **Push to your fork**:
+6. **Push to your fork**:
    ```bash
    git push origin feature/your-feature-name
    ```
 
-6. **Create a Pull Request** on GitHub with:
+7. **Create a Pull Request** on GitHub with:
    - Clear description of changes
    - Reference to any related issues
    - Screenshots if UI changes are involved
+   - Confirmation that documentation has been updated if functionality changed
 
 ## Getting Help
 

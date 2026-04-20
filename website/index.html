@@ -12,21 +12,37 @@
         <div id="greetingDisplay" class="greeting bg-purple-700 rounded shadow p-4 min-h-20 flex items-center justify-center">
             Click the button to see a greeting!
         </div>
-        <button id="randomGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded mt-4">👋</button>
+        <div class="flex space-x-4 mt-4">
+            <button id="randomGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded">👋</button>
+            <button id="randomFarewellButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded">👋😢</button>
+        </div>
     </div>
 
     <script>
         async function getRandomGreeting() {
             try {
-                const response = await fetch('http://localhost:8080/random');
+                const response = await fetch('http://localhost:8080/');
                 const data = await response.json();
                 document.getElementById('greetingDisplay').textContent = data.greeting;
             } catch (error) {
                 console.error('Error fetching greeting:', error);
                 document.getElementById('greetingDisplay').textContent = 'Error fetching greeting';
-            }        }
+            }
+        }
+
+        async function getRandomFarewell() {
+            try {
+                const response = await fetch('http://localhost:8080/farewell');
+                const data = await response.json();
+                document.getElementById('greetingDisplay').textContent = data.farewell;
+            } catch (error) {
+                console.error('Error fetching farewell:', error);
+                document.getElementById('greetingDisplay').textContent = 'Error fetching farewell';
+            }
+        }
 
         document.getElementById('randomGreetingButton').addEventListener('click', getRandomGreeting);
+        document.getElementById('randomFarewellButton').addEventListener('click', getRandomFarewell);
     </script>
 </body>
 </html>
