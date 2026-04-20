@@ -5,6 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Greetings App</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        #globeContainer {
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            border-radius: 150px;
+            overflow: hidden;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            box-shadow: 0 0 50px rgba(138, 43, 226, 0.3);
+        }
+        #globeContainer canvas {
+            border-radius: 150px;
+        }
+        #locationInfo {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #a78bfa;
+        }
+    </style>
 </head>
 <body class="bg-purple-900 text-white font-sans flex flex-col items-center justify-center min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-screen-md">
@@ -12,19 +33,213 @@
         <div id="greetingDisplay" class="greeting bg-purple-700 rounded shadow p-4 min-h-20 flex items-center justify-center">
             Click the button to see a greeting!
         </div>
+        <div id="globeContainer" style="display: none;"></div>
+        <div id="locationInfo" style="display: none;"></div>
         <button id="randomGreetingButton" class="bg-purple-500 hover:bg-purple-400 text-white font-bold py-2 px-4 rounded mt-4">👋</button>
     </div>
 
     <script>
+        // Country coordinates (latitude, longitude)
+        const countryCoordinates = {
+            'US': { lat: 39.8283, lng: -98.5795, name: 'United States' },
+            'GB': { lat: 55.3781, lng: -3.4360, name: 'United Kingdom' },
+            'FR': { lat: 46.6034, lng: 1.8883, name: 'France' },
+            'IT': { lat: 41.8719, lng: 12.5674, name: 'Italy' },
+            'ES': { lat: 40.4637, lng: -3.7492, name: 'Spain' },
+            'DE': { lat: 51.1657, lng: 10.4515, name: 'Germany' },
+            'CN': { lat: 35.8617, lng: 104.1954, name: 'China' },
+            'IN': { lat: 20.5937, lng: 78.9629, name: 'India' },
+            'SA': { lat: 23.8859, lng: 45.0792, name: 'Saudi Arabia' },
+            'BD': { lat: 23.6850, lng: 90.3563, name: 'Bangladesh' },
+            'RU': { lat: 61.5240, lng: 105.3188, name: 'Russia' },
+            'BR': { lat: -14.2350, lng: -51.9253, name: 'Brazil' },
+            'PK': { lat: 30.3753, lng: 69.3451, name: 'Pakistan' },
+            'ID': { lat: -0.7893, lng: 113.9213, name: 'Indonesia' },
+            'JP': { lat: 36.2048, lng: 138.2529, name: 'Japan' }
+        };
+
+        let scene, camera, renderer, globe, marker;
+        let animationId;
+
+        function initGlobe() {
+            const container = document.getElementById('globeContainer');
+            
+            // Scene setup
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(300, 300);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+
+            // Create globe with earth-like colors
+            const geometry = new THREE.SphereGeometry(1, 64, 64);
+            
+            // Create a simple procedural earth texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            // Create ocean background
+            ctx.fillStyle = '#1e40af';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Add some simple landmasses
+            ctx.fillStyle = '#16a34a';
+            
+            // North America
+            ctx.fillRect(50, 80, 80, 60);
+            
+            // Europe
+            ctx.fillRect(200, 70, 40, 30);
+            
+            // Asia
+            ctx.fillRect(280, 60, 120, 80);
+            
+            // Africa
+            ctx.fillRect(220, 110, 60, 80);
+            
+            // South America
+            ctx.fillRect(100, 140, 40, 80);
+            
+            // Australia
+            ctx.fillRect(350, 160, 50, 30);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            
+            const material = new THREE.MeshLambertMaterial({ 
+                map: texture,
+                transparent: true,
+                opacity: 0.9
+            });
+            globe = new THREE.Mesh(geometry, material);
+            scene.add(globe);
+
+            // Add atmosphere glow
+            const atmosphereGeometry = new THREE.SphereGeometry(1.02, 32, 32);
+            const atmosphereMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x4a90e2,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.BackSide
+            });
+            const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+            scene.add(atmosphere);
+
+            // Position camera
+            camera.position.z = 3;
+
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+
+            // Add directional light (sun)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 0.5, 1);
+            scene.add(directionalLight);
+
+            animate();
+        }
+
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            // Rotate globe slowly
+            globe.rotation.y += 0.003;
+            
+            renderer.render(scene, camera);
+        }
+
+        function addMarker(lat, lng) {
+            // Remove existing marker
+            if (marker) {
+                scene.remove(marker);
+            }
+
+            // Convert lat/lng to 3D coordinates
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lng + 180) * (Math.PI / 180);
+
+            const x = -(1.05 * Math.sin(phi) * Math.cos(theta));
+            const y = 1.05 * Math.cos(phi);
+            const z = 1.05 * Math.sin(phi) * Math.sin(theta);
+
+            // Create marker
+            const markerGeometry = new THREE.SphereGeometry(0.03, 8, 8);
+            const markerMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xff4444,
+                transparent: true,
+                opacity: 0.9
+            });
+            marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            marker.position.set(x, y, z);
+            scene.add(marker);
+
+            // Add marker glow
+            const glowGeometry = new THREE.SphereGeometry(0.06, 8, 8);
+            const glowMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xff6b6b,
+                transparent: true,
+                opacity: 0.3
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            glow.position.set(x, y, z);
+            scene.add(glow);
+
+            // Animate marker
+            let scale = 1;
+            let growing = true;
+            const animateMarker = () => {
+                if (growing) {
+                    scale += 0.02;
+                    if (scale >= 1.3) growing = false;
+                } else {
+                    scale -= 0.02;
+                    if (scale <= 1) growing = true;
+                }
+                marker.scale.set(scale, scale, scale);
+                glow.scale.set(scale * 0.8, scale * 0.8, scale * 0.8);
+                requestAnimationFrame(animateMarker);
+            };
+            animateMarker();
+        }
+
+        function showGlobeWithLocation(locale) {
+            const globeContainer = document.getElementById('globeContainer');
+            const locationInfo = document.getElementById('locationInfo');
+            
+            globeContainer.style.display = 'block';
+            locationInfo.style.display = 'block';
+            
+            if (!scene) {
+                initGlobe();
+            }
+            
+            const coords = countryCoordinates[locale];
+            if (coords) {
+                addMarker(coords.lat, coords.lng);
+                locationInfo.textContent = `📍 ${coords.name}`;
+            } else {
+                locationInfo.textContent = `📍 Location: ${locale}`;
+            }
+        }
+
         async function getRandomGreeting() {
             try {
                 const response = await fetch('http://localhost:8080/random');
                 const data = await response.json();
                 document.getElementById('greetingDisplay').textContent = data.greeting;
+                
+                // Show globe with location
+                if (data.locale) {
+                    showGlobeWithLocation(data.locale);
+                }
             } catch (error) {
                 console.error('Error fetching greeting:', error);
                 document.getElementById('greetingDisplay').textContent = 'Error fetching greeting';
-            }        }
+            }
+        }
 
         document.getElementById('randomGreetingButton').addEventListener('click', getRandomGreeting);
     </script>
