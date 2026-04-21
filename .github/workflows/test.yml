@@ -16,7 +16,7 @@ jobs:
       - name: Dagger checks
         uses: dagger/dagger-for-github@main
         with:
-          dagger-flags: "--cloud"
+          dagger-flags: "--scale-out"
           check: "**"
           cloud-token: ${{ secrets.DAGGER_CLOUD_COMPUTE_TOKEN }}
           version: "latest"
