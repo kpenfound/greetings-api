@@ -1,0 +1,6 @@
+name = "code-workspace"
+engineVersion = "v0.17.1"
+disableDefaultFunctionCaching = true
+
+[runtime]
+  source = "go"

@@ -1,0 +1,33 @@
+[modules.greetings]
+source = ".dagger/modules/greetings"
+entrypoint = true
+
+[modules.dagger-go-sdk]
+source = "github.com/dagger/go-sdk"
+
+[modules.dagger-typescript-sdk]
+source = "github.com/dagger/typescript-sdk"
+
+[modules.eslint]
+source = "github.com/dagger/eslint"
+
+[modules.go]
+source = "github.com/dagger/go"
+
+[modules.dagger-go-sdk.as-sdk]
+name = "go"
+
+[[modules.dagger-go-sdk.as-sdk.modules]]
+path = ".dagger/modules/greetings"
+
+[[modules.dagger-go-sdk.as-sdk.modules]]
+path = ".dagger/backend"
+
+[[modules.dagger-go-sdk.as-sdk.modules]]
+path = ".dagger/workspace"
+
+[modules.dagger-typescript-sdk.as-sdk]
+name = "typescript"
+
+[[modules.dagger-typescript-sdk.as-sdk.modules]]
+path = ".dagger/frontend"

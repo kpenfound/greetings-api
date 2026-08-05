@@ -1,0 +1,11 @@
+name = "backend"
+engineVersion = "v0.18.7"
+disableDefaultFunctionCaching = true
+
+[runtime]
+  source = "go"
+
+[[dependencies]]
+  name = "golang"
+  source = "github.com/kpenfound/dagger-modules/golang@main"
+  pin = "f7964245d0146dd3810f247c6c09eb33518d4654"
