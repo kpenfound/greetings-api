@@ -6,6 +6,6 @@ disableDefaultFunctionCaching = true
   source = "go"
 
 [[dependencies]]
-  name = "golang"
-  source = "github.com/kpenfound/dagger-modules/golang@main"
-  pin = "f7964245d0146dd3810f247c6c09eb33518d4654"
+  name = "go"
+  source = "github.com/dagger/go@main"
+  pin = "548de867d65d3074c5730c70f317094f167709c7"

@@ -52,12 +52,15 @@ greetings-api/
 ├── website/             # Frontend application
 │   ├── index.html      # Main HTML file
 │   ├── package.json    # Frontend dependencies
-│   └── cypress/        # E2E tests
-├── .dagger/             # Dagger CI/CD modules
+│   ├── playwright.config.ts  # E2E test configuration
+│   └── tests/          # Playwright E2E tests
+├── .dagger/             # Dagger modules
 │   ├── backend/        # Backend build module
 │   ├── frontend/       # Frontend build module
-│   └── workspace/      # Workspace configuration
-└── dagger.json          # Dagger configuration
+│   ├── workspace/      # Agent workspace module
+│   └── modules/greetings/  # Entrypoint module configuration
+├── dagger.toml          # Dagger workspace configuration
+└── dagger.lock          # Dagger dependency lock file
 ```
 
 ### Backend Architecture
@@ -73,15 +76,15 @@ greetings-api/
 ### Frontend Architecture
 
 - **Language**: TypeScript
-- **Testing**: Cypress for end-to-end tests
+- **Testing**: Playwright for end-to-end tests
 - **Linting**: ESLint with TypeScript support
 - **Build**: Managed through Dagger modules
 
 ### CI/CD Architecture
 
 - **Tool**: Dagger for CI/CD operations
-- **Modules**: Separate modules for backend, frontend, and workspace management
-- **Functions**: Build, test, lint, serve, and release operations
+- **Modules**: Project modules for backend, frontend, and agent workspace management, plus reusable modules installed in `dagger.toml`: [go](https://github.com/dagger/go) (Go lint/test), [eslint](https://github.com/dagger/eslint) (JS/TS lint), and [playwright](https://github.com/dagger/playwright) (E2E tests, wired to `frontend:serve`)
+- **Checks**: All validation runs through `dagger check`; services run through `dagger up`
 
 ## Development Workflow
 
@@ -90,10 +93,10 @@ greetings-api/
 **Using Dagger (Recommended):**
 ```bash
 # Serve both backend and frontend
-dagger call serve up
+dagger up
 
 # Or run from remote without cloning
-dagger -m github.com/kpenfound/greetings-api call serve up
+dagger -W github.com/kpenfound/greetings-api up
 ```
 
 The frontend will be available at http://localhost:8081/ and the backend at http://localhost:8080/
@@ -103,7 +106,7 @@ The frontend will be available at http://localhost:8081/ and the backend at http
 **Backend Tests:**
 ```bash
 # Using Dagger
-dagger call test
+dagger check go:test-all
 
 # Or directly with Go
 go test ./...
@@ -112,7 +115,7 @@ go test ./...
 **Frontend E2E Tests:**
 ```bash
 # Using Dagger (recommended)
-dagger call check
+dagger check playwright:test
 
 # Or directly with npm
 cd website
@@ -124,13 +127,13 @@ npm run test:e2e
 **Backend Linting:**
 ```bash
 # Using Dagger
-dagger call lint
+dagger check go:lint-all
 ```
 
 **Frontend Linting:**
 ```bash
-# Using Dagger (part of check command)
-dagger call check
+# Using Dagger
+dagger check eslint:lint
 
 # Or directly with npm
 cd website
@@ -139,12 +142,13 @@ npm run lint
 
 ### Available Dagger Commands
 
+- `dagger check` - Run the complete CI checks
+- `dagger check -l` - List all available checks
+- `dagger up` - Serve the application locally (backend :8080, frontend :8081)
+- `dagger up -l` - List all available services
 - `dagger call build` - Build the backend and frontend
-- `dagger call check` - Run the complete CI checks
-- `dagger call lint` - Lint the Go code
-- `dagger call test` - Run unit tests
-- `dagger call serve up` - Serve the application locally
 - `dagger call release` - Create a GitHub release
+- `dagger functions` - List all available functions
 
 ## Making Changes
 
@@ -163,7 +167,7 @@ npm run lint
 
 - All new Go code should include unit tests
 - Frontend changes should not break existing E2E tests
-- Run the full test suite before submitting PRs: `dagger call check`
+- Run the full test suite before submitting PRs: `dagger check`
 
 ### Pull Request Process
 
@@ -176,7 +180,7 @@ npm run lint
 
 3. **Test your changes** thoroughly:
    ```bash
-   dagger call check
+   dagger check
    ```
 
 4. **Commit your changes** with clear commit messages

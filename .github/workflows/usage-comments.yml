@@ -14,12 +14,12 @@ jobs:
             Test this PR by running the following command:
 
             ```
-            dagger -m github.com/kpenfound/greetings-api@pull/${{ github.event.pull_request.number }}/head call check
+            dagger -W github.com/kpenfound/greetings-api@pull/${{ github.event.pull_request.number }}/head check
             ```
 
             Run this branch locally:
 
             ```
-            dagger -m github.com/kpenfound/greetings-api@pull/${{ github.event.pull_request.number }}/head call serve up
+            dagger -W github.com/kpenfound/greetings-api@pull/${{ github.event.pull_request.number }}/head up
             ```
           token: ${{ secrets.GITHUB_TOKEN }}

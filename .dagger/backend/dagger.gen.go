@@ -226,13 +226,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Backend).Build(&parent, arch), nil
-		case "Check":
-			var parent Backend
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*Backend).Check(&parent, ctx)
 		case "CheckDirectory":
 			var parent Backend
 			err = json.Unmarshal(parentJSON, &parent)
@@ -303,13 +296,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Backend).FormatFile(&parent, source, path), nil
-		case "Lint":
-			var parent Backend
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*Backend).Lint(&parent, ctx)
 		case "Serve":
 			var parent Backend
 			err = json.Unmarshal(parentJSON, &parent)
@@ -317,13 +303,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
 			return (*Backend).Serve(&parent), nil
-		case "UnitTest":
-			var parent Backend
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*Backend).UnitTest(&parent, ctx)
 		case "":
 			var parent Backend
 			err = json.Unmarshal(parentJSON, &parent)
@@ -349,70 +328,56 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 						dag.Function("Binary",
 							dag.TypeDef().WithObject("File")).
 							WithDescription("Return the compiled backend binary for a particular architecture").
-							WithSourceMap(dag.SourceMap("main.go", 74, 1)).
-							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 76, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 73, 1)).
+							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 75, 2)})).
 					WithFunction(
 						dag.Function("Build",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Build the backend").
-							WithSourceMap(dag.SourceMap("main.go", 60, 1)).
-							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 62, 2)})).
-					WithFunction(
-						dag.Function("Check",
-							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
-							WithDescription("Checker").
-							WithSourceMap(dag.SourceMap("main.go", 47, 1))).
+							WithSourceMap(dag.SourceMap("main.go", 58, 1)).
+							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 60, 2)})).
 					WithFunction(
 						dag.Function("CheckDirectory",
 							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
 							WithDescription("Stateless checker").
-							WithSourceMap(dag.SourceMap("main.go", 105, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory to run checks on", SourceMap: dag.SourceMap("main.go", 108, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 106, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory to run checks on", SourceMap: dag.SourceMap("main.go", 109, 2)})).
 					WithFunction(
 						dag.Function("Container",
 							dag.TypeDef().WithObject("Container")).
 							WithDescription("Get a container ready to run the backend").
-							WithSourceMap(dag.SourceMap("main.go", 83, 1)).
-							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 85, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 82, 1)).
+							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 84, 2)})).
 					WithFunction(
 						dag.Function("Format",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Formatter").
-							WithSourceMap(dag.SourceMap("main.go", 38, 1))).
+							WithSourceMap(dag.SourceMap("main.go", 50, 1))).
 					WithFunction(
 						dag.Function("FormatDirectory",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Stateless formatter").
-							WithSourceMap(dag.SourceMap("main.go", 114, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory to format", SourceMap: dag.SourceMap("main.go", 116, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 127, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory to format", SourceMap: dag.SourceMap("main.go", 129, 2)})).
 					WithFunction(
 						dag.Function("FormatFile",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Stateless formatter").
-							WithSourceMap(dag.SourceMap("main.go", 123, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory with go module", SourceMap: dag.SourceMap("main.go", 125, 2)}).
-							WithArg("path", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "File path to format", SourceMap: dag.SourceMap("main.go", 127, 2)})).
-					WithFunction(
-						dag.Function("Lint",
-							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
-							WithDescription("Lint the backend Go code").
-							WithSourceMap(dag.SourceMap("main.go", 30, 1))).
+							WithSourceMap(dag.SourceMap("main.go", 136, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory with go module", SourceMap: dag.SourceMap("main.go", 138, 2)}).
+							WithArg("path", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "File path to format", SourceMap: dag.SourceMap("main.go", 140, 2)})).
 					WithFunction(
 						dag.Function("Serve",
 							dag.TypeDef().WithObject("Service")).
 							WithDescription("Get a Service to run the backend").
-							WithSourceMap(dag.SourceMap("main.go", 100, 1))).
-					WithFunction(
-						dag.Function("UnitTest",
-							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
-							WithDescription("Run the unit tests for the backend").
-							WithSourceMap(dag.SourceMap("main.go", 22, 1))).
+							WithSourceMap(dag.SourceMap("main.go", 101, 1)).
+							WithUp()).
 					WithField("Source", dag.TypeDef().WithObject("Directory"), dagger.TypeDefWithFieldOpts{SourceMap: dag.SourceMap("main.go", 12, 2)}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("Backend")).
 							WithSourceMap(dag.SourceMap("main.go", 15, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 15, 10)}))), nil
+							WithArg("source", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 19, 2), DefaultPath: "/", Ignore: []string{".git", "**/node_modules", "website"}}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

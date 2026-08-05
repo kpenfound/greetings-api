@@ -10,7 +10,7 @@ import (
 )
 
 // Retrieve the binding value, as type Frontend
-func (r *Binding) AsFrontend() *Frontend { // frontend (../../../.dagger/frontend/src/index.ts:7:14)
+func (r *Binding) AsFrontend() *Frontend { // frontend (../../../.dagger/frontend/src/index.ts:15:14)
 	q := r.query.Select("asFrontend")
 
 	return &Frontend{
@@ -19,7 +19,7 @@ func (r *Binding) AsFrontend() *Frontend { // frontend (../../../.dagger/fronten
 }
 
 // Create or update a binding of type Frontend in the environment
-func (r *Env) WithFrontendInput(name string, value *Frontend, description string) *Env { // frontend (../../../.dagger/frontend/src/index.ts:7:14)
+func (r *Env) WithFrontendInput(name string, value *Frontend, description string) *Env { // frontend (../../../.dagger/frontend/src/index.ts:15:14)
 	assertNotNil("value", value)
 	q := r.query.Select("withFrontendInput")
 	q = q.Arg("name", name)
@@ -32,7 +32,7 @@ func (r *Env) WithFrontendInput(name string, value *Frontend, description string
 }
 
 // Declare a desired Frontend output to be assigned in the environment
-func (r *Env) WithFrontendOutput(name string, description string) *Env { // frontend (../../../.dagger/frontend/src/index.ts:7:14)
+func (r *Env) WithFrontendOutput(name string, description string) *Env { // frontend (../../../.dagger/frontend/src/index.ts:15:14)
 	q := r.query.Select("withFrontendOutput")
 	q = q.Arg("name", name)
 	q = q.Arg("description", description)
@@ -42,14 +42,11 @@ func (r *Env) WithFrontendOutput(name string, description string) *Env { // fron
 	}
 }
 
-type Frontend struct { // frontend (../../../.dagger/frontend/src/index.ts:7:14)
+type Frontend struct { // frontend (../../../.dagger/frontend/src/index.ts:15:14)
 	query *querybuilder.Selection
 
-	check          *string
 	checkDirectory *string
 	id             *FrontendID
-	lint           *string
-	unitTest       *string
 }
 
 func (r *Frontend) WithGraphQLQuery(q *querybuilder.Selection) *Frontend {
@@ -58,7 +55,7 @@ func (r *Frontend) WithGraphQLQuery(q *querybuilder.Selection) *Frontend {
 	}
 }
 
-func (r *Frontend) Build() *Directory { // frontend (../../../.dagger/frontend/src/index.ts:67:3)
+func (r *Frontend) Build() *Directory { // frontend (../../../.dagger/frontend/src/index.ts:37:3)
 	q := r.query.Select("build")
 
 	return &Directory{
@@ -66,19 +63,7 @@ func (r *Frontend) Build() *Directory { // frontend (../../../.dagger/frontend/s
 	}
 }
 
-func (r *Frontend) Check(ctx context.Context) (string, error) { // frontend (../../../.dagger/frontend/src/index.ts:59:9)
-	if r.check != nil {
-		return *r.check, nil
-	}
-	q := r.query.Select("check")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-func (r *Frontend) CheckDirectory(ctx context.Context, source *Directory) (string, error) { // frontend (../../../.dagger/frontend/src/index.ts:81:9)
+func (r *Frontend) CheckDirectory(ctx context.Context, source *Directory) (string, error) { // frontend (../../../.dagger/frontend/src/index.ts:59:9)
 	assertNotNil("source", source)
 	if r.checkDirectory != nil {
 		return *r.checkDirectory, nil
@@ -92,7 +77,7 @@ func (r *Frontend) CheckDirectory(ctx context.Context, source *Directory) (strin
 	return response, q.Execute(ctx)
 }
 
-func (r *Frontend) Format() *Directory { // frontend (../../../.dagger/frontend/src/index.ts:31:3)
+func (r *Frontend) Format() *Directory { // frontend (../../../.dagger/frontend/src/index.ts:24:3)
 	q := r.query.Select("format")
 
 	return &Directory{
@@ -100,7 +85,7 @@ func (r *Frontend) Format() *Directory { // frontend (../../../.dagger/frontend/
 	}
 }
 
-func (r *Frontend) FormatDirectory(source *Directory) *Directory { // frontend (../../../.dagger/frontend/src/index.ts:87:3)
+func (r *Frontend) FormatDirectory(source *Directory) *Directory { // frontend (../../../.dagger/frontend/src/index.ts:73:3)
 	assertNotNil("source", source)
 	q := r.query.Select("formatDirectory")
 	q = q.Arg("source", source)
@@ -110,7 +95,7 @@ func (r *Frontend) FormatDirectory(source *Directory) *Directory { // frontend (
 	}
 }
 
-func (r *Frontend) FormatFile(source *Directory, path string) *Directory { // frontend (../../../.dagger/frontend/src/index.ts:93:3)
+func (r *Frontend) FormatFile(source *Directory, path string) *Directory { // frontend (../../../.dagger/frontend/src/index.ts:79:3)
 	assertNotNil("source", source)
 	q := r.query.Select("formatFile")
 	q = q.Arg("source", source)
@@ -170,19 +155,7 @@ func (r *Frontend) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-func (r *Frontend) Lint(ctx context.Context) (string, error) { // frontend (../../../.dagger/frontend/src/index.ts:18:9)
-	if r.lint != nil {
-		return *r.lint, nil
-	}
-	q := r.query.Select("lint")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-func (r *Frontend) Serve() *Service { // frontend (../../../.dagger/frontend/src/index.ts:72:3)
+func (r *Frontend) Serve() *Service { // frontend (../../../.dagger/frontend/src/index.ts:43:3)
 	q := r.query.Select("serve")
 
 	return &Service{
@@ -190,24 +163,12 @@ func (r *Frontend) Serve() *Service { // frontend (../../../.dagger/frontend/src
 	}
 }
 
-func (r *Frontend) Source() *Directory { // frontend (../../../.dagger/frontend/src/index.ts:9:3)
+func (r *Frontend) Source() *Directory { // frontend (../../../.dagger/frontend/src/index.ts:17:3)
 	q := r.query.Select("source")
 
 	return &Directory{
 		query: q,
 	}
-}
-
-func (r *Frontend) UnitTest(ctx context.Context) (string, error) { // frontend (../../../.dagger/frontend/src/index.ts:44:9)
-	if r.unitTest != nil {
-		return *r.unitTest, nil
-	}
-	q := r.query.Select("unitTest")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
 }
 
 // AsCodeWorkspaceCheckable returns this Frontend as a CodeWorkspaceCheckable.
@@ -226,13 +187,20 @@ func (r *Frontend) AsNode() Node {
 	}
 }
 
+// FrontendOpts contains options for Query.Frontend
+type FrontendOpts struct {
+	Source *Directory // frontend (../../../.dagger/frontend/src/index.ts:19:54)
+}
+
 // A generated module for Frontend functions
-func (r *Query) Frontend(source *Directory, backend *Service) *Frontend { // frontend (../../../:0:0)
-	assertNotNil("source", source)
-	assertNotNil("backend", backend)
+func (r *Query) Frontend(opts ...FrontendOpts) *Frontend { // frontend (../../../:0:0)
 	q := r.query.Select("frontend")
-	q = q.Arg("source", source)
-	q = q.Arg("backend", backend)
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `source` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Source) {
+			q = q.Arg("source", opts[i].Source)
+		}
+	}
 
 	return &Frontend{
 		query: q,

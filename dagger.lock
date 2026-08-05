@@ -1,2 +1,4 @@
 [["version","1"]]
-["","git.head",["https://github.com/dagger/go"],"28c691078b79071e27d1df4135adbba3b84a2fb7","float"]
+["","git.head",["https://github.com/dagger/eslint"],"35a0cc0923fdf625608afb1c2b276e00262c0f81","float"]
+["","git.head",["https://github.com/dagger/go"],"548de867d65d3074c5730c70f317094f167709c7","float"]
+["","git.head",["https://github.com/dagger/playwright"],"7a6aa5388fcef513f037d31fb0a3251ad4025ed2","float"]

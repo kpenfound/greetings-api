@@ -82,6 +82,6 @@ func parseDiff(diffText string) []CodeSuggestion {
 // Helper function to convert string to int safely
 func atoi(s string) int {
 	var i int
-	fmt.Sscanf(s, "%d", &i)
+	_, _ = fmt.Sscanf(s, "%d", &i)
 	return i
 }

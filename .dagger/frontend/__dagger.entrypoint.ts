@@ -45,9 +45,6 @@ function formatError(e: unknown): DaggerError {
 function rebuildFrontend(state: any): Frontend {
   const __obj = Object.assign(Object.create(Frontend.prototype), state ?? {})
   if (state) {
-    if (state["backend"] !== undefined && state["backend"] !== null) {
-      __obj["backend"] = __loadCoreObject(state["backend"], "Service")
-    }
     if (state["source"] !== undefined && state["source"] !== null) {
       __obj["source"] = __loadCoreObject(state["source"], "Directory")
     }
@@ -58,9 +55,6 @@ function rebuildFrontend(state: any): Frontend {
 async function serializeFrontend(__obj: Frontend): Promise<any> {
   if (__obj === null || __obj === undefined) return __obj
   const __state: any = { ...__obj }
-  if ((__obj as any)["backend"] !== undefined && (__obj as any)["backend"] !== null) {
-    __state["backend"] = await ((__obj as any)["backend"]).id()
-  }
   if ((__obj as any)["source"] !== undefined && (__obj as any)["source"] !== null) {
     __state["source"] = await ((__obj as any)["source"]).id()
   }
@@ -72,18 +66,15 @@ async function serializeFrontend(__obj: Frontend): Promise<any> {
 async function register(): Promise<string> {
   let mod = dag.module_()
   mod = mod.withDescription("A generated module for Frontend functions")
-  let obj_Frontend = dag.typeDef().withObject("Frontend", { sourceMap: dag.sourceMap("src/index.ts", 7, 14) })
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("build", dag.typeDef().withObject("Directory")).withSourceMap(dag.sourceMap("src/index.ts", 67, 3)))
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("check", dag.typeDef().withKind(TypeDefKind.StringKind)).withSourceMap(dag.sourceMap("src/index.ts", 59, 9)))
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("checkDirectory", dag.typeDef().withKind(TypeDefKind.StringKind)).withSourceMap(dag.sourceMap("src/index.ts", 81, 9)).withArg("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 81, 24) }))
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("format", dag.typeDef().withObject("Directory")).withSourceMap(dag.sourceMap("src/index.ts", 31, 3)))
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("formatDirectory", dag.typeDef().withObject("Directory")).withSourceMap(dag.sourceMap("src/index.ts", 87, 3)).withArg("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 87, 19) }))
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("formatFile", dag.typeDef().withObject("Directory")).withSourceMap(dag.sourceMap("src/index.ts", 93, 3)).withArg("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 93, 14) }).withArg("path", dag.typeDef().withKind(TypeDefKind.StringKind), { sourceMap: dag.sourceMap("src/index.ts", 93, 33) }))
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("lint", dag.typeDef().withKind(TypeDefKind.StringKind)).withSourceMap(dag.sourceMap("src/index.ts", 18, 9)))
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("serve", dag.typeDef().withObject("Service")).withSourceMap(dag.sourceMap("src/index.ts", 72, 3)))
-  obj_Frontend = obj_Frontend.withFunction(dag.function_("unitTest", dag.typeDef().withKind(TypeDefKind.StringKind)).withSourceMap(dag.sourceMap("src/index.ts", 44, 9)))
-  obj_Frontend = obj_Frontend.withField("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 9, 3) })
-  obj_Frontend = obj_Frontend.withConstructor(dag.function_("", obj_Frontend).withArg("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 12, 15) }).withArg("backend", dag.typeDef().withObject("Service"), { sourceMap: dag.sourceMap("src/index.ts", 12, 34) }))
+  let obj_Frontend = dag.typeDef().withObject("Frontend", { sourceMap: dag.sourceMap("src/index.ts", 15, 14) })
+  obj_Frontend = obj_Frontend.withFunction(dag.function_("build", dag.typeDef().withObject("Directory")).withSourceMap(dag.sourceMap("src/index.ts", 37, 3)))
+  obj_Frontend = obj_Frontend.withFunction(dag.function_("checkDirectory", dag.typeDef().withKind(TypeDefKind.StringKind)).withSourceMap(dag.sourceMap("src/index.ts", 59, 9)).withArg("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 59, 24) }))
+  obj_Frontend = obj_Frontend.withFunction(dag.function_("format", dag.typeDef().withObject("Directory")).withSourceMap(dag.sourceMap("src/index.ts", 24, 3)))
+  obj_Frontend = obj_Frontend.withFunction(dag.function_("formatDirectory", dag.typeDef().withObject("Directory")).withSourceMap(dag.sourceMap("src/index.ts", 73, 3)).withArg("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 73, 19) }))
+  obj_Frontend = obj_Frontend.withFunction(dag.function_("formatFile", dag.typeDef().withObject("Directory")).withSourceMap(dag.sourceMap("src/index.ts", 79, 3)).withArg("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 79, 14) }).withArg("path", dag.typeDef().withKind(TypeDefKind.StringKind), { sourceMap: dag.sourceMap("src/index.ts", 79, 33) }))
+  obj_Frontend = obj_Frontend.withFunction(dag.function_("serve", dag.typeDef().withObject("Service")).withSourceMap(dag.sourceMap("src/index.ts", 43, 3)).withUp())
+  obj_Frontend = obj_Frontend.withField("source", dag.typeDef().withObject("Directory"), { sourceMap: dag.sourceMap("src/index.ts", 17, 3) })
+  obj_Frontend = obj_Frontend.withConstructor(dag.function_("", obj_Frontend).withArg("source", dag.typeDef().withObject("Directory"), { defaultPath: "/website", sourceMap: dag.sourceMap("src/index.ts", 19, 54) }))
   mod = mod.withObject(obj_Frontend)
   return await mod.id()
 }
@@ -100,8 +91,7 @@ async function invoke(
 
         case "": {
           const __arg_source = args["source"] === undefined || args["source"] === null ? args["source"] : __loadCoreObject(args["source"], "Directory")
-          const __arg_backend = args["backend"] === undefined || args["backend"] === null ? args["backend"] : __loadCoreObject(args["backend"], "Service")
-          const __result = await new Frontend(__arg_source, __arg_backend) as unknown as Frontend
+          const __result = await new Frontend(__arg_source) as unknown as Frontend
           return await serializeFrontend(__result)
         }
 
@@ -109,12 +99,6 @@ async function invoke(
           const __parent = rebuildFrontend(parentJson)
           const __result = await __parent.build()
           return await (__result).id()
-        }
-
-        case "check": {
-          const __parent = rebuildFrontend(parentJson)
-          const __result = await __parent.check()
-          return __result
         }
 
         case "checkDirectory": {
@@ -145,22 +129,10 @@ async function invoke(
           return await (__result).id()
         }
 
-        case "lint": {
-          const __parent = rebuildFrontend(parentJson)
-          const __result = await __parent.lint()
-          return __result
-        }
-
         case "serve": {
           const __parent = rebuildFrontend(parentJson)
           const __result = await __parent.serve()
           return await (__result).id()
-        }
-
-        case "unitTest": {
-          const __parent = rebuildFrontend(parentJson)
-          const __result = await __parent.unitTest()
-          return __result
         }
         default:
           throw new Error(`unknown function ${fnName} on Frontend`)

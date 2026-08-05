@@ -2,17 +2,29 @@
 source = ".dagger/modules/greetings"
 entrypoint = true
 
+[modules.backend]
+source = ".dagger/backend"
+
+[modules.frontend]
+source = ".dagger/frontend"
+
 [modules.dagger-go-sdk]
 source = "github.com/dagger/go-sdk"
 
 [modules.dagger-typescript-sdk]
 source = "github.com/dagger/typescript-sdk"
 
+[modules.go]
+source = "github.com/dagger/go"
+
 [modules.eslint]
 source = "github.com/dagger/eslint"
 
-[modules.go]
-source = "github.com/dagger/go"
+[modules.playwright]
+source = "github.com/dagger/playwright"
+
+[modules.playwright.settings]
+service = "frontend:serve"
 
 [modules.dagger-go-sdk.as-sdk]
 name = "go"

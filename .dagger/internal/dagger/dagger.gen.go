@@ -316,9 +316,6 @@ type Platform string
 type PortID = ID
 
 // A unique identifier for an object.
-type ProxyID = ID
-
-// A unique identifier for an object.
 type SDKConfigID = ID
 
 // A unique identifier for an object.
@@ -13023,16 +13020,6 @@ func (r *Query) LoadPortFromID(id PortID) *Port {
 	q = q.Arg("id", id)
 
 	return &Port{
-		query: q,
-	}
-}
-
-// Load a Proxy from its ID.
-func (r *Query) LoadProxyFromID(id ProxyID) *Proxy {
-	q := r.query.Select("loadProxyFromID")
-	q = q.Arg("id", id)
-
-	return &Proxy{
 		query: q,
 	}
 }

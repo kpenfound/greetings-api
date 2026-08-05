@@ -25,10 +25,5 @@ disableDefaultFunctionCaching = true
   pin = "c6081b3210407d5ea49fce8874c5104afa8373cb"
 
 [[dependencies]]
-  name = "proxy"
-  source = "github.com/kpenfound/dagger-modules/proxy@proxy/v0.2.5"
-  pin = "3e9129a119151eb122e5fe380bd2d4313d8fc001"
-
-[[dependencies]]
   name = "code-workspace"
   source = "../../workspace"

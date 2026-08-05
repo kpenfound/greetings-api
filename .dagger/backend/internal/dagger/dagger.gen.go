@@ -239,7 +239,13 @@ type GitRefID = ID
 type GitRepositoryID = ID
 
 // A unique identifier for an object.
-type GolangID = ID
+type GoDirectoryID = ID
+
+// A unique identifier for an object.
+type GoID = ID
+
+// A unique identifier for an object.
+type GoModuleID = ID
 
 // A unique identifier for an object.
 type HealthcheckConfigID = ID
@@ -12872,12 +12878,32 @@ func (r *Query) LoadGitRepositoryFromID(id GitRepositoryID) *GitRepository {
 	}
 }
 
-// Load a Golang from its ID.
-func (r *Query) LoadGolangFromID(id GolangID) *Golang {
-	q := r.query.Select("loadGolangFromID")
+// Load a GoDirectory from its ID.
+func (r *Query) LoadGoDirectoryFromID(id GoDirectoryID) *GoDirectory {
+	q := r.query.Select("loadGoDirectoryFromID")
 	q = q.Arg("id", id)
 
-	return &Golang{
+	return &GoDirectory{
+		query: q,
+	}
+}
+
+// Load a Go from its ID.
+func (r *Query) LoadGoFromID(id GoID) *Go {
+	q := r.query.Select("loadGoFromID")
+	q = q.Arg("id", id)
+
+	return &Go{
+		query: q,
+	}
+}
+
+// Load a GoModule from its ID.
+func (r *Query) LoadGoModuleFromID(id GoModuleID) *GoModule {
+	q := r.query.Select("loadGoModuleFromID")
+	q = q.Arg("id", id)
+
+	return &GoModule{
 		query: q,
 	}
 }

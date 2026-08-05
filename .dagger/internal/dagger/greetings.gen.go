@@ -15,17 +15,14 @@ type GreetingsID = ID // greetings (../../../:0:0)
 type Greetings struct { // greetings (../../../:0:0)
 	query *querybuilder.Selection
 
-	check               *string
 	debugBrokenTestsPr  *Void
 	debugTests          *string
 	developPullRequest  *string
 	developReview       *string
 	id                  *GreetingsID
-	lint                *string
 	pullRequestFeedback *Void
 	pullRequestReview   *Void
 	release             *string
-	test                *string
 }
 
 func (r *Greetings) WithGraphQLQuery(q *querybuilder.Selection) *Greetings {
@@ -41,43 +38,6 @@ func (r *Greetings) Build() *Directory {
 	return &Directory{
 		query: q,
 	}
-}
-
-// GreetingsCheckOpts contains options for Greetings.Check
-type GreetingsCheckOpts struct {
-	// Github token with permissions to comment on the pull request
-	GithubToken *Secret
-	// git commit in github
-	Commit string
-	// The model to use to debug debug tests
-	Model string
-}
-
-// Run the CI Checks for the project
-func (r *Greetings) Check(ctx context.Context, opts ...GreetingsCheckOpts) (string, error) {
-	if r.check != nil {
-		return *r.check, nil
-	}
-	q := r.query.Select("check")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `githubToken` optional argument
-		if !querybuilder.IsZeroValue(opts[i].GithubToken) {
-			q = q.Arg("githubToken", opts[i].GithubToken)
-		}
-		// `commit` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Commit) {
-			q = q.Arg("commit", opts[i].Commit)
-		}
-		// `model` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Model) {
-			q = q.Arg("model", opts[i].Model)
-		}
-	}
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
 }
 
 // GreetingsDebugBrokenTestsPrOpts contains options for Greetings.DebugBrokenTestsPr
@@ -290,19 +250,6 @@ func (r *Greetings) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-// Lint the Go code in the project
-func (r *Greetings) Lint(ctx context.Context) (string, error) {
-	if r.lint != nil {
-		return *r.lint, nil
-	}
-	q := r.query.Select("lint")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
 // GreetingsPullRequestFeedbackOpts contains options for Greetings.PullRequestFeedback
 type GreetingsPullRequestFeedbackOpts struct {
 	// The model to use to complete the assignment
@@ -365,28 +312,6 @@ func (r *Greetings) Release(ctx context.Context, tag string, ghToken *Secret) (s
 	q := r.query.Select("release")
 	q = q.Arg("tag", tag)
 	q = q.Arg("ghToken", ghToken)
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
-// Serve the backend and frontend to 8080 and 8081 respectively
-func (r *Greetings) Serve() *Service {
-	q := r.query.Select("serve")
-
-	return &Service{
-		query: q,
-	}
-}
-
-// Run unit tests for the project
-func (r *Greetings) Test(ctx context.Context) (string, error) {
-	if r.test != nil {
-		return *r.test, nil
-	}
-	q := r.query.Select("test")
 
 	var response string
 

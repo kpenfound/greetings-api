@@ -5,34 +5,45 @@ A simple greeting api with a beatuiful frontend.
 ## Try it out!
 
 ```
-dagger call serve up
+dagger up
 ```
 
 or without even cloning this repo:
 ```
-dagger -m github.com/kpenfound/greetings-api call serve up
+dagger -W github.com/kpenfound/greetings-api up
 ```
 
-The frontend will be available at http://localhost:8081/
-
+The frontend will be available at http://localhost:8081/ and the backend at http://localhost:8080/
 
 ## Daggerized!
+
+Run the CI checks:
+
+```
+dagger check
+```
 
 Dagger functions:
 
 ```
 Name                    Description
 build                   Build the backend and frontend for a specified environment
-check                   Run the CI Checks for the project
 debug-broken-tests-pr   Debug broken tests on a pull request and comment fix suggestions
 debug-tests             Debug broken tests. Returns a unified diff of the test fixes
 develop                 Complete an assignment for the greetings project and get back the completed work
-develop-pull-request    -
-lint                    Lint the Go code in the project
+develop-feedback        Agent to develop changes based on feedback on changes made in a Directory
+develop-pull-request    Develop changes based on a Github issue and open a pull request
+develop-review          Agent to review changes made in a Directory
+pull-request-feedback   Receive feedback on an open pull request via slash command
+pull-request-review     Review an open pull request via slash command
 release                 Create a GitHub release
-serve                   Serve the backend and frontend to 8080 and 8081 respectively
-test                    Run unit tests for the project
 ```
+
+Checks and services come from the project's modules (`backend`, `frontend`) and
+reusable modules installed in the workspace ([go](https://github.com/dagger/go),
+[eslint](https://github.com/dagger/eslint),
+[playwright](https://github.com/dagger/playwright)). List them with
+`dagger check -l` and `dagger up -l`.
 
 ## Demos
 

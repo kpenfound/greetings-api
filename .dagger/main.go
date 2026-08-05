@@ -38,85 +38,18 @@ func New(
 	app string,
 ) *Greetings {
 	g := &Greetings{
-		Source:   source,
-		Repo:     repo,
-		Image:    image,
-		App:      app,
-		Backend:  dag.Backend(source.WithoutDirectory("website")),
+		Source: source,
+		Repo:   repo,
+		Image:  image,
+		App:    app,
+		Backend: dag.Backend(dagger.BackendOpts{
+			Source: source.WithoutDirectory("website"),
+		}),
 	}
-	g.Frontend = dag.Frontend(source.Directory("website"), g.Backend.Serve())
+	g.Frontend = dag.Frontend(dagger.FrontendOpts{
+		Source: source.Directory("website"),
+	})
 	return g
-}
-
-// Run the CI Checks for the project
-func (g *Greetings) Check(
-	ctx context.Context,
-	// Github token with permissions to comment on the pull request
-	// +optional
-	githubToken *dagger.Secret,
-	// git commit in github
-	// +optional
-	commit string,
-	// The model to use to debug debug tests
-	// +optional
-	model string,
-) (string, error) {
-	// Lint
-	lintOut, err := g.Lint(ctx)
-	if err != nil {
-		if githubToken != nil {
-			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
-			return "", fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
-		}
-		return "", err
-	}
-
-	// Then Test
-	testOut, err := g.Test(ctx)
-	if err != nil {
-		if githubToken != nil {
-			debugErr := g.DebugBrokenTestsPr(ctx, githubToken, commit, model)
-			return "", fmt.Errorf("lint failed, attempting to debug %v %v", err, debugErr)
-		}
-		return "", err
-	}
-
-	// Then Build
-	_, err = g.Build().Sync(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	return lintOut + "\n\n" + testOut, nil
-}
-
-// Run unit tests for the project
-func (g *Greetings) Test(ctx context.Context) (string, error) {
-	backendResult, err := g.Backend.UnitTest(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	frontendResult, err := g.Frontend.UnitTest(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	return backendResult + "\n" + frontendResult, nil
-}
-
-// Lint the Go code in the project
-func (g *Greetings) Lint(ctx context.Context) (string, error) {
-	backendResult, err := g.Backend.Lint(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	frontendResult, err := g.Frontend.Lint(ctx)
-	if err != nil {
-		return "", err
-	}
-	return backendResult + "\n" + frontendResult, nil
 }
 
 // Build the backend and frontend for a specified environment
@@ -124,17 +57,6 @@ func (g *Greetings) Build() *dagger.Directory {
 	return dag.Directory().
 		WithFile("/build/greetings-api", g.Backend.Binary()).
 		WithDirectory("build/website/", g.Frontend.Build())
-}
-
-// Serve the backend and frontend to 8080 and 8081 respectively
-func (g *Greetings) Serve() *dagger.Service {
-	backendService := g.Backend.Serve()
-	frontendService := g.Frontend.Serve()
-
-	return dag.Proxy().
-		WithService(backendService, "backend", 8080, 8080).
-		WithService(frontendService, "frontend", 8081, 80).
-		Service()
 }
 
 // Create a GitHub release

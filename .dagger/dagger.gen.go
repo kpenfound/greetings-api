@@ -225,34 +225,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
 			return (*Greetings).Build(&parent), nil
-		case "Check":
-			var parent Greetings
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var githubToken *dagger.Secret
-			if inputArgs["githubToken"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["githubToken"]), &githubToken)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg githubToken", err))
-				}
-			}
-			var commit string
-			if inputArgs["commit"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["commit"]), &commit)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg commit", err))
-				}
-			}
-			var model string
-			if inputArgs["model"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["model"]), &model)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg model", err))
-				}
-			}
-			return (*Greetings).Check(&parent, ctx, githubToken, commit, model)
 		case "DebugBrokenTestsPr":
 			var parent Greetings
 			err = json.Unmarshal(parentJSON, &parent)
@@ -421,13 +393,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Greetings).DevelopReview(&parent, ctx, source, assignment, diff, model)
-		case "Lint":
-			var parent Greetings
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*Greetings).Lint(&parent, ctx)
 		case "PullRequestFeedback":
 			var parent Greetings
 			err = json.Unmarshal(parentJSON, &parent)
@@ -512,20 +477,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Greetings).Release(&parent, ctx, tag, ghToken)
-		case "Serve":
-			var parent Greetings
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*Greetings).Serve(&parent), nil
-		case "Test":
-			var parent Greetings
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*Greetings).Test(&parent, ctx)
 		case "":
 			var parent Greetings
 			err = json.Unmarshal(parentJSON, &parent)
@@ -572,15 +523,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 						dag.Function("Build",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Build the backend and frontend for a specified environment").
-							WithSourceMap(dag.SourceMap("main.go", 123, 1))).
-					WithFunction(
-						dag.Function("Check",
-							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
-							WithDescription("Run the CI Checks for the project").
-							WithSourceMap(dag.SourceMap("main.go", 52, 1)).
-							WithArg("githubToken", dag.TypeDef().WithObject("Secret").WithOptional(true), dagger.FunctionWithArgOpts{Description: "Github token with permissions to comment on the pull request", SourceMap: dag.SourceMap("main.go", 56, 2)}).
-							WithArg("commit", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "git commit in github", SourceMap: dag.SourceMap("main.go", 59, 2)}).
-							WithArg("model", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "The model to use to debug debug tests", SourceMap: dag.SourceMap("main.go", 62, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 56, 1))).
 					WithFunction(
 						dag.Function("DebugBrokenTestsPr",
 							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
@@ -630,11 +573,6 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 							WithArg("diff", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "Git diff of the changes so far", SourceMap: dag.SourceMap("review.go", 18, 2)}).
 							WithArg("model", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{Description: "The model to use to complete the assignment\n+default = \"claude-sonnet-4-0\"", SourceMap: dag.SourceMap("review.go", 22, 2)})).
 					WithFunction(
-						dag.Function("Lint",
-							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
-							WithDescription("Lint the Go code in the project").
-							WithSourceMap(dag.SourceMap("main.go", 109, 1))).
-					WithFunction(
 						dag.Function("PullRequestFeedback",
 							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
 							WithDescription("Receive feedback on an open pull request via slash command").
@@ -655,19 +593,9 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 						dag.Function("Release",
 							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
 							WithDescription("Create a GitHub release").
-							WithSourceMap(dag.SourceMap("main.go", 141, 1)).
-							WithArg("tag", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 141, 50)}).
-							WithArg("ghToken", dag.TypeDef().WithObject("Secret"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 141, 62)})).
-					WithFunction(
-						dag.Function("Serve",
-							dag.TypeDef().WithObject("Service")).
-							WithDescription("Serve the backend and frontend to 8080 and 8081 respectively").
-							WithSourceMap(dag.SourceMap("main.go", 130, 1))).
-					WithFunction(
-						dag.Function("Test",
-							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
-							WithDescription("Run unit tests for the project").
-							WithSourceMap(dag.SourceMap("main.go", 94, 1))).
+							WithSourceMap(dag.SourceMap("main.go", 63, 1)).
+							WithArg("tag", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 63, 50)}).
+							WithArg("ghToken", dag.TypeDef().WithObject("Secret"), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 63, 62)})).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("Greetings")).

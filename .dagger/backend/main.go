@@ -12,48 +12,46 @@ type Backend struct {
 	Source *dagger.Directory
 }
 
-func New(source *dagger.Directory) *Backend {
+func New(
+	// +optional
+	// +defaultPath="/"
+	// +ignore=[".git", "**/node_modules", "website"]
+	source *dagger.Directory,
+) *Backend {
 	return &Backend{
 		Source: source,
 	}
 }
 
-// Run the unit tests for the backend
-func (b *Backend) UnitTest(ctx context.Context) (string, error) {
-	return dag.
-		Golang().
-		WithSource(b.Source).
-		Test(ctx)
+// golangciLintImage matches the pinned lint image used by the dagger/go module
+const golangciLintImage = "docker.io/golangci/golangci-lint:v2.11.4-alpine@sha256:72bcd68512b4e27540dd3a778a1b7afd45759d8145cfb3c089f1d7af53e718e9"
+
+// source mounted into the Go toolchain container, ready to run go commands
+func (b *Backend) goBase() *dagger.Container {
+	return dag.Go().Base().
+		WithDirectory("/ws", b.Source).
+		WithWorkdir("/ws")
 }
 
-// Lint the backend Go code
-func (b *Backend) Lint(ctx context.Context) (string, error) {
-	return dag.
-		Golang().
-		WithSource(b.Source).
-		GolangciLint(ctx)
+// source mounted into the golangci-lint container
+func (b *Backend) lintBase() *dagger.Container {
+	return dag.Container().
+		From(golangciLintImage).
+		WithMountedCache("/go/pkg/mod", dag.CacheVolume("go-mod")).
+		WithEnvVariable("GOMODCACHE", "/go/pkg/mod").
+		WithMountedCache("/root/.cache/go-build", dag.CacheVolume("go-build")).
+		WithEnvVariable("GOCACHE", "/root/.cache/go-build").
+		WithMountedCache("/root/.cache/golangci-lint", dag.CacheVolume("golangci-lint")).
+		WithDirectory("/ws", b.Source).
+		WithWorkdir("/ws")
 }
 
 // Formatter
 func (b *Backend) Format() *dagger.Directory {
-	return dag.
-		Golang().
-		WithSource(b.Source).
-		Fmt().
-		GolangciLintFix()
-}
-
-// Checker
-func (b *Backend) Check(ctx context.Context) (string, error) {
-	lint, err := b.Lint(ctx)
-	if err != nil {
-		return "", err
-	}
-	test, err := b.UnitTest(ctx)
-	if err != nil {
-		return "", err
-	}
-	return lint + "\n" + test, nil
+	return b.lintBase().
+		WithExec([]string{"gofmt", "-w", "."}).
+		WithExec([]string{"golangci-lint", "run", "--fix"}).
+		Directory("/ws")
 }
 
 // Build the backend
@@ -64,10 +62,11 @@ func (b *Backend) Build(
 	if arch == "" {
 		arch = runtime.GOARCH
 	}
-	return dag.
-		Golang().
-		WithSource(b.Source).
-		Build([]string{}, dagger.GolangBuildOpts{Arch: arch})
+	built := b.goBase().
+		WithEnvVariable("GOOS", "linux").
+		WithEnvVariable("GOARCH", arch).
+		WithExec([]string{"go", "build", "-o", "greetings-api", "."})
+	return dag.Directory().WithFile("greetings-api", built.File("greetings-api"))
 }
 
 // Return the compiled backend binary for a particular architecture
@@ -97,6 +96,8 @@ func (b *Backend) Container(
 }
 
 // Get a Service to run the backend
+//
+// +up
 func (b *Backend) Serve() *dagger.Service {
 	return b.Container(runtime.GOARCH).AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
@@ -107,7 +108,19 @@ func (b *Backend) CheckDirectory(
 	// Directory to run checks on
 	source *dagger.Directory) (string, error) {
 	b.Source = source
-	return b.Check(ctx)
+	lint, err := b.lintBase().
+		WithExec([]string{"golangci-lint", "run"}).
+		Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+	test, err := b.goBase().
+		WithExec([]string{"go", "test", "./..."}).
+		Stdout(ctx)
+	if err != nil {
+		return "", err
+	}
+	return lint + "\n" + test, nil
 }
 
 // Stateless formatter

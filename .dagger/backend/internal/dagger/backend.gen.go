@@ -15,11 +15,8 @@ type BackendID = ID // backend (../../../../:0:0)
 type Backend struct { // backend (../../../../:0:0)
 	query *querybuilder.Selection
 
-	check          *string
 	checkDirectory *string
 	id             *BackendID
-	lint           *string
-	unitTest       *string
 }
 
 func (r *Backend) WithGraphQLQuery(q *querybuilder.Selection) *Backend {
@@ -66,19 +63,6 @@ func (r *Backend) Build(opts ...BackendBuildOpts) *Directory {
 	return &Directory{
 		query: q,
 	}
-}
-
-// Checker
-func (r *Backend) Check(ctx context.Context) (string, error) {
-	if r.check != nil {
-		return *r.check, nil
-	}
-	q := r.query.Select("check")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
 }
 
 // Stateless checker
@@ -197,19 +181,6 @@ func (r *Backend) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-// Lint the backend Go code
-func (r *Backend) Lint(ctx context.Context) (string, error) {
-	if r.lint != nil {
-		return *r.lint, nil
-	}
-	q := r.query.Select("lint")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
 // Get a Service to run the backend
 func (r *Backend) Serve() *Service {
 	q := r.query.Select("serve")
@@ -227,23 +198,19 @@ func (r *Backend) Source() *Directory {
 	}
 }
 
-// Run the unit tests for the backend
-func (r *Backend) UnitTest(ctx context.Context) (string, error) {
-	if r.unitTest != nil {
-		return *r.unitTest, nil
-	}
-	q := r.query.Select("unitTest")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
+// BackendOpts contains options for Query.Backend
+type BackendOpts struct {
+	Source *Directory
 }
 
-func (r *Query) Backend(source *Directory) *Backend { // backend (../../../../:0:0)
-	assertNotNil("source", source)
+func (r *Query) Backend(opts ...BackendOpts) *Backend { // backend (../../../../:0:0)
 	q := r.query.Select("backend")
-	q = q.Arg("source", source)
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `source` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Source) {
+			q = q.Arg("source", opts[i].Source)
+		}
+	}
 
 	return &Backend{
 		query: q,

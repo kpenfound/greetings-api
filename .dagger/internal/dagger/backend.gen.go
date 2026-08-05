@@ -12,11 +12,8 @@ import (
 type Backend struct { // backend (../../../.dagger/backend/main.go:11:6)
 	query *querybuilder.Selection
 
-	check          *string
 	checkDirectory *string
 	id             *BackendID
-	lint           *string
-	unitTest       *string
 }
 
 func (r *Backend) WithGraphQLQuery(q *querybuilder.Selection) *Backend {
@@ -27,11 +24,11 @@ func (r *Backend) WithGraphQLQuery(q *querybuilder.Selection) *Backend {
 
 // BackendBinaryOpts contains options for Backend.Binary
 type BackendBinaryOpts struct {
-	Arch string // backend (../../../.dagger/backend/main.go:76:2)
+	Arch string // backend (../../../.dagger/backend/main.go:75:2)
 }
 
 // Return the compiled backend binary for a particular architecture
-func (r *Backend) Binary(opts ...BackendBinaryOpts) *File { // backend (../../../.dagger/backend/main.go:74:1)
+func (r *Backend) Binary(opts ...BackendBinaryOpts) *File { // backend (../../../.dagger/backend/main.go:73:1)
 	q := r.query.Select("binary")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `arch` optional argument
@@ -47,11 +44,11 @@ func (r *Backend) Binary(opts ...BackendBinaryOpts) *File { // backend (../../..
 
 // BackendBuildOpts contains options for Backend.Build
 type BackendBuildOpts struct {
-	Arch string // backend (../../../.dagger/backend/main.go:62:2)
+	Arch string // backend (../../../.dagger/backend/main.go:60:2)
 }
 
 // Build the backend
-func (r *Backend) Build(opts ...BackendBuildOpts) *Directory { // backend (../../../.dagger/backend/main.go:60:1)
+func (r *Backend) Build(opts ...BackendBuildOpts) *Directory { // backend (../../../.dagger/backend/main.go:58:1)
 	q := r.query.Select("build")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `arch` optional argument
@@ -65,21 +62,8 @@ func (r *Backend) Build(opts ...BackendBuildOpts) *Directory { // backend (../..
 	}
 }
 
-// Checker
-func (r *Backend) Check(ctx context.Context) (string, error) { // backend (../../../.dagger/backend/main.go:47:1)
-	if r.check != nil {
-		return *r.check, nil
-	}
-	q := r.query.Select("check")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
 // Stateless checker
-func (r *Backend) CheckDirectory(ctx context.Context, source *Directory) (string, error) { // backend (../../../.dagger/backend/main.go:105:1)
+func (r *Backend) CheckDirectory(ctx context.Context, source *Directory) (string, error) { // backend (../../../.dagger/backend/main.go:106:1)
 	assertNotNil("source", source)
 	if r.checkDirectory != nil {
 		return *r.checkDirectory, nil
@@ -95,11 +79,11 @@ func (r *Backend) CheckDirectory(ctx context.Context, source *Directory) (string
 
 // BackendContainerOpts contains options for Backend.Container
 type BackendContainerOpts struct {
-	Arch string // backend (../../../.dagger/backend/main.go:85:2)
+	Arch string // backend (../../../.dagger/backend/main.go:84:2)
 }
 
 // Get a container ready to run the backend
-func (r *Backend) Container(opts ...BackendContainerOpts) *Container { // backend (../../../.dagger/backend/main.go:83:1)
+func (r *Backend) Container(opts ...BackendContainerOpts) *Container { // backend (../../../.dagger/backend/main.go:82:1)
 	q := r.query.Select("container")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `arch` optional argument
@@ -114,7 +98,7 @@ func (r *Backend) Container(opts ...BackendContainerOpts) *Container { // backen
 }
 
 // Formatter
-func (r *Backend) Format() *Directory { // backend (../../../.dagger/backend/main.go:38:1)
+func (r *Backend) Format() *Directory { // backend (../../../.dagger/backend/main.go:50:1)
 	q := r.query.Select("format")
 
 	return &Directory{
@@ -123,7 +107,7 @@ func (r *Backend) Format() *Directory { // backend (../../../.dagger/backend/mai
 }
 
 // Stateless formatter
-func (r *Backend) FormatDirectory(source *Directory) *Directory { // backend (../../../.dagger/backend/main.go:114:1)
+func (r *Backend) FormatDirectory(source *Directory) *Directory { // backend (../../../.dagger/backend/main.go:127:1)
 	assertNotNil("source", source)
 	q := r.query.Select("formatDirectory")
 	q = q.Arg("source", source)
@@ -134,7 +118,7 @@ func (r *Backend) FormatDirectory(source *Directory) *Directory { // backend (..
 }
 
 // Stateless formatter
-func (r *Backend) FormatFile(source *Directory, path string) *Directory { // backend (../../../.dagger/backend/main.go:123:1)
+func (r *Backend) FormatFile(source *Directory, path string) *Directory { // backend (../../../.dagger/backend/main.go:136:1)
 	assertNotNil("source", source)
 	q := r.query.Select("formatFile")
 	q = q.Arg("source", source)
@@ -194,21 +178,8 @@ func (r *Backend) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-// Lint the backend Go code
-func (r *Backend) Lint(ctx context.Context) (string, error) { // backend (../../../.dagger/backend/main.go:30:1)
-	if r.lint != nil {
-		return *r.lint, nil
-	}
-	q := r.query.Select("lint")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
 // Get a Service to run the backend
-func (r *Backend) Serve() *Service { // backend (../../../.dagger/backend/main.go:100:1)
+func (r *Backend) Serve() *Service { // backend (../../../.dagger/backend/main.go:101:1)
 	q := r.query.Select("serve")
 
 	return &Service{
@@ -222,19 +193,6 @@ func (r *Backend) Source() *Directory { // backend (../../../.dagger/backend/mai
 	return &Directory{
 		query: q,
 	}
-}
-
-// Run the unit tests for the backend
-func (r *Backend) UnitTest(ctx context.Context) (string, error) { // backend (../../../.dagger/backend/main.go:22:1)
-	if r.unitTest != nil {
-		return *r.unitTest, nil
-	}
-	q := r.query.Select("unitTest")
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
 }
 
 // AsCodeWorkspaceCheckable returns this Backend as a CodeWorkspaceCheckable.
@@ -286,10 +244,19 @@ func (r *Env) WithBackendOutput(name string, description string) *Env { // backe
 	}
 }
 
-func (r *Query) Backend(source *Directory) *Backend { // backend (../../../.dagger/backend/main.go:15:1)
-	assertNotNil("source", source)
+// BackendOpts contains options for Query.Backend
+type BackendOpts struct {
+	Source *Directory // backend (../../../.dagger/backend/main.go:19:2)
+}
+
+func (r *Query) Backend(opts ...BackendOpts) *Backend { // backend (../../../.dagger/backend/main.go:15:1)
 	q := r.query.Select("backend")
-	q = q.Arg("source", source)
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `source` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Source) {
+			q = q.Arg("source", opts[i].Source)
+		}
+	}
 
 	return &Backend{
 		query: q,
