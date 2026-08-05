@@ -1,0 +1,11 @@
+name = "backend"
+engineVersion = "v0.18.7"
+disableDefaultFunctionCaching = true
+
+[runtime]
+  source = "go"
+
+[[dependencies]]
+  name = "go"
+  source = "github.com/dagger/go@main"
+  pin = "548de867d65d3074c5730c70f317094f167709c7"

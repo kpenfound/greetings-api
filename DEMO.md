@@ -1,4 +1,11 @@
-# Dagger Demo Flow
+# Dagger Demo Flow (Retired)
+
+> **⚠️ This demo is retired.** It describes an older version of this project,
+> using Dagger v0 CLI syntax and functions that no longer exist on the current
+> branch (e.g. `deploy`, `all`). The commands below will not work against the
+> current codebase. To run these demos, check out an older commit or tag of
+> this repository from before the Dagger v1 migration. For current usage, see
+> the [README](./README.md) and [CONTRIBUTING](./CONTRIBUTING.md).
 
 ## The Greetings API App
 
