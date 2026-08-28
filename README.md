@@ -42,8 +42,10 @@ release                 Create a GitHub release
 Checks and services come from the project's modules (`backend`, `frontend`) and
 reusable modules installed in the workspace ([go](https://github.com/dagger/go),
 [eslint](https://github.com/dagger/eslint),
-[playwright](https://github.com/dagger/playwright)). List them with
-`dagger check -l` and `dagger up -l`.
+[playwright](https://github.com/dagger/playwright)). The reusable modules are
+wired to the project's services in `dagger.toml`: `go:test-all` runs the Go e2e
+tests against `backend:serve`, and `playwright:test` runs the browser tests
+against `frontend:serve`. List them with `dagger check -l` and `dagger up -l`.
 
 ## Demos
 

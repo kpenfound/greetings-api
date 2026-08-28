@@ -9,105 +9,6 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-// Retrieve the binding value, as type Go
-func (r *Binding) AsGo() *Go { // go (../../../../:0:0)
-	q := r.query.Select("asGo")
-
-	return &Go{
-		query: q,
-	}
-}
-
-// Retrieve the binding value, as type GoDirectory
-func (r *Binding) AsGoDirectory() *GoDirectory { // go (../../../../:0:0)
-	q := r.query.Select("asGoDirectory")
-
-	return &GoDirectory{
-		query: q,
-	}
-}
-
-// Retrieve the binding value, as type GoModule
-func (r *Binding) AsGoModule() *GoModule { // go (../../../../:0:0)
-	q := r.query.Select("asGoModule")
-
-	return &GoModule{
-		query: q,
-	}
-}
-
-// Create or update a binding of type GoDirectory in the environment
-func (r *Env) WithGoDirectoryInput(name string, value *GoDirectory, description string) *Env { // go (../../../../:0:0)
-	assertNotNil("value", value)
-	q := r.query.Select("withGoDirectoryInput")
-	q = q.Arg("name", name)
-	q = q.Arg("value", value)
-	q = q.Arg("description", description)
-
-	return &Env{
-		query: q,
-	}
-}
-
-// Declare a desired GoDirectory output to be assigned in the environment
-func (r *Env) WithGoDirectoryOutput(name string, description string) *Env { // go (../../../../:0:0)
-	q := r.query.Select("withGoDirectoryOutput")
-	q = q.Arg("name", name)
-	q = q.Arg("description", description)
-
-	return &Env{
-		query: q,
-	}
-}
-
-// Create or update a binding of type Go in the environment
-func (r *Env) WithGoInput(name string, value *Go, description string) *Env { // go (../../../../:0:0)
-	assertNotNil("value", value)
-	q := r.query.Select("withGoInput")
-	q = q.Arg("name", name)
-	q = q.Arg("value", value)
-	q = q.Arg("description", description)
-
-	return &Env{
-		query: q,
-	}
-}
-
-// Create or update a binding of type GoModule in the environment
-func (r *Env) WithGoModuleInput(name string, value *GoModule, description string) *Env { // go (../../../../:0:0)
-	assertNotNil("value", value)
-	q := r.query.Select("withGoModuleInput")
-	q = q.Arg("name", name)
-	q = q.Arg("value", value)
-	q = q.Arg("description", description)
-
-	return &Env{
-		query: q,
-	}
-}
-
-// Declare a desired GoModule output to be assigned in the environment
-func (r *Env) WithGoModuleOutput(name string, description string) *Env { // go (../../../../:0:0)
-	q := r.query.Select("withGoModuleOutput")
-	q = q.Arg("name", name)
-	q = q.Arg("description", description)
-
-	return &Env{
-		query: q,
-	}
-}
-
-// Declare a desired Go output to be assigned in the environment
-func (r *Env) WithGoOutput(name string, description string) *Env { // go (../../../../:0:0)
-	q := r.query.Select("withGoOutput")
-	q = q.Arg("name", name)
-	q = q.Arg("description", description)
-
-	return &Env{
-		query: q,
-	}
-}
-
 // A Dagger module for Go - a programming language for building simple, secure, scalable systems.
 //
 // https://dagger.io
@@ -146,22 +47,13 @@ func (r *Go) Generate(ctx context.Context) ([]string, error) { // go (../../../.
 	return response, q.Execute(ctx)
 }
 
-// GoGenerateAllOpts contains options for Go.GenerateAll
-type GoGenerateAllOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Run go generate in every discovered Go module.
 // Modules configured to skip generate, or without go:generate directives,
 // are skipped.
-func (r *Go) GenerateAll(opts ...GoGenerateAllOpts) *Changeset { // go (../../../../:0:0)
+func (r *Go) GenerateAll(ws *Workspace) *Changeset { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("generateAll")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	return &Changeset{
 		query: q,
@@ -239,32 +131,21 @@ func (r *Go) Lint(ctx context.Context) ([]string, error) { // go (../../../../:0
 	return response, q.Execute(ctx)
 }
 
-// GoLintAllOpts contains options for Go.LintAll
-type GoLintAllOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Run golangci-lint in every discovered Go module.
 // Modules configured to skip lint are skipped.
-func (r *Go) LintAll(ctx context.Context, opts ...GoLintAllOpts) error { // go (../../../../:0:0)
+func (r *Go) LintAll(ctx context.Context, ws *Workspace) error { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	if r.lintAll != nil {
 		return nil
 	}
 	q := r.query.Select("lintAll")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	return q.Execute(ctx)
 }
 
 // GoModuleOpts contains options for Go.Module
 type GoModuleOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-
 	FindUp bool // go (../../../../:0:0)
 }
 
@@ -272,18 +153,16 @@ type GoModuleOpts struct {
 //
 // By default, path may be a module root or a directory inside a module. Set
 // findUp to false when path is already a module root and no lookup is needed.
-func (r *Go) Module(path string, opts ...GoModuleOpts) *GoModule { // go (../../../../:0:0)
+func (r *Go) Module(ws *Workspace, path string, opts ...GoModuleOpts) *GoModule { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("module")
 	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
 		// `findUp` optional argument
 		if !querybuilder.IsZeroValue(opts[i].FindUp) {
 			q = q.Arg("findUp", opts[i].FindUp)
 		}
 	}
+	q = q.Arg("ws", ws)
 	q = q.Arg("path", path)
 
 	return &GoModule{
@@ -293,8 +172,6 @@ func (r *Go) Module(path string, opts ...GoModuleOpts) *GoModule { // go (../../
 
 // GoModulesOpts contains options for Go.Modules
 type GoModulesOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-
 	Include []string // go (../../../../:0:0)
 
 	Exclude []string // go (../../../../:0:0)
@@ -309,13 +186,10 @@ type GoModulesOpts struct {
 // Go modules discovered from go.mod files at or below the working directory,
 // plus the enclosing module when the cwd is inside one. Optional include/exclude
 // patterns filter the discovered module roots.
-func (r *Go) Modules(ctx context.Context, opts ...GoModulesOpts) ([]GoModule, error) { // go (../../../../:0:0)
+func (r *Go) Modules(ctx context.Context, ws *Workspace, opts ...GoModulesOpts) ([]GoModule, error) { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("modules")
 	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
 		// `include` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Include) {
 			q = q.Arg("include", opts[i].Include)
@@ -337,6 +211,7 @@ func (r *Go) Modules(ctx context.Context, opts ...GoModulesOpts) ([]GoModule, er
 			q = q.Arg("includeSkipGenerate", opts[i].IncludeSkipGenerate)
 		}
 	}
+	q = q.Arg("ws", ws)
 
 	q = q.Select("id")
 
@@ -377,24 +252,15 @@ func (r *Go) Test(ctx context.Context) ([]string, error) { // go (../../../../:0
 	return response, q.Execute(ctx)
 }
 
-// GoTestAllOpts contains options for Go.TestAll
-type GoTestAllOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Run tests in every discovered Go module.
 // Modules configured to skip tests are skipped.
-func (r *Go) TestAll(ctx context.Context, opts ...GoTestAllOpts) error { // go (../../../../:0:0)
+func (r *Go) TestAll(ctx context.Context, ws *Workspace) error { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	if r.testAll != nil {
 		return nil
 	}
 	q := r.query.Select("testAll")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	return q.Execute(ctx)
 }
@@ -545,45 +411,27 @@ func (r *GoModule) Base() *Container { // go (../../../../:0:0)
 	}
 }
 
-// GoModuleGenerateOpts contains options for GoModule.Generate
-type GoModuleGenerateOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Changes made by running go generate in this module.
 // If this module is configured to skip generate or no go:generate directives are
 // found, the changeset is empty.
-func (r *GoModule) Generate(opts ...GoModuleGenerateOpts) *Changeset { // go (../../../../:0:0)
+func (r *GoModule) Generate(ws *Workspace) *Changeset { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("generate")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	return &Changeset{
 		query: q,
 	}
 }
 
-// GoModuleHasGenerateDirectivesOpts contains options for GoModule.HasGenerateDirectives
-type GoModuleHasGenerateDirectivesOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Whether this module's Go files contain a go:generate directive.
-func (r *GoModule) HasGenerateDirectives(ctx context.Context, opts ...GoModuleHasGenerateDirectivesOpts) (bool, error) { // go (../../../../:0:0)
+func (r *GoModule) HasGenerateDirectives(ctx context.Context, ws *Workspace) (bool, error) { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	if r.hasGenerateDirectives != nil {
 		return *r.hasGenerateDirectives, nil
 	}
 	q := r.query.Select("hasGenerateDirectives")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	var response bool
 
@@ -642,8 +490,6 @@ func (r *GoModule) UnmarshalJSON(bs []byte) error {
 
 // GoModuleIncludeOpts contains options for GoModule.Include
 type GoModuleIncludeOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-
 	Lint bool // go (../../../../:0:0)
 
 	Test bool // go (../../../../:0:0)
@@ -653,13 +499,10 @@ type GoModuleIncludeOpts struct {
 
 // Final workspace include patterns used to build this module's source directory.
 // With no include flags, defaults to test inputs.
-func (r *GoModule) Include(ctx context.Context, opts ...GoModuleIncludeOpts) ([]string, error) { // go (../../../../:0:0)
+func (r *GoModule) Include(ctx context.Context, ws *Workspace, opts ...GoModuleIncludeOpts) ([]string, error) { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("include")
 	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
 		// `lint` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Lint) {
 			q = q.Arg("lint", opts[i].Lint)
@@ -673,6 +516,7 @@ func (r *GoModule) Include(ctx context.Context, opts ...GoModuleIncludeOpts) ([]
 			q = q.Arg("generate", opts[i].Generate)
 		}
 	}
+	q = q.Arg("ws", ws)
 
 	var response []string
 
@@ -692,8 +536,6 @@ func (r *GoModule) IncludeBase(ctx context.Context) ([]string, error) { // go (.
 
 // GoModuleIncludeDiscoveredOpts contains options for GoModule.IncludeDiscovered
 type GoModuleIncludeDiscoveredOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-
 	Lint bool // go (../../../../:0:0)
 
 	Test bool // go (../../../../:0:0)
@@ -704,13 +546,10 @@ type GoModuleIncludeDiscoveredOpts struct {
 // Additional workspace include patterns discovered by scanning Go directives
 // and local go.mod replaces reachable from this module's include graph.
 // With no include flags, defaults to test inputs.
-func (r *GoModule) IncludeDiscovered(ctx context.Context, opts ...GoModuleIncludeDiscoveredOpts) ([]string, error) { // go (../../../../:0:0)
+func (r *GoModule) IncludeDiscovered(ctx context.Context, ws *Workspace, opts ...GoModuleIncludeDiscoveredOpts) ([]string, error) { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("includeDiscovered")
 	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
 		// `lint` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Lint) {
 			q = q.Arg("lint", opts[i].Lint)
@@ -724,6 +563,7 @@ func (r *GoModule) IncludeDiscovered(ctx context.Context, opts ...GoModuleInclud
 			q = q.Arg("generate", opts[i].Generate)
 		}
 	}
+	q = q.Arg("ws", ws)
 
 	var response []string
 
@@ -741,24 +581,15 @@ func (r *GoModule) IncludeExtraFiles(ctx context.Context) ([]string, error) { //
 	return response, q.Execute(ctx)
 }
 
-// GoModuleLintOpts contains options for GoModule.Lint
-type GoModuleLintOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Run golangci-lint in this module.
 // If this module is configured to skip lint, no lint check is run.
-func (r *GoModule) Lint(ctx context.Context, opts ...GoModuleLintOpts) error { // go (../../../../:0:0)
+func (r *GoModule) Lint(ctx context.Context, ws *Workspace) error { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	if r.lint != nil {
 		return nil
 	}
 	q := r.query.Select("lint")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	return q.Execute(ctx)
 }
@@ -776,23 +607,14 @@ func (r *GoModule) Path(ctx context.Context) (string, error) { // go (../../../.
 	return response, q.Execute(ctx)
 }
 
-// GoModuleSkipGenerateOpts contains options for GoModule.SkipGenerate
-type GoModuleSkipGenerateOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Whether this module falls outside the configured go generate selection.
-func (r *GoModule) SkipGenerate(ctx context.Context, opts ...GoModuleSkipGenerateOpts) (bool, error) { // go (../../../../:0:0)
+func (r *GoModule) SkipGenerate(ctx context.Context, ws *Workspace) (bool, error) { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	if r.skipGenerate != nil {
 		return *r.skipGenerate, nil
 	}
 	q := r.query.Select("skipGenerate")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	var response bool
 
@@ -800,23 +622,14 @@ func (r *GoModule) SkipGenerate(ctx context.Context, opts ...GoModuleSkipGenerat
 	return response, q.Execute(ctx)
 }
 
-// GoModuleSkipLintOpts contains options for GoModule.SkipLint
-type GoModuleSkipLintOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Whether this module falls outside the configured lint selection.
-func (r *GoModule) SkipLint(ctx context.Context, opts ...GoModuleSkipLintOpts) (bool, error) { // go (../../../../:0:0)
+func (r *GoModule) SkipLint(ctx context.Context, ws *Workspace) (bool, error) { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	if r.skipLint != nil {
 		return *r.skipLint, nil
 	}
 	q := r.query.Select("skipLint")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	var response bool
 
@@ -824,23 +637,14 @@ func (r *GoModule) SkipLint(ctx context.Context, opts ...GoModuleSkipLintOpts) (
 	return response, q.Execute(ctx)
 }
 
-// GoModuleSkipTestOpts contains options for GoModule.SkipTest
-type GoModuleSkipTestOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Whether this module falls outside the configured test selection.
-func (r *GoModule) SkipTest(ctx context.Context, opts ...GoModuleSkipTestOpts) (bool, error) { // go (../../../../:0:0)
+func (r *GoModule) SkipTest(ctx context.Context, ws *Workspace) (bool, error) { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	if r.skipTest != nil {
 		return *r.skipTest, nil
 	}
 	q := r.query.Select("skipTest")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	var response bool
 
@@ -850,8 +654,6 @@ func (r *GoModule) SkipTest(ctx context.Context, opts ...GoModuleSkipTestOpts) (
 
 // GoModuleSourceOpts contains options for GoModule.Source
 type GoModuleSourceOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-
 	Lint bool // go (../../../../:0:0)
 
 	Test bool // go (../../../../:0:0)
@@ -861,13 +663,10 @@ type GoModuleSourceOpts struct {
 
 // Workspace source mounted for this module's Go commands.
 // With no include flags, defaults to test inputs.
-func (r *GoModule) Source(opts ...GoModuleSourceOpts) *Directory { // go (../../../../:0:0)
+func (r *GoModule) Source(ws *Workspace, opts ...GoModuleSourceOpts) *Directory { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("source")
 	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
 		// `lint` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Lint) {
 			q = q.Arg("lint", opts[i].Lint)
@@ -881,68 +680,42 @@ func (r *GoModule) Source(opts ...GoModuleSourceOpts) *Directory { // go (../../
 			q = q.Arg("generate", opts[i].Generate)
 		}
 	}
+	q = q.Arg("ws", ws)
 
 	return &Directory{
 		query: q,
 	}
-}
-
-// GoModuleTestOpts contains options for GoModule.Test
-type GoModuleTestOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
 }
 
 // Run tests in this module.
 // If this module is configured to skip tests, no tests are run.
-func (r *GoModule) Test(ctx context.Context, opts ...GoModuleTestOpts) error { // go (../../../../:0:0)
+func (r *GoModule) Test(ctx context.Context, ws *Workspace) error { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	if r.test != nil {
 		return nil
 	}
 	q := r.query.Select("test")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	return q.Execute(ctx)
 }
 
-// GoModuleTestDataOpts contains options for GoModule.TestData
-type GoModuleTestDataOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Workspace testdata directories mounted while testing this module.
-func (r *GoModule) TestData(opts ...GoModuleTestDataOpts) *Directory { // go (../../../../:0:0)
+func (r *GoModule) TestData(ws *Workspace) *Directory { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("testData")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	return &Directory{
 		query: q,
 	}
 }
 
-// GoModuleTestDirectoriesOpts contains options for GoModule.TestDirectories
-type GoModuleTestDirectoriesOpts struct {
-	Ws *Workspace // go (../../../../:0:0)
-}
-
 // Directories in this module containing Go test files.
-func (r *GoModule) TestDirectories(ctx context.Context, opts ...GoModuleTestDirectoriesOpts) ([]GoDirectory, error) { // go (../../../../:0:0)
+func (r *GoModule) TestDirectories(ctx context.Context, ws *Workspace) ([]GoDirectory, error) { // go (../../../../:0:0)
+	assertNotNil("ws", ws)
 	q := r.query.Select("testDirectories")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `ws` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Ws) {
-			q = q.Arg("ws", opts[i].Ws)
-		}
-	}
+	q = q.Arg("ws", ws)
 
 	q = q.Select("id")
 

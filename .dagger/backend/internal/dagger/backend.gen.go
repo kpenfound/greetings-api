@@ -132,6 +132,30 @@ func (r *Backend) FormatFile(source *Directory, path string) *Directory {
 	}
 }
 
+// A Go container with the backend API running as a bound service, for the go
+// module's `base` setting (dagger.toml: [modules.go.settings] base =
+// "backend:go-test-base").
+//
+// The e2e tests in e2e_test.go need a server to talk to, which the go
+// toolchain has no way to start. Handing it a base container with the service
+// already bound lets its own test check run them; without this they skip, and
+// a skip reports the same as a pass.
+//
+// Deliberately no workdir, source mount or cache mounts: the go module adds its
+// own on top. This is only an image plus a service and the address to reach it.
+// The binding survives into every command the toolchain derives from this.
+//
+// The image matches the toolchain's own default rather than the version in
+// go.mod. It has to: this base also builds the toolchain's helper binaries,
+// whose go.mod requires 1.26, so an older image fails before any test runs.
+func (r *Backend) GoTestBase() *Container {
+	q := r.query.Select("goTestBase")
+
+	return &Container{
+		query: q,
+	}
+}
+
 // A unique identifier for this Backend.
 func (r *Backend) ID(ctx context.Context) (BackendID, error) {
 	if r.id != nil {

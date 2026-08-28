@@ -17,6 +17,14 @@ source = "github.com/dagger/typescript-sdk"
 [modules.go]
 source = "github.com/dagger/go"
 
+[modules.go.settings]
+# The e2e tests in e2e_test.go need the API running. The toolchain cannot start
+# it, so it is handed a base container with backend:serve already bound (as
+# GREETINGS_API_URL) and it runs the tests itself. Without this its test check
+# would run without the variable, and the e2e tests skip when that is unset,
+# which looks exactly like passing.
+base = "backend:go-test-base"
+
 [modules.eslint]
 source = "github.com/dagger/eslint"
 

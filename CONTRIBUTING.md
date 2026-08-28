@@ -34,7 +34,7 @@ The Greetings API is a simple greeting service with a beautiful frontend. It ser
 
 - Go 1.18 or higher
 - Node.js (for the frontend)
-- [Dagger](https://dagger.io/) for running CI/CD operations
+- [Dagger](https://dagger.io/) for running CI/CD operations. This project targets the v1 beta; run the CLI with `DAGGER_X_RELEASE=v1.0.0-beta.11` (or `dagger --x-release=v1.0.0-beta.11 ...`) so the CLI and engine match the version CI uses
 
 ## Project Architecture
 
@@ -43,7 +43,8 @@ The project follows a monorepo structure with both backend and frontend componen
 ```
 greetings-api/
 ├── main.go              # Go backend server
-├── main_test.go         # Go backend tests
+├── main_test.go         # Go backend unit tests
+├── e2e_test.go          # Go backend e2e tests (need a running API, see Running Tests)
 ├── greetings.json       # Greeting data in multiple languages
 ├── go.mod               # Go module dependencies
 ├── CONTRIBUTING.md      # Developer documentation
@@ -71,7 +72,7 @@ greetings-api/
   - `GET /` - Returns a random greeting
   - `GET /{language}` - Returns a greeting in the specified language
 - **Data**: Greetings are stored in `greetings.json` and embedded in the binary
-- **Testing**: Uses `gotest.tools` for unit tests
+- **Testing**: Uses `gotest.tools`. `main_test.go` holds unit tests; `e2e_test.go` holds end-to-end tests that hit a running API over HTTP (endpoints, error responses, CORS) and skip unless `GREETINGS_API_URL` points at one
 
 ### Frontend Architecture
 
@@ -83,7 +84,8 @@ greetings-api/
 ### CI/CD Architecture
 
 - **Tool**: Dagger for CI/CD operations
-- **Modules**: Project modules for backend, frontend, and agent workspace management, plus reusable modules installed in `dagger.toml`: [go](https://github.com/dagger/go) (Go lint/test), [eslint](https://github.com/dagger/eslint) (JS/TS lint), and [playwright](https://github.com/dagger/playwright) (E2E tests, wired to `frontend:serve`)
+- **Modules**: Project modules for backend, frontend, and agent workspace management, plus reusable modules installed in `dagger.toml`: [go](https://github.com/dagger/go) (Go lint/test), [eslint](https://github.com/dagger/eslint) (JS/TS lint), and [playwright](https://github.com/dagger/playwright) (E2E tests)
+- **Wiring**: Reusable modules get project services through settings in `dagger.toml` rather than custom check functions. The go module's `base` is `backend:go-test-base`, a Go container with `backend:serve` bound as `GREETINGS_API_URL`, so `go:test-all` runs the e2e tests against the real API. The playwright module's `service` is `frontend:serve`, so `playwright:test` runs the browser tests against the served site
 - **Checks**: All validation runs through `dagger check`; services run through `dagger up`
 
 ## Development Workflow
@@ -105,12 +107,16 @@ The frontend will be available at http://localhost:8081/ and the backend at http
 
 **Backend Tests:**
 ```bash
-# Using Dagger
+# Using Dagger (recommended)
 dagger check go:test-all
 
 # Or directly with Go
 go test ./...
 ```
+
+`go:test-all` gets its API from `backend:go-test-base`, wired as the go module's `base` setting in `dagger.toml`, so the e2e tests in `e2e_test.go` run against a real server.
+
+> A bare `go test ./...` runs only the unit tests: the e2e tests skip when `GREETINGS_API_URL` is unset, and a skipped test reports the same as a passing one. To run them outside Dagger, start the API (`go run .`) and set `GREETINGS_API_URL=http://localhost:8080`.
 
 **Frontend E2E Tests:**
 ```bash
@@ -146,9 +152,9 @@ npm run lint
 - `dagger check -l` - List all available checks
 - `dagger up` - Serve the application locally (backend :8080, frontend :8081)
 - `dagger up -l` - List all available services
-- `dagger call build` - Build the backend and frontend
-- `dagger call release` - Create a GitHub release
-- `dagger functions` - List all available functions
+- `dagger api call build` - Build the backend and frontend
+- `dagger api call release` - Create a GitHub release
+- `dagger api call --help` - List all available functions
 
 ## Making Changes
 
