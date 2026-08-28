@@ -296,6 +296,13 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 				}
 			}
 			return (*Backend).FormatFile(&parent, source, path), nil
+		case "GoTestBase":
+			var parent Backend
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			return (*Backend).GoTestBase(&parent), nil
 		case "Serve":
 			var parent Backend
 			err = json.Unmarshal(parentJSON, &parent)
@@ -340,8 +347,8 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 						dag.Function("CheckDirectory",
 							dag.TypeDef().WithKind(dagger.TypeDefKindStringKind)).
 							WithDescription("Stateless checker").
-							WithSourceMap(dag.SourceMap("main.go", 106, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory to run checks on", SourceMap: dag.SourceMap("main.go", 109, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 129, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory to run checks on", SourceMap: dag.SourceMap("main.go", 132, 2)})).
 					WithFunction(
 						dag.Function("Container",
 							dag.TypeDef().WithObject("Container")).
@@ -357,15 +364,20 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 						dag.Function("FormatDirectory",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Stateless formatter").
-							WithSourceMap(dag.SourceMap("main.go", 127, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory to format", SourceMap: dag.SourceMap("main.go", 129, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 150, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory to format", SourceMap: dag.SourceMap("main.go", 152, 2)})).
 					WithFunction(
 						dag.Function("FormatFile",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Stateless formatter").
-							WithSourceMap(dag.SourceMap("main.go", 136, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory with go module", SourceMap: dag.SourceMap("main.go", 138, 2)}).
-							WithArg("path", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "File path to format", SourceMap: dag.SourceMap("main.go", 140, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 159, 1)).
+							WithArg("source", dag.TypeDef().WithObject("Directory"), dagger.FunctionWithArgOpts{Description: "Directory with go module", SourceMap: dag.SourceMap("main.go", 161, 2)}).
+							WithArg("path", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind), dagger.FunctionWithArgOpts{Description: "File path to format", SourceMap: dag.SourceMap("main.go", 163, 2)})).
+					WithFunction(
+						dag.Function("GoTestBase",
+							dag.TypeDef().WithObject("Container")).
+							WithDescription("A Go container with the backend API running as a bound service, for the go\nmodule's `base` setting (dagger.toml: [modules.go.settings] base =\n\"backend:go-test-base\").\n\nThe e2e tests in e2e_test.go need a server to talk to, which the go\ntoolchain has no way to start. Handing it a base container with the service\nalready bound lets its own test check run them; without this they skip, and\na skip reports the same as a pass.\n\nDeliberately no workdir, source mount or cache mounts: the go module adds its\nown on top. This is only an image plus a service and the address to reach it.\nThe binding survives into every command the toolchain derives from this.\n\nThe image matches the toolchain's own default rather than the version in\ngo.mod. It has to: this base also builds the toolchain's helper binaries,\nwhose go.mod requires 1.26, so an older image fails before any test runs.").
+							WithSourceMap(dag.SourceMap("main.go", 121, 1))).
 					WithFunction(
 						dag.Function("Serve",
 							dag.TypeDef().WithObject("Service")).

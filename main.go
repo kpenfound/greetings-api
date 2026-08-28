@@ -36,6 +36,7 @@ func main() {
 		greeting, err := SelectGreeting(greetings, "random")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		_, err = w.Write([]byte(FormatResponse(greeting)))
 		if err != nil {
@@ -50,6 +51,7 @@ func main() {
 		greeting, err := SelectGreeting(greetings, language)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		_, err = w.Write([]byte(FormatResponse(greeting)))
 		if err != nil {

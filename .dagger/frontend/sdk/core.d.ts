@@ -115,6 +115,12 @@ type AddressFileOpts = {
     gitignore?: boolean;
     noCache?: boolean;
 };
+type AgentGroupComposeOpts = {
+    /**
+     * The base LLM to compose onto. Defaults to a fresh workspace-bound LLM.
+     */
+    base?: LLM;
+};
 type BuildArg = {
     /**
      * The build argument name.
@@ -881,12 +887,6 @@ type ContainerWithoutUnixSocketOpts = {
      */
     expand?: boolean;
 };
-type CurrentModuleAsSdkOpts = {
-    /**
-     * The workspace to resolve SDK-role data against. Defaults to the current workspace.
-     */
-    workspace?: Workspace;
-};
 type CurrentModuleGeneratorsOpts = {
     /**
      * Only include generators matching the specified patterns
@@ -1162,12 +1162,24 @@ type DirectoryWithNewFileOpts = {
      */
     permissions?: number;
 };
+type DirectoryWithPatchOpts = {
+    /**
+     * How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
+     */
+    onConflict?: PatchConflict;
+};
+type DirectoryWithPatchFileOpts = {
+    /**
+     * How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
+     */
+    onConflict?: PatchConflict;
+};
 type EngineCacheEntrySetOpts = {
     key?: string;
 };
 type EngineCachePruneOpts = {
     /**
-     * Use the engine-wide default pruning policy if true, otherwise prune the whole cache of any releasable entries.
+     * Use enabled engine-wide default disk and structural policies. If no default disk policy is enabled, the disk stage falls back to pruning all releasable disk-cache entries. If false, explicit options select stages; with no options, all releasable disk-cache entries are pruned.
      */
     useDefaultPolicy?: boolean;
     /**
@@ -1186,22 +1198,14 @@ type EngineCachePruneOpts = {
      * Override the target disk space to keep after pruning (e.g. "200GB" or "50%").
      */
     targetSpace?: string;
-};
-type EnvChecksOpts = {
     /**
-     * Only include checks matching the specified patterns
+     * Override the maximum structural metadata estimate in absolute bytes. Explicit values must be positive; the configured/default value is used when omitted.
      */
-    include?: string[];
+    maxEstimatedBytes?: number;
     /**
-     * When true, only return annotated check functions; exclude generate-as-checks
+     * Override the structural metadata estimate to target in absolute bytes. Explicit values must be positive and lower than the resolved maximum; the configured/default value is used when omitted.
      */
-    noGenerate?: boolean;
-};
-type EnvServicesOpts = {
-    /**
-     * Only include services matching the specified patterns
-     */
-    include?: string[];
+    targetEstimatedBytes?: number;
 };
 type EnvFileGetOpts = {
     /**
@@ -1424,11 +1428,51 @@ type GeneratorGroupChangesOpts = {
      */
     onConflict?: ChangesetsMergeConflict;
 };
+type GitCommitAncestorReleaseTagOpts = {
+    /**
+     * Include pre-release tags when choosing the latest tag.
+     */
+    includePreRelease?: boolean;
+};
+type GitCommitReleaseTagOpts = {
+    /**
+     * Include pre-release tags when choosing the latest tag.
+     */
+    includePreRelease?: boolean;
+};
+type GitCommitTreeOpts = {
+    /**
+     * Set to true to discard .git directory.
+     */
+    discardGitDir?: boolean;
+    /**
+     * The depth of the tree to fetch.
+     */
+    depth?: number;
+    /**
+     * Set to true to populate tag refs in the local checkout .git.
+     */
+    includeTags?: boolean;
+};
 type GitRefAsWorkspaceOpts = {
     /**
      * Current working directory inside the workspace root. Defaults to the workspace root.
      */
     cwd?: string;
+};
+type GitRefLogOpts = {
+    /**
+     * Maximum number of commits to return.
+     */
+    limit?: number;
+    /**
+     * Only include commits touching these paths, relative to the root of the repository.
+     */
+    paths?: string[];
+    /**
+     * Exclude commits reachable from this ref, i.e. only list commits added on top of it.
+     */
+    base?: GitRef;
 };
 type GitRefTreeOpts = {
     /**
@@ -1618,6 +1662,12 @@ type LLMWithResponseOpts = {
      */
     totalTokens?: number;
 };
+type LLMWithToolsOpts = {
+    /**
+     * Method names to exclude from the toolset (e.g. constructors, entrypoints).
+     */
+    except?: string[];
+};
 type LLMContentBlockInput = {
     /**
      * The arguments to pass to the tool (for TOOL_CALL kind).
@@ -1795,6 +1845,29 @@ declare function NetworkProtocolValueToName(value: NetworkProtocol): string;
  * it can be properly used inside the module runtime.
  */
 declare function NetworkProtocolNameToValue(name: string): NetworkProtocol;
+/**
+ * How to handle patch hunks that no longer apply to the target content.
+ */
+declare enum PatchConflict {
+    /**
+     * Fail the operation if any part of the patch does not apply.
+     */
+    Fail = "FAIL",
+    /**
+     * Apply the hunks that fit and insert conflict markers where hunks no longer match, instead of failing.
+     */
+    LeaveConflictMarkers = "LEAVE_CONFLICT_MARKERS"
+}
+/**
+ * Utility function to convert a PatchConflict value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+declare function PatchConflictValueToName(value: PatchConflict): string;
+/**
+ * Utility function to convert a PatchConflict name to its value so
+ * it can be properly used inside the module runtime.
+ */
+declare function PatchConflictNameToValue(name: string): PatchConflict;
 type PipelineLabel = {
     /**
      * Label name.
@@ -1863,15 +1936,11 @@ type ClientCurrentTypeDefsOpts = {
      */
     hideCore?: boolean;
 };
-type ClientEnvOpts = {
+type ClientEngineVolumeOpts = {
     /**
-     * Give the environment the same privileges as the caller: core API including host access, current module, and dependencies
+     * Optional existing subdirectory within the volume payload to mount.
      */
-    privileged?: boolean;
-    /**
-     * Allow new outputs to be declared and saved in the environment
-     */
-    writable?: boolean;
+    subdir?: string;
 };
 type ClientEnvFileOpts = {
     /**
@@ -2271,6 +2340,18 @@ declare function TypeDefKindNameToValue(name: string): TypeDefKind;
 type Void = string & {
     __Void: never;
 };
+type WorkspaceAgentsOpts = {
+    /**
+     * Only include agents matching the specified patterns
+     */
+    include?: string[];
+};
+type WorkspaceChangesOpts = {
+    /**
+     * An earlier workspace state to compare against.
+     */
+    from?: Workspace;
+};
 type WorkspaceChecksOpts = {
     /**
      * Only include checks matching the specified patterns
@@ -2308,6 +2389,20 @@ type WorkspaceDirectoryOpts = {
      * Apply .gitignore filter rules inside the directory.
      */
     gitignore?: boolean;
+};
+type WorkspaceFindRootsOpts = {
+    /**
+     * Directory to start from. Relative paths resolve from the workspace cwd.
+     */
+    start?: string;
+    /**
+     * File basenames that mark a project root (e.g. ["go.mod"] or ["deno.json", "deno.jsonc"]).
+     */
+    markers: string[];
+    /**
+     * Glob patterns pruning the walk below start (e.g. ["**\/node_modules/**"]).
+     */
+    exclude?: string[];
 };
 type WorkspaceFindUpOpts = {
     /**
@@ -2398,10 +2493,14 @@ type WorkspaceWithInitClientOpts = {
      * Write to the workspace config directory at the workspace cwd.
      */
     here?: boolean;
+    /**
+     * Skip running the SDK's generators for the new client.
+     */
+    noGenerate?: boolean;
 };
 type WorkspaceWithInitModuleOpts = {
     /**
-     * Workspace-relative path for the new module.
+     * Path for the new module, relative to the workspace cwd; a leading "/" is relative to the workspace root. Defaults to .dagger/modules/<name> beside the workspace config.
      */
     path?: string;
     /**
@@ -2420,6 +2519,10 @@ type WorkspaceWithInitModuleOpts = {
      * Write to the workspace config directory at the workspace cwd.
      */
     here?: boolean;
+    /**
+     * Skip running the SDK's generators for the new module.
+     */
+    noGenerate?: boolean;
 };
 type WorkspaceWithModuleOpts = {
     /**
@@ -2545,213 +2648,54 @@ declare class Address extends BaseClient {
      */
     volume: () => Volume;
 }
-declare class Binding extends BaseClient {
+declare class Agent extends BaseClient {
     private readonly _id?;
-    private readonly _asString?;
-    private readonly _digest?;
-    private readonly _isNull?;
+    private readonly _description?;
     private readonly _name?;
-    private readonly _typeName?;
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _asString?: string, _digest?: string, _isNull?: boolean, _name?: string, _typeName?: string);
+    constructor(ctx?: Context, _id?: ID, _description?: string, _name?: string);
     /**
-     * A unique identifier for this Binding.
+     * A unique identifier for this Agent.
      */
     id: () => Promise<ID>;
     /**
-     * Retrieve the binding value, as type Address
+     * The description of the agent
      */
-    asAddress: () => Address;
+    description: () => Promise<string>;
     /**
-     * Retrieve the binding value, as type CacheVolume
-     */
-    asCacheVolume: () => CacheVolume;
-    /**
-     * Retrieve the binding value, as type Changeset
-     */
-    asChangeset: () => Changeset;
-    /**
-     * Retrieve the binding value, as type Check
-     */
-    asCheck: () => Check;
-    /**
-     * Retrieve the binding value, as type CheckGroup
-     */
-    asCheckGroup: () => CheckGroup;
-    /**
-     * Retrieve the binding value, as type Cloud
-     */
-    asCloud: () => Cloud;
-    /**
-     * Retrieve the binding value, as type Container
-     */
-    asContainer: () => Container;
-    /**
-     * Retrieve the binding value, as type CurrentModuleAsSDK
-     */
-    asCurrentModuleAsSDK: () => CurrentModuleAsSDK;
-    /**
-     * Retrieve the binding value, as type CurrentModuleAsSDKClient
-     */
-    asCurrentModuleAsSDKClient: () => CurrentModuleAsSDKClient;
-    /**
-     * Retrieve the binding value, as type CurrentModuleAsSDKModule
-     */
-    asCurrentModuleAsSDKModule: () => CurrentModuleAsSDKModule;
-    /**
-     * Retrieve the binding value, as type DiffStat
-     */
-    asDiffStat: () => DiffStat;
-    /**
-     * Retrieve the binding value, as type Directory
-     */
-    asDirectory: () => Directory;
-    /**
-     * Retrieve the binding value, as type Env
-     */
-    asEnv: () => Env;
-    /**
-     * Retrieve the binding value, as type EnvFile
-     */
-    asEnvFile: () => EnvFile;
-    /**
-     * Retrieve the binding value, as type File
-     */
-    asFile: () => File;
-    /**
-     * Retrieve the binding value, as type Generator
-     */
-    asGenerator: () => Generator;
-    /**
-     * Retrieve the binding value, as type GeneratorGroup
-     */
-    asGeneratorGroup: () => GeneratorGroup;
-    /**
-     * Retrieve the binding value, as type GitRef
-     */
-    asGitRef: () => GitRef;
-    /**
-     * Retrieve the binding value, as type GitRepository
-     */
-    asGitRepository: () => GitRepository;
-    /**
-     * Retrieve the binding value, as type HTTPState
-     */
-    asHTTPState: () => HTTPState;
-    /**
-     * Retrieve the binding value, as type JSONValue
-     */
-    asJSONValue: () => JSONValue;
-    /**
-     * Retrieve the binding value, as type LLMContentBlock
-     */
-    asLLMContentBlock: () => LLMContentBlock;
-    /**
-     * Retrieve the binding value, as type LLMMessage
-     */
-    asLLMMessage: () => LLMMessage;
-    /**
-     * Retrieve the binding value, as type Module
-     */
-    asModule: () => Module_;
-    /**
-     * Retrieve the binding value, as type ModuleConfigClient
-     */
-    asModuleConfigClient: () => ModuleConfigClient;
-    /**
-     * Retrieve the binding value, as type ModuleSource
-     */
-    asModuleSource: () => ModuleSource;
-    /**
-     * Retrieve the binding value, as type Schema
-     */
-    asSchema: () => Schema;
-    /**
-     * Retrieve the binding value, as type SearchResult
-     */
-    asSearchResult: () => SearchResult;
-    /**
-     * Retrieve the binding value, as type SearchSubmatch
-     */
-    asSearchSubmatch: () => SearchSubmatch;
-    /**
-     * Retrieve the binding value, as type Secret
-     */
-    asSecret: () => Secret;
-    /**
-     * Retrieve the binding value, as type Service
-     */
-    asService: () => Service;
-    /**
-     * Retrieve the binding value, as type Socket
-     */
-    asSocket: () => Socket;
-    /**
-     * Retrieve the binding value, as type Stat
-     */
-    asStat: () => Stat;
-    /**
-     * Returns the binding's string value
-     */
-    asString: () => Promise<string>;
-    /**
-     * Retrieve the binding value, as type Up
-     */
-    asUp: () => Up;
-    /**
-     * Retrieve the binding value, as type UpGroup
-     */
-    asUpGroup: () => UpGroup;
-    /**
-     * Retrieve the binding value, as type Volume
-     */
-    asVolume: () => Volume;
-    /**
-     * Retrieve the binding value, as type Workspace
-     */
-    asWorkspace: () => Workspace;
-    /**
-     * Retrieve the binding value, as type WorkspaceGit
-     */
-    asWorkspaceGit: () => WorkspaceGit;
-    /**
-     * Retrieve the binding value, as type WorkspaceMigration
-     */
-    asWorkspaceMigration: () => WorkspaceMigration;
-    /**
-     * Retrieve the binding value, as type WorkspaceMigrationStep
-     */
-    asWorkspaceMigrationStep: () => WorkspaceMigrationStep;
-    /**
-     * Retrieve the binding value, as type WorkspaceModule
-     */
-    asWorkspaceModule: () => WorkspaceModule;
-    /**
-     * Retrieve the binding value, as type WorkspaceModuleSetting
-     */
-    asWorkspaceModuleSetting: () => WorkspaceModuleSetting;
-    /**
-     * Retrieve the binding value, as type WorkspaceSDK
-     */
-    asWorkspaceSDK: () => WorkspaceSDK;
-    /**
-     * Returns the digest of the binding value
-     */
-    digest: () => Promise<string>;
-    /**
-     * Returns true if the binding is null
-     */
-    isNull: () => Promise<boolean>;
-    /**
-     * Returns the binding name
+     * Return the fully qualified name of the agent
      */
     name: () => Promise<string>;
     /**
-     * Returns the binding type
+     * The original module in which the agent has been defined
      */
-    typeName: () => Promise<string>;
+    originalModule: () => Module_;
+    /**
+     * The path of the agent within its module
+     */
+    path: () => Promise<string[]>;
+}
+declare class AgentGroup extends BaseClient {
+    private readonly _id?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID);
+    /**
+     * A unique identifier for this AgentGroup.
+     */
+    id: () => Promise<ID>;
+    /**
+     * Compose all selected agent middlewares onto a base LLM, in alphabetical module:fn order, and return the composed LLM.
+     * @param opts.base The base LLM to compose onto. Defaults to a fresh workspace-bound LLM.
+     */
+    compose: (opts?: AgentGroupComposeOpts) => LLM;
+    /**
+     * Return a list of individual agents and their details
+     */
+    list: () => Promise<Agent[]>;
 }
 /**
  * A directory whose contents persist across runs.
@@ -2884,7 +2828,7 @@ declare class Check extends BaseClient {
     /**
      * If the check failed, this is the error
      */
-    error: () => Error$1;
+    error: () => Promise<Error$1 | null>;
     /**
      * Return the fully qualified name of the check
      */
@@ -3058,7 +3002,7 @@ declare class Container extends BaseClient {
     /**
      * Retrieves this container's configured docker healthcheck.
      */
-    dockerHealthcheck: () => HealthcheckConfig;
+    dockerHealthcheck: () => Promise<HealthcheckConfig | null>;
     /**
      * Return the container's OCI entrypoint.
      */
@@ -3152,7 +3096,9 @@ declare class Container extends BaseClient {
     file: (path: string, opts?: ContainerFileOpts) => File;
     /**
      * Download a container image, and apply it to the container state. All previous state will be lost.
-     * @param address Address of the container image to download, in standard OCI ref format. Example:"registry.dagger.io/engine:latest"
+     * @param address Address of the container image to download, in standard OCI ref format. Example: "registry.dagger.io/engine:latest".
+     *
+     * An address without a tag or digest selects the greatest stable release tag, falling back to the literal "latest" tag when no eligible release exists.
      * @param opts.registryService Service to use as the registry endpoint for the image address.
      *
      * The service will be started only for this pull.
@@ -3240,7 +3186,7 @@ declare class Container extends BaseClient {
      * @param path Path to check (e.g., "/file.txt").
      * @param opts.doNotFollowSymlinks If specified, do not follow symlinks.
      */
-    stat: (path: string, opts?: ContainerStatOpts) => Stat;
+    stat: (path: string, opts?: ContainerStatOpts) => Promise<Stat | null>;
     /**
      * The buffered standard error stream of the last executed command
      *
@@ -3709,9 +3655,9 @@ declare class CurrentModule extends BaseClient {
      * Treat the currently executing module as an SDK installed in the given workspace, exposing the modules and clients it manages.
      *
      * Errors if the current module is not installed as an SDK in this workspace.
-     * @param opts.workspace The workspace to resolve SDK-role data against. Defaults to the current workspace.
+     * @param workspace The workspace to resolve SDK-role data against.
      */
-    asSDK: (opts?: CurrentModuleAsSdkOpts) => CurrentModuleAsSDK;
+    asSDK: (workspace: Workspace) => CurrentModuleAsSDK;
     /**
      * The dependencies of the module.
      */
@@ -3749,7 +3695,7 @@ declare class CurrentModule extends BaseClient {
     workdirFile: (path: string) => File;
 }
 /**
- * The SDK-role data for the currently executing module, as installed in the active workspace.
+ * The SDK-role data for the currently executing module, as installed in the supplied workspace.
  */
 declare class CurrentModuleAsSDK extends BaseClient {
     private readonly _id?;
@@ -3767,7 +3713,7 @@ declare class CurrentModuleAsSDK extends BaseClient {
      */
     clients: () => Promise<CurrentModuleAsSDKClient[]>;
     /**
-     * The workspace-local modules this SDK authors and manages.
+     * The managed modules relevant to the bound workspace cwd: every module at or below it, plus the nearest enclosing module when the cwd itself is not managed.
      */
     modules: () => Promise<CurrentModuleAsSDKModule[]>;
     /**
@@ -4022,7 +3968,7 @@ declare class Directory extends BaseClient {
      * @param path Path to stat (e.g., "/file.txt").
      * @param opts.doNotFollowSymlinks If specified, do not follow symlinks.
      */
-    stat: (path: string, opts?: DirectoryStatOpts) => Stat;
+    stat: (path: string, opts?: DirectoryStatOpts) => Promise<Stat | null>;
     /**
      * Force evaluation in the engine.
      */
@@ -4095,15 +4041,17 @@ declare class Directory extends BaseClient {
     /**
      * Retrieves this directory with the given Git-compatible patch applied.
      * @param patch Patch to apply (e.g., "diff --git a/file.txt b/file.txt\nindex 1234567..abcdef8 100644\n--- a/file.txt\n+++ b/file.txt\n@@ -1,1 +1,1 @@\n-Hello\n+World\n").
+     * @param opts.onConflict How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
      * @experimental
      */
-    withPatch: (patch: string) => Directory;
+    withPatch: (patch: string, opts?: DirectoryWithPatchOpts) => Directory;
     /**
      * Retrieves this directory with the given Git-compatible patch file applied.
      * @param patch File containing the patch to apply
+     * @param opts.onConflict How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
      * @experimental
      */
-    withPatchFile: (patch: File) => Directory;
+    withPatchFile: (patch: File, opts?: DirectoryWithPatchFileOpts) => Directory;
     /**
      * Return a snapshot with a symlink
      * @param target Location of the file or directory to link to (e.g., "/existing/file").
@@ -4198,11 +4146,13 @@ declare class EngineCache extends BaseClient {
     minFreeSpace: () => Promise<number>;
     /**
      * Prune the cache of releaseable entries
-     * @param opts.useDefaultPolicy Use the engine-wide default pruning policy if true, otherwise prune the whole cache of any releasable entries.
+     * @param opts.useDefaultPolicy Use enabled engine-wide default disk and structural policies. If no default disk policy is enabled, the disk stage falls back to pruning all releasable disk-cache entries. If false, explicit options select stages; with no options, all releasable disk-cache entries are pruned.
      * @param opts.maxUsedSpace Override the maximum disk space to keep before pruning (e.g. "200GB" or "80%").
      * @param opts.reservedSpace Override the minimum disk space to retain during pruning (e.g. "500GB" or "10%").
      * @param opts.minFreeSpace Override the minimum free disk space target during pruning (e.g. "20GB" or "20%").
      * @param opts.targetSpace Override the target disk space to keep after pruning (e.g. "200GB" or "50%").
+     * @param opts.maxEstimatedBytes Override the maximum structural metadata estimate in absolute bytes. Explicit values must be positive; the configured/default value is used when omitted.
+     * @param opts.targetEstimatedBytes Override the structural metadata estimate to target in absolute bytes. Explicit values must be positive and lower than the resolved maximum; the configured/default value is used when omitted.
      */
     prune: (opts?: EngineCachePruneOpts) => Promise<void>;
     /**
@@ -4326,7 +4276,7 @@ declare class EnumTypeDef extends BaseClient {
     /**
      * The location of this enum declaration.
      */
-    sourceMap: () => SourceMap;
+    sourceMap: () => Promise<SourceMap | null>;
     /**
      * If this EnumTypeDef is associated with a Module, the name of the module. Unset otherwise.
      */
@@ -4369,664 +4319,11 @@ declare class EnumValueTypeDef extends BaseClient {
     /**
      * The location of this enum member declaration.
      */
-    sourceMap: () => SourceMap;
+    sourceMap: () => Promise<SourceMap | null>;
     /**
      * The value of the enum member
      */
     value: () => Promise<string>;
-}
-declare class Env extends BaseClient {
-    private readonly _id?;
-    /**
-     * Constructor is used for internal usage only, do not create object from it.
-     */
-    constructor(ctx?: Context, _id?: ID);
-    /**
-     * A unique identifier for this Env.
-     */
-    id: () => Promise<ID>;
-    /**
-     * Return the check with the given name from the installed modules. Must match exactly one check.
-     * @param name The name of the check to retrieve
-     * @experimental
-     */
-    check: (name: string) => Check;
-    /**
-     * Return all checks defined by the installed modules
-     * @param opts.include Only include checks matching the specified patterns
-     * @param opts.noGenerate When true, only return annotated check functions; exclude generate-as-checks
-     * @experimental
-     */
-    checks: (opts?: EnvChecksOpts) => CheckGroup;
-    /**
-     * Retrieves an input binding by name
-     */
-    input: (name: string) => Binding;
-    /**
-     * Returns all input bindings provided to the environment
-     */
-    inputs: () => Promise<Binding[]>;
-    /**
-     * Retrieves an output binding by name
-     */
-    output: (name: string) => Binding;
-    /**
-     * Returns all declared output bindings for the environment
-     */
-    outputs: () => Promise<Binding[]>;
-    /**
-     * Return all services defined by the installed modules
-     * @param opts.include Only include services matching the specified patterns
-     * @experimental
-     */
-    services: (opts?: EnvServicesOpts) => UpGroup;
-    /**
-     * Create or update a binding of type Address in the environment
-     * @param name The name of the binding
-     * @param value The Address value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withAddressInput: (name: string, value: Address, description: string) => Env;
-    /**
-     * Declare a desired Address output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withAddressOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type CacheVolume in the environment
-     * @param name The name of the binding
-     * @param value The CacheVolume value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withCacheVolumeInput: (name: string, value: CacheVolume, description: string) => Env;
-    /**
-     * Declare a desired CacheVolume output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withCacheVolumeOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Changeset in the environment
-     * @param name The name of the binding
-     * @param value The Changeset value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withChangesetInput: (name: string, value: Changeset, description: string) => Env;
-    /**
-     * Declare a desired Changeset output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withChangesetOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type CheckGroup in the environment
-     * @param name The name of the binding
-     * @param value The CheckGroup value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withCheckGroupInput: (name: string, value: CheckGroup, description: string) => Env;
-    /**
-     * Declare a desired CheckGroup output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withCheckGroupOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Check in the environment
-     * @param name The name of the binding
-     * @param value The Check value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withCheckInput: (name: string, value: Check, description: string) => Env;
-    /**
-     * Declare a desired Check output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withCheckOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Cloud in the environment
-     * @param name The name of the binding
-     * @param value The Cloud value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withCloudInput: (name: string, value: Cloud, description: string) => Env;
-    /**
-     * Declare a desired Cloud output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withCloudOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Container in the environment
-     * @param name The name of the binding
-     * @param value The Container value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withContainerInput: (name: string, value: Container, description: string) => Env;
-    /**
-     * Declare a desired Container output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withContainerOutput: (name: string, description: string) => Env;
-    /**
-     * Installs the current module into the environment, exposing its functions to the model
-     *
-     * Contextual path arguments will be populated using the environment's workspace.
-     */
-    withCurrentModule: () => Env;
-    /**
-     * Create or update a binding of type CurrentModuleAsSDKClient in the environment
-     * @param name The name of the binding
-     * @param value The CurrentModuleAsSDKClient value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withCurrentModuleAsSDKClientInput: (name: string, value: CurrentModuleAsSDKClient, description: string) => Env;
-    /**
-     * Declare a desired CurrentModuleAsSDKClient output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withCurrentModuleAsSDKClientOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type CurrentModuleAsSDK in the environment
-     * @param name The name of the binding
-     * @param value The CurrentModuleAsSDK value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withCurrentModuleAsSDKInput: (name: string, value: CurrentModuleAsSDK, description: string) => Env;
-    /**
-     * Create or update a binding of type CurrentModuleAsSDKModule in the environment
-     * @param name The name of the binding
-     * @param value The CurrentModuleAsSDKModule value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withCurrentModuleAsSDKModuleInput: (name: string, value: CurrentModuleAsSDKModule, description: string) => Env;
-    /**
-     * Declare a desired CurrentModuleAsSDKModule output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withCurrentModuleAsSDKModuleOutput: (name: string, description: string) => Env;
-    /**
-     * Declare a desired CurrentModuleAsSDK output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withCurrentModuleAsSDKOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type DiffStat in the environment
-     * @param name The name of the binding
-     * @param value The DiffStat value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withDiffStatInput: (name: string, value: DiffStat, description: string) => Env;
-    /**
-     * Declare a desired DiffStat output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withDiffStatOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Directory in the environment
-     * @param name The name of the binding
-     * @param value The Directory value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withDirectoryInput: (name: string, value: Directory, description: string) => Env;
-    /**
-     * Declare a desired Directory output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withDirectoryOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type EnvFile in the environment
-     * @param name The name of the binding
-     * @param value The EnvFile value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withEnvFileInput: (name: string, value: EnvFile, description: string) => Env;
-    /**
-     * Declare a desired EnvFile output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withEnvFileOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Env in the environment
-     * @param name The name of the binding
-     * @param value The Env value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withEnvInput: (name: string, value: Env, description: string) => Env;
-    /**
-     * Declare a desired Env output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withEnvOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type File in the environment
-     * @param name The name of the binding
-     * @param value The File value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withFileInput: (name: string, value: File, description: string) => Env;
-    /**
-     * Declare a desired File output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withFileOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type GeneratorGroup in the environment
-     * @param name The name of the binding
-     * @param value The GeneratorGroup value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withGeneratorGroupInput: (name: string, value: GeneratorGroup, description: string) => Env;
-    /**
-     * Declare a desired GeneratorGroup output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withGeneratorGroupOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Generator in the environment
-     * @param name The name of the binding
-     * @param value The Generator value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withGeneratorInput: (name: string, value: Generator, description: string) => Env;
-    /**
-     * Declare a desired Generator output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withGeneratorOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type GitRef in the environment
-     * @param name The name of the binding
-     * @param value The GitRef value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withGitRefInput: (name: string, value: GitRef, description: string) => Env;
-    /**
-     * Declare a desired GitRef output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withGitRefOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type GitRepository in the environment
-     * @param name The name of the binding
-     * @param value The GitRepository value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withGitRepositoryInput: (name: string, value: GitRepository, description: string) => Env;
-    /**
-     * Declare a desired GitRepository output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withGitRepositoryOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type HTTPState in the environment
-     * @param name The name of the binding
-     * @param value The HTTPState value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withHTTPStateInput: (name: string, value: HTTPState, description: string) => Env;
-    /**
-     * Declare a desired HTTPState output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withHTTPStateOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type JSONValue in the environment
-     * @param name The name of the binding
-     * @param value The JSONValue value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withJSONValueInput: (name: string, value: JSONValue, description: string) => Env;
-    /**
-     * Declare a desired JSONValue output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withJSONValueOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type LLMContentBlock in the environment
-     * @param name The name of the binding
-     * @param value The LLMContentBlock value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withLLMContentBlockInput: (name: string, value: LLMContentBlock, description: string) => Env;
-    /**
-     * Declare a desired LLMContentBlock output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withLLMContentBlockOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type LLMMessage in the environment
-     * @param name The name of the binding
-     * @param value The LLMMessage value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withLLMMessageInput: (name: string, value: LLMMessage, description: string) => Env;
-    /**
-     * Declare a desired LLMMessage output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withLLMMessageOutput: (name: string, description: string) => Env;
-    /**
-     * Sets the main module for this environment (the project being worked on)
-     *
-     * Contextual path arguments will be populated using the environment's workspace.
-     */
-    withMainModule: (module_: Module_) => Env;
-    /**
-     * Installs a module into the environment, exposing its functions to the model
-     *
-     * Contextual path arguments will be populated using the environment's workspace.
-     * @deprecated Use withMainModule instead
-     */
-    withModule: (module_: Module_) => Env;
-    /**
-     * Create or update a binding of type ModuleConfigClient in the environment
-     * @param name The name of the binding
-     * @param value The ModuleConfigClient value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withModuleConfigClientInput: (name: string, value: ModuleConfigClient, description: string) => Env;
-    /**
-     * Declare a desired ModuleConfigClient output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withModuleConfigClientOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Module in the environment
-     * @param name The name of the binding
-     * @param value The Module value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withModuleInput: (name: string, value: Module_, description: string) => Env;
-    /**
-     * Declare a desired Module output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withModuleOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type ModuleSource in the environment
-     * @param name The name of the binding
-     * @param value The ModuleSource value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withModuleSourceInput: (name: string, value: ModuleSource, description: string) => Env;
-    /**
-     * Declare a desired ModuleSource output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withModuleSourceOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Schema in the environment
-     * @param name The name of the binding
-     * @param value The Schema value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withSchemaInput: (name: string, value: Schema, description: string) => Env;
-    /**
-     * Declare a desired Schema output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withSchemaOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type SearchResult in the environment
-     * @param name The name of the binding
-     * @param value The SearchResult value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withSearchResultInput: (name: string, value: SearchResult, description: string) => Env;
-    /**
-     * Declare a desired SearchResult output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withSearchResultOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type SearchSubmatch in the environment
-     * @param name The name of the binding
-     * @param value The SearchSubmatch value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withSearchSubmatchInput: (name: string, value: SearchSubmatch, description: string) => Env;
-    /**
-     * Declare a desired SearchSubmatch output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withSearchSubmatchOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Secret in the environment
-     * @param name The name of the binding
-     * @param value The Secret value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withSecretInput: (name: string, value: Secret, description: string) => Env;
-    /**
-     * Declare a desired Secret output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withSecretOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Service in the environment
-     * @param name The name of the binding
-     * @param value The Service value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withServiceInput: (name: string, value: Service, description: string) => Env;
-    /**
-     * Declare a desired Service output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withServiceOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Socket in the environment
-     * @param name The name of the binding
-     * @param value The Socket value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withSocketInput: (name: string, value: Socket, description: string) => Env;
-    /**
-     * Declare a desired Socket output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withSocketOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Stat in the environment
-     * @param name The name of the binding
-     * @param value The Stat value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withStatInput: (name: string, value: Stat, description: string) => Env;
-    /**
-     * Declare a desired Stat output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withStatOutput: (name: string, description: string) => Env;
-    /**
-     * Provides a string input binding to the environment
-     * @param name The name of the binding
-     * @param value The string value to assign to the binding
-     * @param description The description of the input
-     */
-    withStringInput: (name: string, value: string, description: string) => Env;
-    /**
-     * Declares a desired string output binding
-     * @param name The name of the binding
-     * @param description The description of the output
-     */
-    withStringOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type UpGroup in the environment
-     * @param name The name of the binding
-     * @param value The UpGroup value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withUpGroupInput: (name: string, value: UpGroup, description: string) => Env;
-    /**
-     * Declare a desired UpGroup output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withUpGroupOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Up in the environment
-     * @param name The name of the binding
-     * @param value The Up value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withUpInput: (name: string, value: Up, description: string) => Env;
-    /**
-     * Declare a desired Up output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withUpOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Volume in the environment
-     * @param name The name of the binding
-     * @param value The Volume value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withVolumeInput: (name: string, value: Volume, description: string) => Env;
-    /**
-     * Declare a desired Volume output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withVolumeOutput: (name: string, description: string) => Env;
-    /**
-     * Returns a new environment with the provided workspace
-     * @param workspace The directory to set as the host filesystem
-     */
-    withWorkspace: (workspace: Directory) => Env;
-    /**
-     * Create or update a binding of type WorkspaceGit in the environment
-     * @param name The name of the binding
-     * @param value The WorkspaceGit value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withWorkspaceGitInput: (name: string, value: WorkspaceGit, description: string) => Env;
-    /**
-     * Declare a desired WorkspaceGit output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withWorkspaceGitOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type Workspace in the environment
-     * @param name The name of the binding
-     * @param value The Workspace value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withWorkspaceInput: (name: string, value: Workspace, description: string) => Env;
-    /**
-     * Create or update a binding of type WorkspaceMigration in the environment
-     * @param name The name of the binding
-     * @param value The WorkspaceMigration value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withWorkspaceMigrationInput: (name: string, value: WorkspaceMigration, description: string) => Env;
-    /**
-     * Declare a desired WorkspaceMigration output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withWorkspaceMigrationOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type WorkspaceMigrationStep in the environment
-     * @param name The name of the binding
-     * @param value The WorkspaceMigrationStep value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withWorkspaceMigrationStepInput: (name: string, value: WorkspaceMigrationStep, description: string) => Env;
-    /**
-     * Declare a desired WorkspaceMigrationStep output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withWorkspaceMigrationStepOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type WorkspaceModule in the environment
-     * @param name The name of the binding
-     * @param value The WorkspaceModule value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withWorkspaceModuleInput: (name: string, value: WorkspaceModule, description: string) => Env;
-    /**
-     * Declare a desired WorkspaceModule output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withWorkspaceModuleOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type WorkspaceModuleSetting in the environment
-     * @param name The name of the binding
-     * @param value The WorkspaceModuleSetting value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withWorkspaceModuleSettingInput: (name: string, value: WorkspaceModuleSetting, description: string) => Env;
-    /**
-     * Declare a desired WorkspaceModuleSetting output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withWorkspaceModuleSettingOutput: (name: string, description: string) => Env;
-    /**
-     * Declare a desired Workspace output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withWorkspaceOutput: (name: string, description: string) => Env;
-    /**
-     * Create or update a binding of type WorkspaceSDK in the environment
-     * @param name The name of the binding
-     * @param value The WorkspaceSDK value to assign to the binding
-     * @param description The purpose of the input
-     */
-    withWorkspaceSDKInput: (name: string, value: WorkspaceSDK, description: string) => Env;
-    /**
-     * Declare a desired WorkspaceSDK output to be assigned in the environment
-     * @param name The name of the binding
-     * @param description A description of the desired value of the binding
-     */
-    withWorkspaceSDKOutput: (name: string, description: string) => Env;
-    /**
-     * Returns a new environment without any outputs
-     */
-    withoutOutputs: () => Env;
-    workspace: () => Directory;
-    /**
-     * Call the provided function with current Env.
-     *
-     * This is useful for reusability and readability by not breaking the calling chain.
-     */
-    with: (arg: (param: Env) => Env) => Env;
 }
 /**
  * A collection of environment variables.
@@ -5215,7 +4512,7 @@ declare class FieldTypeDef extends BaseClient {
     /**
      * The location of this field declaration.
      */
-    sourceMap: () => SourceMap;
+    sourceMap: () => Promise<SourceMap | null>;
     /**
      * The type of the field.
      */
@@ -5301,7 +4598,7 @@ declare class File extends BaseClient {
     /**
      * Return file status
      */
-    stat: () => Stat;
+    stat: () => Promise<Stat | null>;
     /**
      * Force evaluation in the engine.
      */
@@ -5383,11 +4680,15 @@ declare class Function_ extends BaseClient {
     /**
      * The location of this function declaration.
      */
-    sourceMap: () => SourceMap;
+    sourceMap: () => Promise<SourceMap | null>;
     /**
      * If this function is provided by a module, the name of the module. Unset otherwise.
      */
     sourceModuleName: () => Promise<string>;
+    /**
+     * Returns the function with a flag indicating it is an agent middleware.
+     */
+    withAgent: () => Function_;
     /**
      * Returns the function with the provided argument
      * @param name The name of the argument
@@ -5492,7 +4793,7 @@ declare class FunctionArg extends BaseClient {
     /**
      * The location of this arg declaration.
      */
-    sourceMap: () => SourceMap;
+    sourceMap: () => Promise<SourceMap | null>;
     /**
      * The type of the argument.
      */
@@ -5706,16 +5007,108 @@ declare class GeneratorGroup extends BaseClient {
     with: (arg: (param: GeneratorGroup) => GeneratorGroup) => GeneratorGroup;
 }
 /**
+ * An immutable git commit.
+ */
+declare class GitCommit extends BaseClient {
+    private readonly _id?;
+    private readonly _authorEmail?;
+    private readonly _authorName?;
+    private readonly _authoredDate?;
+    private readonly _committedDate?;
+    private readonly _committerEmail?;
+    private readonly _committerName?;
+    private readonly _message?;
+    private readonly _messageBody?;
+    private readonly _messageHeadline?;
+    private readonly _sha?;
+    private readonly _shortSha?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID, _authorEmail?: string, _authorName?: string, _authoredDate?: string, _committedDate?: string, _committerEmail?: string, _committerName?: string, _message?: string, _messageBody?: string, _messageHeadline?: string, _sha?: string, _shortSha?: string);
+    /**
+     * A unique identifier for this GitCommit.
+     */
+    id: () => Promise<ID>;
+    /**
+     * The latest semver release tag reachable from this commit.
+     * @param opts.includePreRelease Include pre-release tags when choosing the latest tag.
+     */
+    ancestorReleaseTag: (opts?: GitCommitAncestorReleaseTagOpts) => Promise<GitRef | null>;
+    /**
+     * Git author email.
+     */
+    authorEmail: () => Promise<string>;
+    /**
+     * Git author name.
+     */
+    authorName: () => Promise<string>;
+    /**
+     * Git author date, in RFC3339 format.
+     */
+    authoredDate: () => Promise<string>;
+    /**
+     * Git committer date, in RFC3339 format.
+     */
+    committedDate: () => Promise<string>;
+    /**
+     * Git committer email.
+     */
+    committerEmail: () => Promise<string>;
+    /**
+     * Git committer name.
+     */
+    committerName: () => Promise<string>;
+    /**
+     * Full commit message.
+     */
+    message: () => Promise<string>;
+    /**
+     * Commit message body, excluding the headline.
+     */
+    messageBody: () => Promise<string>;
+    /**
+     * First line of the commit message.
+     */
+    messageHeadline: () => Promise<string>;
+    /**
+     * Parent commit SHAs.
+     */
+    parentShas: () => Promise<string[]>;
+    /**
+     * The latest semver release tag that points directly at this commit.
+     * @param opts.includePreRelease Include pre-release tags when choosing the latest tag.
+     */
+    releaseTag: (opts?: GitCommitReleaseTagOpts) => Promise<GitRef | null>;
+    /**
+     * The full commit SHA.
+     */
+    sha: () => Promise<string>;
+    /**
+     * The abbreviated commit SHA.
+     */
+    shortSha: () => Promise<string>;
+    /**
+     * The filesystem tree at this commit.
+     * @param opts.discardGitDir Set to true to discard .git directory.
+     * @param opts.depth The depth of the tree to fetch.
+     * @param opts.includeTags Set to true to populate tag refs in the local checkout .git.
+     */
+    tree: (opts?: GitCommitTreeOpts) => Directory;
+}
+/**
  * A git ref (tag, branch, or commit).
  */
 declare class GitRef extends BaseClient {
     private readonly _id?;
     private readonly _commit?;
+    private readonly _commitSHA?;
+    private readonly _name?;
     private readonly _ref?;
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _commit?: string, _ref?: string);
+    constructor(ctx?: Context, _id?: ID, _commit?: string, _commitSHA?: string, _name?: string, _ref?: string);
     /**
      * A unique identifier for this GitRef.
      */
@@ -5727,17 +5120,38 @@ declare class GitRef extends BaseClient {
     asWorkspace: (opts?: GitRefAsWorkspaceOpts) => Workspace;
     /**
      * The resolved commit id at this ref.
+     * @deprecated Use "commitSHA" instead.
      */
     commit: () => Promise<string>;
+    /**
+     * The resolved commit SHA at this ref.
+     */
+    commitSHA: () => Promise<string>;
     /**
      * Find the best common ancestor between this ref and another ref.
      * @param other The other ref to compare against.
      */
     commonAncestor: (other: GitRef) => GitRef;
     /**
+     * Commits reachable from this ref, newest first, starting with the commit this ref resolves to.
+     * @param opts.limit Maximum number of commits to return.
+     * @param opts.paths Only include commits touching these paths, relative to the root of the repository.
+     * @param opts.base Exclude commits reachable from this ref, i.e. only list commits added on top of it.
+     */
+    log: (opts?: GitRefLogOpts) => Promise<GitCommit[]>;
+    /**
+     * The resolved name of this ref.
+     */
+    name: () => Promise<string>;
+    /**
      * The resolved ref name at this ref.
+     * @deprecated Use "name" instead.
      */
     ref: () => Promise<string>;
+    /**
+     * The commit this ref resolves to.
+     */
+    targetCommit: () => GitCommit;
     /**
      * The filesystem tree at this ref.
      * @param opts.discardGitDir Set to true to discard .git directory.
@@ -5785,15 +5199,17 @@ declare class GitRepository extends BaseClient {
      * Returns details of a commit.
      * @param id Identifier of the commit (e.g., "b6315d8f2810962c601af73f86831f6866ea798b").
      */
-    commit: (id: string) => GitRef;
+    commit: (id: string) => GitCommit;
     /**
      * Returns details for HEAD.
      */
     head: () => GitRef;
     /**
-     * Returns details for the latest semver tag.
+     * Return the latest stable release tag, falling back to HEAD when no release exists.
+     *
+     * Release selection accepts an optional "v" prefix, incomplete versions, and zero-padded numeric components. This operation is pinned.
      */
-    latestVersion: () => GitRef;
+    latest: () => GitRef;
     /**
      * Returns details of a ref.
      * @param name Ref's name (can be a commit identifier, a tag name, a branch name, or a fully-qualified ref).
@@ -6007,7 +5423,7 @@ declare class InterfaceTypeDef extends BaseClient {
     /**
      * The location of this interface declaration.
      */
-    sourceMap: () => SourceMap;
+    sourceMap: () => Promise<SourceMap | null>;
     /**
      * If this InterfaceTypeDef is associated with a Module, the name of the module. Unset otherwise.
      */
@@ -6096,12 +5512,14 @@ declare class JSONValue extends BaseClient {
  */
 declare class LLM extends BaseClient {
     private readonly _id?;
+    private readonly _contextTokens?;
     private readonly _contextWindow?;
     private readonly _hasPending?;
     private readonly _lastReply?;
     private readonly _model?;
     private readonly _portableID?;
     private readonly _provider?;
+    private readonly _reasoningEffort?;
     private readonly _replay?;
     private readonly _sync?;
     private readonly _tools?;
@@ -6109,23 +5527,19 @@ declare class LLM extends BaseClient {
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _contextWindow?: number, _hasPending?: boolean, _lastReply?: string, _model?: string, _portableID?: ID, _provider?: string, _replay?: ID, _sync?: ID, _tools?: string, _transcript?: string);
+    constructor(ctx?: Context, _id?: ID, _contextTokens?: number, _contextWindow?: number, _hasPending?: boolean, _lastReply?: string, _model?: string, _portableID?: ID, _provider?: string, _reasoningEffort?: string, _replay?: ID, _sync?: ID, _tools?: string, _transcript?: string);
     /**
      * A unique identifier for this LLM.
      */
     id: () => Promise<ID>;
     /**
-     * returns the type of the current state
+     * estimated number of tokens currently occupying the context window; unlike tokenUsage this is not cumulative over the session
      */
-    bindResult: (name: string) => Binding;
+    contextTokens: () => Promise<number>;
     /**
      * The model's total context window in tokens, or null if unknown (e.g. a local or uncatalogued model).
      */
     contextWindow: () => Promise<number>;
-    /**
-     * return the LLM's current environment
-     */
-    env: () => Env;
     /**
      * Fork the conversation, so that otherwise-identical follow-ups evaluate independently instead of deduplicating to a single cached result.
      * @param label A label distinguishing this fork from its siblings, e.g. "attempt-2" when retrying a flaky evaluation.
@@ -6154,7 +5568,7 @@ declare class LLM extends BaseClient {
      */
     model: () => Promise<string>;
     /**
-     * A portable, self-contained ID for the conversation that node() can resolve in any session. Unlike id, which may return an engine-local runtime handle valid only within the current session, this returns the recipe form suitable for persisting and later restoring the conversation.
+     * A portable, self-contained ID for the conversation that node() can resolve in any session. Unlike id, which may return an engine-local runtime handle valid only within the current session, this returns the recipe form suitable for persisting and later restoring the conversation. The recipe is flattened: bindings superseded during the session (workspace overlays recorded by each mutating tool call, and re-bound toolsets) are dropped, while the current workspace binding — including any pending, un-exported edits — is preserved.
      */
     portableID: () => Promise<ID>;
     /**
@@ -6162,9 +5576,17 @@ declare class LLM extends BaseClient {
      */
     provider: () => Promise<string>;
     /**
+     * The reasoning effort in use, e.g. "low", "medium", or "high". Empty or "none" when reasoning is disabled.
+     */
+    reasoningEffort: () => Promise<string>;
+    /**
      * Re-emit telemetry spans for the full message history, so a loaded conversation displays in the TUI.
      */
     replay: () => Promise<LLM>;
+    /**
+     * The skills visible to the model, exactly as the ListSkills tool serves them: engine-embedded skills, skills installed with withSkills, and skills discovered in the workspace.
+     */
+    skills: () => Promise<LLMSkill[]>;
     /**
      * Advance the conversation by a single step: send the queued prompt or tool results to the model, evaluate any tool calls it makes, and queue their results. Use loop to step until the model ends its turn.
      * @param opts.maxTokens Cap the model's output tokens for this step. Defaults to the model's maximum.
@@ -6187,18 +5609,6 @@ declare class LLM extends BaseClient {
      */
     transcript: () => Promise<string>;
     /**
-     * Return a new LLM with the specified function no longer exposed as a tool
-     * @param typeName The type name whose function will be blocked
-     * @param function The function to block
-     *
-     * Will be converted to lowerCamelCase if necessary.
-     */
-    withBlockedFunction: (typeName: string, function_: string) => LLM;
-    /**
-     * allow the LLM to interact with an environment via MCP
-     */
-    withEnv: (env: Env) => LLM;
-    /**
      * Add an external MCP server to the LLM
      * @param name The name of the MCP server
      * @param service The MCP service to run and communicate with over stdio
@@ -6211,12 +5621,6 @@ declare class LLM extends BaseClient {
      */
     withModel: (model: string, opts?: LLMWithModelOpts) => LLM;
     /**
-     * Track an object so the LLM can reference it in subsequent tool calls.
-     * @param tag Arbitrary string tag for the object, typically in TypeName#Number format
-     * @param object The object to track, as a generic ID
-     */
-    withObject: (tag: string, object: ID) => LLM;
-    /**
      * Queue a user prompt, to be sent to the model on the next step or loop.
      * @param prompt The prompt to send
      */
@@ -6226,6 +5630,11 @@ declare class LLM extends BaseClient {
      * @param file The file to read the prompt from
      */
     withPromptFile: (file: File) => LLM;
+    /**
+     * Change the reasoning effort for the rest of the conversation, overriding any configured default. The message history is preserved; the new effort takes effect on the next step.
+     * @param effort The reasoning effort, e.g. "low", "medium", or "high"; "none" disables reasoning. Supported levels are model-specific — some models also accept e.g. "minimal", "xhigh", or "max".
+     */
+    withReasoningEffort: (effort: string) => LLM;
     /**
      * Append an assistant response to the message history without calling the model, e.g. to reconstruct a conversation from another source.
      * @param content The response content
@@ -6237,9 +5646,10 @@ declare class LLM extends BaseClient {
      */
     withResponse: (content: LLMContentBlockInput[], opts?: LLMWithResponseOpts) => LLM;
     /**
-     * Use a static set of tools for method calls, e.g. for MCP clients that do not support dynamic tool registration
+     * Install skills from a directory, adding them to the skills the model discovers with ListSkills and reads with ReadSkill. Each skill is a directory containing a SKILL.md with name and description frontmatter, discovered anywhere in the tree. Installed skills take precedence over skills discovered in the workspace, but cannot shadow the engine's built-in skills.
+     * @param directory A directory containing skills, each a subdirectory holding a SKILL.md.
      */
-    withStaticTools: () => LLM;
+    withSkills: (directory: Directory) => LLM;
     /**
      * Add a system prompt, instructing the model across the whole conversation.
      * @param prompt The system prompt to send
@@ -6253,6 +5663,17 @@ declare class LLM extends BaseClient {
      */
     withToolResult: (callId: string, content: string, errored: boolean) => LLM;
     /**
+     * Expose an object's methods as tools. Every eligible method of the bound object becomes a tool; a tool that returns this object's own type replaces it as the new state. Repeatable to bind several objects.
+     * @param object The object whose methods become tools.
+     * @param opts.except Method names to exclude from the toolset (e.g. constructors, entrypoints).
+     */
+    withTools: (object: Node, opts?: LLMWithToolsOpts) => LLM;
+    /**
+     * Bind the LLM to a workspace, exposing its modules as tools exactly as the Dagger CLI would serve them for that workspace.
+     * @param workspace The workspace to work in.
+     */
+    withWorkspace: (workspace: Workspace) => LLM;
+    /**
      * Disable the default system prompt
      */
     withoutDefaultSystemPrompt: () => LLM;
@@ -6264,6 +5685,10 @@ declare class LLM extends BaseClient {
      * Clear the user-added system prompts, keeping only the default system prompt.
      */
     withoutSystemPrompts: () => LLM;
+    /**
+     * Return the workspace the LLM is bound to.
+     */
+    workspace: () => Workspace;
     /**
      * Call the provided function with current LLM.
      *
@@ -6346,6 +5771,30 @@ declare class LLMMessage extends BaseClient {
      * Token usage reported by the provider for the API call that produced this message; all zeros except on assistant responses.
      */
     tokenUsage: () => LLMTokenUsage;
+}
+/**
+ * A skill available to a model: task-specific guidance discovered with ListSkills and read with ReadSkill.
+ */
+declare class LLMSkill extends BaseClient {
+    private readonly _id?;
+    private readonly _description?;
+    private readonly _name?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID, _description?: string, _name?: string);
+    /**
+     * A unique identifier for this LLMSkill.
+     */
+    id: () => Promise<ID>;
+    /**
+     * The one-line description from the SKILL.md frontmatter.
+     */
+    description: () => Promise<string>;
+    /**
+     * The skill name, as passed to ReadSkill.
+     */
+    name: () => Promise<string>;
 }
 /**
  * A count of tokens consumed by LLM API calls.
@@ -6509,11 +5958,11 @@ declare class Module_ extends BaseClient {
     /**
      * The container that runs the module's entrypoint. It will fail to execute if the module doesn't compile.
      */
-    runtime: () => Container;
+    runtime: () => Promise<Container | null>;
     /**
      * The SDK config used by this module.
      */
-    sdk: () => SDKConfig;
+    sdk: () => Promise<SDKConfig | null>;
     /**
      * Serve a module's API in the current session.
      *
@@ -6531,7 +5980,7 @@ declare class Module_ extends BaseClient {
     /**
      * The source for the module.
      */
-    source: () => ModuleSource;
+    source: () => Promise<ModuleSource | null>;
     /**
      * Forces evaluation of the module, including any loading into the engine and associated validation.
      */
@@ -6677,6 +6126,13 @@ declare class ModuleSource extends BaseClient {
      */
     engineVersion: () => Promise<string>;
     /**
+     * Return the supplied workspace with this module's generated context applied.
+     *
+     * The workspace change baseline is preserved, so a later Workspace.changes call includes this generation together with any other edits made by the caller.
+     * @param workspace The workspace to apply generated files to.
+     */
+    generate: (workspace: Workspace) => Workspace;
+    /**
      * Generate this module's transitive local dependency closure and return the staged changes as a single changeset against the unstaged workspace root.
      *
      * Each local dependency is generated by its own SDK against a workspace scoped to it, carrying the dependency's own already-generated dependencies. Remote (git) dependencies are assumed committed and skipped. Overlay the result onto the workspace before generating this module; it is not this module's own generated code.
@@ -6738,7 +6194,7 @@ declare class ModuleSource extends BaseClient {
     /**
      * The SDK configuration of the module.
      */
-    sdk: () => SDKConfig;
+    sdk: () => Promise<SDKConfig | null>;
     /**
      * The path, relative to the context directory, that contains the module config.
      */
@@ -6911,7 +6367,7 @@ declare class ObjectTypeDef extends BaseClient {
     /**
      * The function used to construct new instances of this object, if any.
      */
-    constructor_: () => Function_;
+    constructor_: () => Promise<Function_ | null>;
     /**
      * The reason this enum member is deprecated, if any.
      */
@@ -6935,7 +6391,7 @@ declare class ObjectTypeDef extends BaseClient {
     /**
      * The location of this object declaration.
      */
-    sourceMap: () => SourceMap;
+    sourceMap: () => Promise<SourceMap | null>;
     /**
      * If this ObjectTypeDef is associated with a Module, the name of the module. Unset otherwise.
      */
@@ -7026,15 +6482,6 @@ declare class Client extends BaseClient {
      */
     container: (opts?: ClientContainerOpts) => Container;
     /**
-     * Returns the current environment
-     *
-     * When called from a function invoked via an LLM tool call, this will be the LLM's current environment, including any modifications made through calling tools. Env values returned by functions become the new environment for subsequent calls, and Changeset values returned by functions are applied to the environment's workspace.
-     *
-     * When called from a module function outside of an LLM, this returns an Env with the current module installed, and with the current module's source directory as its workspace.
-     * @experimental
-     */
-    currentEnv: () => Env;
-    /**
      * The FunctionCall context that the SDK caller is currently executing in.
      *
      * If the caller is not currently executing in a function, this will return an error.
@@ -7044,6 +6491,10 @@ declare class Client extends BaseClient {
      * The module currently being served in the session, if any.
      */
     currentModule: () => CurrentModule;
+    /**
+     * The object that received the current module function call, as a Node. Errors when there is no current call, or the call is top-level (e.g. a module constructor).
+     */
+    currentNode: () => Node;
     /**
      * The TypeDef representations of the objects currently being served in the session.
      * @param opts.returnAllTypes Return the full referenced typedef closure instead of only top-level served typedefs.
@@ -7070,12 +6521,11 @@ declare class Client extends BaseClient {
      */
     engine: () => Engine;
     /**
-     * Initializes a new environment
-     * @param opts.privileged Give the environment the same privileges as the caller: core API including host access, current module, and dependencies
-     * @param opts.writable Allow new outputs to be declared and saved in the environment
-     * @experimental
+     * Constructs an engine-managed volume backed by operator-provided storage beneath the configured engine state root.
+     * @param name Canonical slash-separated volume name beneath the engine volume namespace.
+     * @param opts.subdir Optional existing subdirectory within the volume payload to mount.
      */
-    env: (opts?: ClientEnvOpts) => Env;
+    engineVolume: (name: string, opts?: ClientEngineVolumeOpts) => Volume;
     /**
      * Initialize an environment file
      * @param opts.expand Replace "${VAR}" or "$VAR" with the value of other vars
@@ -7160,7 +6610,7 @@ declare class Client extends BaseClient {
     /**
      * Load any object by its ID.
      */
-    node: (id: ID) => Node;
+    node: (id: ID) => Promise<Node | null>;
     /**
      * Load a GraphQL introspection schema for merging.
      * @param json The introspection schema JSON to load.
@@ -7617,27 +7067,27 @@ declare class TypeDef extends BaseClient {
     /**
      * If kind is ENUM, the enum-specific type definition. If kind is not ENUM, this will be null.
      */
-    asEnum: () => EnumTypeDef;
+    asEnum: () => Promise<EnumTypeDef | null>;
     /**
      * If kind is INPUT, the input-specific type definition. If kind is not INPUT, this will be null.
      */
-    asInput: () => InputTypeDef;
+    asInput: () => Promise<InputTypeDef | null>;
     /**
      * If kind is INTERFACE, the interface-specific type definition. If kind is not INTERFACE, this will be null.
      */
-    asInterface: () => InterfaceTypeDef;
+    asInterface: () => Promise<InterfaceTypeDef | null>;
     /**
      * If kind is LIST, the list-specific type definition. If kind is not LIST, this will be null.
      */
-    asList: () => ListTypeDef;
+    asList: () => Promise<ListTypeDef | null>;
     /**
      * If kind is OBJECT, the object-specific type definition. If kind is not OBJECT, this will be null.
      */
-    asObject: () => ObjectTypeDef;
+    asObject: () => Promise<ObjectTypeDef | null>;
     /**
      * If kind is SCALAR, the scalar-specific type definition. If kind is not SCALAR, this will be null.
      */
-    asScalar: () => ScalarTypeDef;
+    asScalar: () => Promise<ScalarTypeDef | null>;
     /**
      * The kind of type this is (e.g. primitive, list, object).
      */
@@ -7829,9 +7279,17 @@ declare class Workspace extends BaseClient {
      */
     address: () => Promise<string>;
     /**
-     * Return this workspace's pending overlay changes.
+     * Return all agent middlewares from modules loaded in the workspace.
+     * @param opts.include Only include agents matching the specified patterns
      */
-    changes: () => Changeset;
+    agents: (opts?: WorkspaceAgentsOpts) => AgentGroup;
+    /**
+     * Return this workspace's changes, with paths relative to its working directory.
+     *
+     * Pass from to compare against an earlier workspace state. Omitting it preserves the cumulative behavior used by clients from before this argument was added.
+     * @param opts.from An earlier workspace state to compare against.
+     */
+    changes: (opts?: WorkspaceChangesOpts) => Changeset;
     /**
      * Return all checks from modules loaded in the workspace.
      * @param opts.include Only include checks matching the specified patterns
@@ -7889,6 +7347,17 @@ declare class Workspace extends BaseClient {
      */
     file: (path: string) => File;
     /**
+     * Find project roots marked by any of the given filenames, starting from a path relative to the workspace cwd.
+     *
+     * Returns cwd-relative directory paths for every marked directory at or below start, plus the nearest marked ancestor when start itself is not marked.
+     *
+     * Each returned path is usable as-is with other workspace APIs, e.g. directory(path).
+     * @param opts.start Directory to start from. Relative paths resolve from the workspace cwd.
+     * @param opts.markers File basenames that mark a project root (e.g. ["go.mod"] or ["deno.json", "deno.jsonc"]).
+     * @param opts.exclude Glob patterns pruning the walk below start (e.g. ["**\/node_modules/**"]).
+     */
+    findRoots: (opts?: WorkspaceFindRootsOpts) => Promise<string[]>;
+    /**
      * Search for a file or directory by walking up from the start path within the workspace.
      *
      * Returns the absolute workspace path if found, or null if not found.
@@ -7924,6 +7393,8 @@ declare class Workspace extends BaseClient {
     migrate: () => WorkspaceMigration;
     /**
      * Return a module defined in the workspace configuration.
+     *
+     * Reflects the selected env's effective view.
      * @param name Module name to inspect.
      */
     module_: (name: string) => WorkspaceModule;
@@ -7938,8 +7409,14 @@ declare class Workspace extends BaseClient {
     moduleSource: (path: string) => ModuleSource;
     /**
      * List modules defined in the workspace configuration.
+     *
+     * Reflects the selected env's effective view.
      */
     modules: () => Promise<WorkspaceModule[]>;
+    /**
+     * Return this workspace with its cached host reads invalidated, so subsequent file and directory reads re-read the live host instead of a snapshot cached earlier in the session.
+     */
+    reloaded: () => Workspace;
     /**
      * An installed SDK, by name.
      * @param name SDK name to look up.
@@ -7986,6 +7463,8 @@ declare class Workspace extends BaseClient {
     withConfigEnv: (name: string, opts?: WorkspaceWithConfigEnvOpts) => Workspace;
     /**
      * Return this workspace with a configuration value written.
+     *
+     * When the session selects an env, the key is scoped to that env's overlay and the env is created if missing.
      * @param key Dotted key path.
      * @param value Value to set. Bools, integers, and comma-separated arrays are auto-detected.
      * @param opts.values List value to set. Elements are stored verbatim, with no auto-detection. Mutually exclusive with value.
@@ -7993,36 +7472,70 @@ declare class Workspace extends BaseClient {
      */
     withConfigValue: (key: string, value: string, opts?: WorkspaceWithConfigValueOpts) => Workspace;
     /**
+     * Return this workspace with a directory merged into the given path, without mutating the source.
+     *
+     * Anything already at the path stays, and files the source carries win, as with Directory.withDirectory. Use withNewDirectory to replace the path instead.
+     * @param path Path to merge into. Relative paths resolve from the workspace cwd.
+     * @param source Directory to merge there.
+     */
+    withDirectory: (path: string, source: Directory) => Workspace;
+    /**
      * Return this workspace with a generated API client initialized.
-     * @param path Workspace-relative output directory for the generated client.
+     *
+     * The SDK's generators run for the new client, so the returned workspace carries its generated bindings.
+     * @param path Output directory for the generated client, relative to the workspace cwd; a leading "/" is relative to the workspace root.
      * @param sdk Workspace SDK name or module entry name to use.
      * @param module Workspace-relative path or canonical ref for the module the client binds to.
      * @param opts.args SDK-specific init arguments.
      * @param opts.here Write to the workspace config directory at the workspace cwd.
+     * @param opts.noGenerate Skip running the SDK's generators for the new client.
      */
     withInitClient: (path: string, sdk: string, module_: string, opts?: WorkspaceWithInitClientOpts) => Workspace;
     /**
      * Return this workspace with a new module initialized.
+     *
+     * The SDK's generators run for the new module, so the returned workspace carries the generated code it needs to be loadable.
      * @param name Name of the new module.
      * @param sdk Workspace SDK name or module entry name to use.
-     * @param opts.path Workspace-relative path for the new module.
+     * @param opts.path Path for the new module, relative to the workspace cwd; a leading "/" is relative to the workspace root. Defaults to .dagger/modules/<name> beside the workspace config.
      * @param opts.source Source subpath within the new module.
      * @param opts.include Additional include patterns for the module.
      * @param opts.args SDK-specific init arguments.
      * @param opts.here Write to the workspace config directory at the workspace cwd.
+     * @param opts.noGenerate Skip running the SDK's generators for the new module.
      */
     withInitModule: (name: string, sdk: string, opts?: WorkspaceWithInitModuleOpts) => Workspace;
     /**
      * Return this workspace with a module installed in its config.
+     *
+     * When the session selects an env, the module is recorded in that env's overlay and the env is created if missing.
      * @param ref Module reference to install.
      * @param opts.name Override name for the installed module entry.
      * @param opts.here Write to the workspace config directory at the workspace cwd.
      */
     withModule: (ref: string, opts?: WorkspaceWithModuleOpts) => Workspace;
     /**
-     * Return this workspace with a directory added, without mutating the source.
-     * @param path Path of the added directory. Relative paths resolve from the workspace cwd.
-     * @param source Directory to add.
+     * Return this workspace with a directory mounted read-only at the given path, without mutating the source.
+     *
+     * Mounted content is readable through the normal workspace file tools but shadows the source at the mount path and stays out of the pending changeset: it never appears in changes, is never exported, and cannot be modified.
+     * @param path Location of the mounted directory. Relative paths resolve from the workspace cwd.
+     * @param source Directory to mount.
+     */
+    withMountedDirectory: (path: string, source: Directory) => Workspace;
+    /**
+     * Return this workspace with a file mounted read-only at the given path, without mutating the source.
+     *
+     * Mounted content is readable through the normal workspace file tools but shadows the source at the mount path and stays out of the pending changeset: it never appears in changes, is never exported, and cannot be modified.
+     * @param path Location of the mounted file. Relative paths resolve from the workspace cwd.
+     * @param source File to mount.
+     */
+    withMountedFile: (path: string, source: File) => Workspace;
+    /**
+     * Return this workspace with the given path replaced by a directory, without mutating the source.
+     *
+     * The source becomes the entire contents of the path: anything already there that the source does not carry is removed. Use withDirectory to keep it instead.
+     * @param path Path to replace. Relative paths resolve from the workspace cwd.
+     * @param source Directory to write there.
      */
     withNewDirectory: (path: string, source: Directory) => Workspace;
     /**
@@ -8059,12 +7572,26 @@ declare class Workspace extends BaseClient {
      * Return this workspace with a configuration value removed.
      *
      * Errors when the key is not currently set.
+     *
+     * When the session selects an env, the key is scoped to that env's overlay.
      * @param key Dotted key path (e.g. modules.greeter.settings.greeting).
      * @param opts.here Write to the workspace config directory at the workspace cwd.
      */
     withoutConfigValue: (key: string, opts?: WorkspaceWithoutConfigValueOpts) => Workspace;
     /**
+     * Return this workspace with a directory removed, without mutating the source.
+     * @param path Path of the directory to remove. Relative paths resolve from the workspace cwd.
+     */
+    withoutDirectory: (path: string) => Workspace;
+    /**
+     * Return this workspace with a file removed, without mutating the source.
+     * @param path Path of the file to remove. Relative paths resolve from the workspace cwd.
+     */
+    withoutFile: (path: string) => Workspace;
+    /**
      * Return this workspace with a module removed from its config.
+     *
+     * When the session selects an env, only that env's overlay entry is removed.
      * @param name Name of the installed module entry to remove.
      * @param opts.here Write to the workspace config directory at the workspace cwd.
      */
@@ -8679,6 +8206,15 @@ declare const generate: () => ((target: object, propertyKey: string | symbol, de
  */
 declare const up: () => ((target: object, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor);
 /**
+ * The definition of @agent decorator that marks a function as an agent
+ * middleware: it takes a base LLM and returns an LLM with the module's tools
+ * and prompting folded onto it. `dagger agent` discovers and composes these.
+ *
+ * Besides the base LLM, an agent function may not declare any other required
+ * argument.
+ */
+declare const agent: () => ((target: object, propertyKey: string | symbol, descriptor?: PropertyDescriptor) => void);
+/**
  * The definition of @field decorator that should be on top of any
  * class' property that must be exposed to the Dagger API.
  *
@@ -8713,5 +8249,5 @@ declare const argument: (opts?: ArgumentOptions) => ((target: object, propertyKe
 
 declare function entrypoint(files: string[]): Promise<void>;
 
-export { Address, BaseClient, Binding, CacheSharingMode, CacheSharingModeNameToValue, CacheSharingModeValueToName, CacheVolume, Changeset, ChangesetMergeConflict, ChangesetMergeConflictNameToValue, ChangesetMergeConflictValueToName, ChangesetsMergeConflict, ChangesetsMergeConflictNameToValue, ChangesetsMergeConflictValueToName, Check, CheckGroup, Client, ClientFilesyncMirror, Cloud, Container, Context, CurrentModule, CurrentModuleAsSDK, CurrentModuleAsSDKClient, CurrentModuleAsSDKModule, DaggerSDKError, DiffStat, DiffStatKind, DiffStatKindNameToValue, DiffStatKindValueToName, Directory, DockerImageRefValidationError, ERROR_CODES, Engine, EngineCache, EngineCacheEntry, EngineCacheEntrySet, EngineSessionConnectParamsParseError, EngineSessionConnectionTimeoutError, EngineSessionError, EnumTypeDef, EnumValueTypeDef, Env, EnvFile, EnvVariable, Error$1 as Error, ErrorValue, ExecError, ExistsType, ExistsTypeNameToValue, ExistsTypeValueToName, FieldTypeDef, File, FileType, FileTypeNameToValue, FileTypeValueToName, FunctionArg, FunctionCachePolicy, FunctionCachePolicyNameToValue, FunctionCachePolicyValueToName, FunctionCall, FunctionCallArgValue, FunctionNotFound, Function_, GeneratedCode, Generator, GeneratorGroup, GitRef, GitRepository, GraphQLRequestError, HTTPState, HealthcheckConfig, Host, ImageLayerCompression, ImageLayerCompressionNameToValue, ImageLayerCompressionValueToName, ImageMediaTypes, ImageMediaTypesNameToValue, ImageMediaTypesValueToName, InitEngineSessionBinaryError, InputTypeDef, InterfaceTypeDef, IntrospectionError, JSONValue, LLM, LLMContentBlock, LLMContentBlockKind, LLMContentBlockKindNameToValue, LLMContentBlockKindValueToName, LLMMessage, LLMMessageRole, LLMMessageRoleNameToValue, LLMMessageRoleValueToName, LLMTokenUsage, Label, ListTypeDef, ModuleConfigClient, ModuleSource, ModuleSourceExperimentalFeature, ModuleSourceExperimentalFeatureNameToValue, ModuleSourceExperimentalFeatureValueToName, ModuleSourceKind, ModuleSourceKindNameToValue, ModuleSourceKindValueToName, Module_, NetworkProtocol, NetworkProtocolNameToValue, NetworkProtocolValueToName, NotAwaitedRequestError, ObjectTypeDef, Port, RegistryProtocol, RegistryProtocolNameToValue, RegistryProtocolValueToName, RemoteGitMirror, ReturnType, ReturnTypeNameToValue, ReturnTypeValueToName, SDKConfig, ScalarTypeDef, Schema, SearchResult, SearchSubmatch, Secret, Service, Socket, SourceMap, Stat, Terminal, TooManyNestedObjectsError, TypeDef, TypeDefKind, TypeDefKindNameToValue, TypeDefKindValueToName, UnknownDaggerError, Up, UpGroup, Volume, Workspace, WorkspaceGit, WorkspaceMigration, WorkspaceMigrationStep, WorkspaceModule, WorkspaceModuleSetting, WorkspaceSDK, _ExportableClient, _NodeClient, _SyncerClient, argument, check, connect, connection, dag, entrypoint, enumType, field, func, generate, getRegisteredClass, getTracer, object, up };
-export type { AddressDirectoryOpts, AddressFileOpts, BuildArg, CallbackFct, ChangesetWithChangesetOpts, ChangesetWithChangesetsOpts, CheckGroupRunOpts, ClientCacheVolumeOpts, ClientContainerOpts, ClientCurrentTypeDefsOpts, ClientEnvFileOpts, ClientEnvOpts, ClientFileOpts, ClientGitOpts, ClientHttpOpts, ClientLLMOpts, ClientModuleSourceOpts, ClientSecretOpts, ClientSshfsVolumeOpts, ConnectOpts, ContainerAsServiceOpts, ContainerAsTarballOpts, ContainerDirectoryOpts, ContainerExistsOpts, ContainerExportImageOpts, ContainerExportOpts, ContainerFileOpts, ContainerFromOpts, ContainerImportOpts, ContainerLayerOpts, ContainerManifestOpts, ContainerPublishOpts, ContainerStatOpts, ContainerTerminalOpts, ContainerUpOpts, ContainerWithDefaultTerminalCmdOpts, ContainerWithDirectoryOpts, ContainerWithDockerHealthcheckOpts, ContainerWithEntrypointOpts, ContainerWithEnvVariableOpts, ContainerWithExecOpts, ContainerWithExposedPortOpts, ContainerWithFileOpts, ContainerWithFilesOpts, ContainerWithMountedCacheOpts, ContainerWithMountedDirectoryOpts, ContainerWithMountedFileOpts, ContainerWithMountedSecretOpts, ContainerWithMountedTempOpts, ContainerWithMountedVolumeOpts, ContainerWithNewFileOpts, ContainerWithSymlinkOpts, ContainerWithUnixSocketOpts, ContainerWithWorkdirOpts, ContainerWithoutDirectoryOpts, ContainerWithoutEntrypointOpts, ContainerWithoutExposedPortOpts, ContainerWithoutFileOpts, ContainerWithoutFilesOpts, ContainerWithoutMountOpts, ContainerWithoutUnixSocketOpts, CurrentModuleAsSdkOpts, CurrentModuleGeneratorsOpts, CurrentModuleWorkdirOpts, DirectoryAsModuleOpts, DirectoryAsModuleSourceOpts, DirectoryAsWorkspaceOpts, DirectoryDockerBuildOpts, DirectoryEntriesOpts, DirectoryExistsOpts, DirectoryExportOpts, DirectoryFilterOpts, DirectorySearchOpts, DirectoryStatOpts, DirectoryTerminalOpts, DirectoryWithDirectoryOpts, DirectoryWithFileOpts, DirectoryWithFilesOpts, DirectoryWithNewDirectoryOpts, DirectoryWithNewFileOpts, EngineCacheEntrySetOpts, EngineCachePruneOpts, EnvChecksOpts, EnvFileGetOpts, EnvFileVariablesOpts, EnvServicesOpts, Exportable, FileAsEnvFileOpts, FileContentsOpts, FileDigestOpts, FileExportOpts, FileSearchOpts, FileWithReplacedOpts, FunctionWithArgOpts, FunctionWithCachePolicyOpts, FunctionWithDeprecatedOpts, GeneratorGroupChangesOpts, GitRefAsWorkspaceOpts, GitRefTreeOpts, GitRepositoryAsWorkspaceOpts, GitRepositoryBranchesOpts, GitRepositoryTagsOpts, HostDirectoryOpts, HostFileOpts, HostFindUpOpts, HostServiceOpts, HostTunnelOpts, ID, JSON, JSONValueContentsOpts, LLMContentBlockInput, LLMLoopOpts, LLMStepOpts, LLMWithModelOpts, LLMWithResponseOpts, ModuleChecksOpts, ModuleGeneratorsOpts, ModuleServeOpts, ModuleServicesOpts, Node, PipelineLabel, Platform, PortForward, ServiceEndpointOpts, ServiceStopOpts, ServiceTerminalOpts, ServiceUpOpts, Syncer, TypeDefWithEnumMemberOpts, TypeDefWithEnumOpts, TypeDefWithEnumValueOpts, TypeDefWithFieldOpts, TypeDefWithInterfaceOpts, TypeDefWithObjectOpts, TypeDefWithScalarOpts, Void, WorkspaceChecksOpts, WorkspaceConfigReadOpts, WorkspaceDirectoryOpts, WorkspaceFindUpOpts, WorkspaceGeneratorsOpts, WorkspaceSearchOpts, WorkspaceServicesOpts, WorkspaceWithConfigEnvOpts, WorkspaceWithConfigValueOpts, WorkspaceWithInitClientOpts, WorkspaceWithInitModuleOpts, WorkspaceWithModuleOpts, WorkspaceWithNewFileOpts, WorkspaceWithSdkOpts, WorkspaceWithoutConfigEnvOpts, WorkspaceWithoutConfigValueOpts, WorkspaceWithoutModuleOpts, WorkspaceWithoutSdkOpts, __DirectiveArgsOpts, __FieldArgsOpts, __TypeEnumValuesOpts, __TypeFieldsOpts, __TypeInputFieldsOpts, float };
+export { Address, Agent, AgentGroup, BaseClient, CacheSharingMode, CacheSharingModeNameToValue, CacheSharingModeValueToName, CacheVolume, Changeset, ChangesetMergeConflict, ChangesetMergeConflictNameToValue, ChangesetMergeConflictValueToName, ChangesetsMergeConflict, ChangesetsMergeConflictNameToValue, ChangesetsMergeConflictValueToName, Check, CheckGroup, Client, ClientFilesyncMirror, Cloud, Container, Context, CurrentModule, CurrentModuleAsSDK, CurrentModuleAsSDKClient, CurrentModuleAsSDKModule, DaggerSDKError, DiffStat, DiffStatKind, DiffStatKindNameToValue, DiffStatKindValueToName, Directory, DockerImageRefValidationError, ERROR_CODES, Engine, EngineCache, EngineCacheEntry, EngineCacheEntrySet, EngineSessionConnectParamsParseError, EngineSessionConnectionTimeoutError, EngineSessionError, EnumTypeDef, EnumValueTypeDef, EnvFile, EnvVariable, Error$1 as Error, ErrorValue, ExecError, ExistsType, ExistsTypeNameToValue, ExistsTypeValueToName, FieldTypeDef, File, FileType, FileTypeNameToValue, FileTypeValueToName, FunctionArg, FunctionCachePolicy, FunctionCachePolicyNameToValue, FunctionCachePolicyValueToName, FunctionCall, FunctionCallArgValue, FunctionNotFound, Function_, GeneratedCode, Generator, GeneratorGroup, GitCommit, GitRef, GitRepository, GraphQLRequestError, HTTPState, HealthcheckConfig, Host, ImageLayerCompression, ImageLayerCompressionNameToValue, ImageLayerCompressionValueToName, ImageMediaTypes, ImageMediaTypesNameToValue, ImageMediaTypesValueToName, InitEngineSessionBinaryError, InputTypeDef, InterfaceTypeDef, IntrospectionError, JSONValue, LLM, LLMContentBlock, LLMContentBlockKind, LLMContentBlockKindNameToValue, LLMContentBlockKindValueToName, LLMMessage, LLMMessageRole, LLMMessageRoleNameToValue, LLMMessageRoleValueToName, LLMSkill, LLMTokenUsage, Label, ListTypeDef, ModuleConfigClient, ModuleSource, ModuleSourceExperimentalFeature, ModuleSourceExperimentalFeatureNameToValue, ModuleSourceExperimentalFeatureValueToName, ModuleSourceKind, ModuleSourceKindNameToValue, ModuleSourceKindValueToName, Module_, NetworkProtocol, NetworkProtocolNameToValue, NetworkProtocolValueToName, NotAwaitedRequestError, ObjectTypeDef, PatchConflict, PatchConflictNameToValue, PatchConflictValueToName, Port, RegistryProtocol, RegistryProtocolNameToValue, RegistryProtocolValueToName, RemoteGitMirror, ReturnType, ReturnTypeNameToValue, ReturnTypeValueToName, SDKConfig, ScalarTypeDef, Schema, SearchResult, SearchSubmatch, Secret, Service, Socket, SourceMap, Stat, Terminal, TooManyNestedObjectsError, TypeDef, TypeDefKind, TypeDefKindNameToValue, TypeDefKindValueToName, UnknownDaggerError, Up, UpGroup, Volume, Workspace, WorkspaceGit, WorkspaceMigration, WorkspaceMigrationStep, WorkspaceModule, WorkspaceModuleSetting, WorkspaceSDK, _ExportableClient, _NodeClient, _SyncerClient, agent, argument, check, connect, connection, dag, entrypoint, enumType, field, func, generate, getRegisteredClass, getTracer, object, up };
+export type { AddressDirectoryOpts, AddressFileOpts, AgentGroupComposeOpts, BuildArg, CallbackFct, ChangesetWithChangesetOpts, ChangesetWithChangesetsOpts, CheckGroupRunOpts, ClientCacheVolumeOpts, ClientContainerOpts, ClientCurrentTypeDefsOpts, ClientEngineVolumeOpts, ClientEnvFileOpts, ClientFileOpts, ClientGitOpts, ClientHttpOpts, ClientLLMOpts, ClientModuleSourceOpts, ClientSecretOpts, ClientSshfsVolumeOpts, ConnectOpts, ContainerAsServiceOpts, ContainerAsTarballOpts, ContainerDirectoryOpts, ContainerExistsOpts, ContainerExportImageOpts, ContainerExportOpts, ContainerFileOpts, ContainerFromOpts, ContainerImportOpts, ContainerLayerOpts, ContainerManifestOpts, ContainerPublishOpts, ContainerStatOpts, ContainerTerminalOpts, ContainerUpOpts, ContainerWithDefaultTerminalCmdOpts, ContainerWithDirectoryOpts, ContainerWithDockerHealthcheckOpts, ContainerWithEntrypointOpts, ContainerWithEnvVariableOpts, ContainerWithExecOpts, ContainerWithExposedPortOpts, ContainerWithFileOpts, ContainerWithFilesOpts, ContainerWithMountedCacheOpts, ContainerWithMountedDirectoryOpts, ContainerWithMountedFileOpts, ContainerWithMountedSecretOpts, ContainerWithMountedTempOpts, ContainerWithMountedVolumeOpts, ContainerWithNewFileOpts, ContainerWithSymlinkOpts, ContainerWithUnixSocketOpts, ContainerWithWorkdirOpts, ContainerWithoutDirectoryOpts, ContainerWithoutEntrypointOpts, ContainerWithoutExposedPortOpts, ContainerWithoutFileOpts, ContainerWithoutFilesOpts, ContainerWithoutMountOpts, ContainerWithoutUnixSocketOpts, CurrentModuleGeneratorsOpts, CurrentModuleWorkdirOpts, DirectoryAsModuleOpts, DirectoryAsModuleSourceOpts, DirectoryAsWorkspaceOpts, DirectoryDockerBuildOpts, DirectoryEntriesOpts, DirectoryExistsOpts, DirectoryExportOpts, DirectoryFilterOpts, DirectorySearchOpts, DirectoryStatOpts, DirectoryTerminalOpts, DirectoryWithDirectoryOpts, DirectoryWithFileOpts, DirectoryWithFilesOpts, DirectoryWithNewDirectoryOpts, DirectoryWithNewFileOpts, DirectoryWithPatchFileOpts, DirectoryWithPatchOpts, EngineCacheEntrySetOpts, EngineCachePruneOpts, EnvFileGetOpts, EnvFileVariablesOpts, Exportable, FileAsEnvFileOpts, FileContentsOpts, FileDigestOpts, FileExportOpts, FileSearchOpts, FileWithReplacedOpts, FunctionWithArgOpts, FunctionWithCachePolicyOpts, FunctionWithDeprecatedOpts, GeneratorGroupChangesOpts, GitCommitAncestorReleaseTagOpts, GitCommitReleaseTagOpts, GitCommitTreeOpts, GitRefAsWorkspaceOpts, GitRefLogOpts, GitRefTreeOpts, GitRepositoryAsWorkspaceOpts, GitRepositoryBranchesOpts, GitRepositoryTagsOpts, HostDirectoryOpts, HostFileOpts, HostFindUpOpts, HostServiceOpts, HostTunnelOpts, ID, JSON, JSONValueContentsOpts, LLMContentBlockInput, LLMLoopOpts, LLMStepOpts, LLMWithModelOpts, LLMWithResponseOpts, LLMWithToolsOpts, ModuleChecksOpts, ModuleGeneratorsOpts, ModuleServeOpts, ModuleServicesOpts, Node, PipelineLabel, Platform, PortForward, ServiceEndpointOpts, ServiceStopOpts, ServiceTerminalOpts, ServiceUpOpts, Syncer, TypeDefWithEnumMemberOpts, TypeDefWithEnumOpts, TypeDefWithEnumValueOpts, TypeDefWithFieldOpts, TypeDefWithInterfaceOpts, TypeDefWithObjectOpts, TypeDefWithScalarOpts, Void, WorkspaceAgentsOpts, WorkspaceChangesOpts, WorkspaceChecksOpts, WorkspaceConfigReadOpts, WorkspaceDirectoryOpts, WorkspaceFindRootsOpts, WorkspaceFindUpOpts, WorkspaceGeneratorsOpts, WorkspaceSearchOpts, WorkspaceServicesOpts, WorkspaceWithConfigEnvOpts, WorkspaceWithConfigValueOpts, WorkspaceWithInitClientOpts, WorkspaceWithInitModuleOpts, WorkspaceWithModuleOpts, WorkspaceWithNewFileOpts, WorkspaceWithSdkOpts, WorkspaceWithoutConfigEnvOpts, WorkspaceWithoutConfigValueOpts, WorkspaceWithoutModuleOpts, WorkspaceWithoutSdkOpts, __DirectiveArgsOpts, __FieldArgsOpts, __TypeEnumValuesOpts, __TypeFieldsOpts, __TypeInputFieldsOpts, float };
