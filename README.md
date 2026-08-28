@@ -52,3 +52,4 @@ against `frontend:serve`. List them with `dagger check -l` and `dagger up -l`.
 - [Debugger Agent](./DEBUGGER_AGENT.md)
 - [SWE Agent](./SWE_AGENT.md)
 - [Agentic CI](./AGENTIC_CI.md)
+- [Module Wiring](./MODULE_WIRING.md)
