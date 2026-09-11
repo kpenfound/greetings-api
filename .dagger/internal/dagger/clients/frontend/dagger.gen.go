@@ -7,21 +7,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
-	"net/http"
-	"os"
 	"reflect"
-	"strconv"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/dagger/querybuilder"
 
-	telemetry "github.com/dagger/otel-go"
+	"dagger.io/dagger"
 )
 
 func Tracer() trace.Tracer {
@@ -30,12 +25,6 @@ func Tracer() trace.Tracer {
 
 // reassigned at runtime after the span is initialized
 var marshalCtx = context.Background()
-
-// SetMarshalContext is a hack that lets us set the ctx to use for
-// MarshalJSON implementations that get an object's ID.
-func SetMarshalContext(ctx context.Context) {
-	marshalCtx = ctx
-}
 
 // assertNotNil panic if the given value is nil.
 // This function is used to validate that input with pointer type are not nil.
@@ -179,6 +168,18 @@ type DiffStatID = ID
 type DirectoryID = ID
 
 // A unique identifier for an object.
+type EngineCacheEntryID = ID
+
+// A unique identifier for an object.
+type EngineCacheEntrySetID = ID
+
+// A unique identifier for an object.
+type EngineCacheID = ID
+
+// A unique identifier for an object.
+type EngineID = ID
+
+// A unique identifier for an object.
 type EnumTypeDefID = ID
 
 // A unique identifier for an object.
@@ -204,6 +205,9 @@ type FieldTypeDefID = ID
 
 // A unique identifier for an object.
 type FileID = ID
+
+// A unique identifier for an object.
+type FrontendID = ID
 
 // A unique identifier for an object.
 type FunctionArgID = ID
@@ -233,16 +237,10 @@ type GitRefID = ID
 type GitRepositoryID = ID
 
 // A unique identifier for an object.
-type GoDirectoryID = ID
-
-// A unique identifier for an object.
-type GoID = ID
-
-// A unique identifier for an object.
-type GoModuleID = ID
-
-// A unique identifier for an object.
 type HealthcheckConfigID = ID
+
+// A unique identifier for an object.
+type HostID = ID
 
 // A unique identifier for an object.
 type ID string
@@ -527,15 +525,6 @@ func (r *Address) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Address) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Address{query: selectNode(dag.query, id, "Address")}
-	return nil
-}
 
 // Load a secret from the address.
 func (r *Address) Secret() *Secret {
@@ -636,15 +625,6 @@ func (r *CacheVolume) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *CacheVolume) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = CacheVolume{query: selectNode(dag.query, id, "CacheVolume")}
-	return nil
 }
 
 // AsNode returns this CacheVolume as a Node.
@@ -801,15 +781,6 @@ func (r *Changeset) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Changeset) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Changeset{query: selectNode(dag.query, id, "Changeset")}
-	return nil
 }
 
 // Returns true if the changeset is empty (i.e. there are no changes).
@@ -1045,15 +1016,6 @@ func (r *Check) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Check) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Check{query: selectNode(dag.query, id, "Check")}
-	return nil
-}
 
 // Return the command name of the check. Entrypoint targets omit the module prefix.
 func (r *Check) Name(ctx context.Context) (string, error) {
@@ -1189,15 +1151,6 @@ func (r *CheckGroup) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *CheckGroup) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = CheckGroup{query: selectNode(dag.query, id, "CheckGroup")}
-	return nil
-}
 
 // Return a list of individual checks and their details
 func (r *CheckGroup) List(ctx context.Context) ([]Check, error) {
@@ -1322,15 +1275,6 @@ func (r *Cloud) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Cloud) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Cloud{query: selectNode(dag.query, id, "Cloud")}
-	return nil
 }
 
 // The trace URL for the current session
@@ -1939,15 +1883,6 @@ func (r *Container) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Container) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Container{query: selectNode(dag.query, id, "Container")}
-	return nil
 }
 
 // The unique image reference which can only be retrieved immediately after the 'Container.From' call.
@@ -3505,15 +3440,6 @@ func (r *CurrentModule) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *CurrentModule) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = CurrentModule{query: selectNode(dag.query, id, "CurrentModule")}
-	return nil
-}
 
 // The name of the module being executed in
 func (r *CurrentModule) Name(ctx context.Context) (string, error) {
@@ -3657,15 +3583,6 @@ func (r *DiffStat) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *DiffStat) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = DiffStat{query: selectNode(dag.query, id, "DiffStat")}
-	return nil
 }
 
 // Type of change.
@@ -4126,15 +4043,6 @@ func (r *Directory) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Directory) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Directory{query: selectNode(dag.query, id, "Directory")}
-	return nil
 }
 
 // Returns the name of the directory.
@@ -4599,6 +4507,575 @@ func (r *Directory) AsSyncer() *Syncer {
 	}
 }
 
+// The Dagger engine configuration and state
+type Engine struct {
+	query *querybuilder.Selection
+
+	id   *EngineID
+	name *string
+}
+
+func (r *Engine) WithGraphQLQuery(q *querybuilder.Selection) *Engine {
+	return &Engine{
+		query: q,
+	}
+}
+
+// The list of connected client IDs
+func (r *Engine) Clients(ctx context.Context) ([]string, error) {
+	q := r.query.Select("clients")
+
+	var response []string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A unique identifier for this Engine.
+func (r *Engine) ID(ctx context.Context) (EngineID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response EngineID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *Engine) XXX_GraphQLType() string {
+	return "Engine"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *Engine) XXX_GraphQLIDType() string {
+	return "ID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *Engine) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *Engine) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+
+// The local engine cache state tracked by dagql
+func (r *Engine) LocalCache() *EngineCache {
+	q := r.query.Select("localCache")
+
+	return &EngineCache{
+		query: q,
+	}
+}
+
+// The name of the engine instance.
+func (r *Engine) Name(ctx context.Context) (string, error) {
+	if r.name != nil {
+		return *r.name, nil
+	}
+	q := r.query.Select("name")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// AsNode returns this Engine as a Node.
+// This is a local type conversion — no GraphQL call.
+func (r *Engine) AsNode() Node {
+	return &NodeClient{
+		query: r.query,
+	}
+}
+
+// A cache storage for the Dagger engine
+type EngineCache struct {
+	query *querybuilder.Selection
+
+	id            *EngineCacheID
+	maxUsedSpace  *int
+	minFreeSpace  *int
+	prune         *Void
+	reservedSpace *int
+	targetSpace   *int
+}
+
+func (r *EngineCache) WithGraphQLQuery(q *querybuilder.Selection) *EngineCache {
+	return &EngineCache{
+		query: q,
+	}
+}
+
+// EngineCacheEntrySetOpts contains options for EngineCache.EntrySet
+type EngineCacheEntrySetOpts struct {
+	Key string
+}
+
+// The current set of entries in the cache
+func (r *EngineCache) EntrySet(opts ...EngineCacheEntrySetOpts) *EngineCacheEntrySet {
+	q := r.query.Select("entrySet")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `key` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Key) {
+			q = q.Arg("key", opts[i].Key)
+		}
+	}
+
+	return &EngineCacheEntrySet{
+		query: q,
+	}
+}
+
+// A unique identifier for this EngineCache.
+func (r *EngineCache) ID(ctx context.Context) (EngineCacheID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response EngineCacheID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *EngineCache) XXX_GraphQLType() string {
+	return "EngineCache"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *EngineCache) XXX_GraphQLIDType() string {
+	return "ID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *EngineCache) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *EngineCache) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+
+// The maximum bytes to keep in the cache without pruning.
+func (r *EngineCache) MaxUsedSpace(ctx context.Context) (int, error) {
+	if r.maxUsedSpace != nil {
+		return *r.maxUsedSpace, nil
+	}
+	q := r.query.Select("maxUsedSpace")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The target amount of free disk space the garbage collector will attempt to leave.
+func (r *EngineCache) MinFreeSpace(ctx context.Context) (int, error) {
+	if r.minFreeSpace != nil {
+		return *r.minFreeSpace, nil
+	}
+	q := r.query.Select("minFreeSpace")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// EngineCachePruneOpts contains options for EngineCache.Prune
+type EngineCachePruneOpts struct {
+	// Use the engine-wide default pruning policy if true, otherwise prune the whole cache of any releasable entries.
+	UseDefaultPolicy bool
+	// Override the maximum disk space to keep before pruning (e.g. "200GB" or "80%").
+	MaxUsedSpace string
+	// Override the minimum disk space to retain during pruning (e.g. "500GB" or "10%").
+	ReservedSpace string
+	// Override the minimum free disk space target during pruning (e.g. "20GB" or "20%").
+	MinFreeSpace string
+	// Override the target disk space to keep after pruning (e.g. "200GB" or "50%").
+	TargetSpace string
+}
+
+// Prune the cache of releaseable entries
+func (r *EngineCache) Prune(ctx context.Context, opts ...EngineCachePruneOpts) error {
+	if r.prune != nil {
+		return nil
+	}
+	q := r.query.Select("prune")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `useDefaultPolicy` optional argument
+		if !querybuilder.IsZeroValue(opts[i].UseDefaultPolicy) {
+			q = q.Arg("useDefaultPolicy", opts[i].UseDefaultPolicy)
+		}
+		// `maxUsedSpace` optional argument
+		if !querybuilder.IsZeroValue(opts[i].MaxUsedSpace) {
+			q = q.Arg("maxUsedSpace", opts[i].MaxUsedSpace)
+		}
+		// `reservedSpace` optional argument
+		if !querybuilder.IsZeroValue(opts[i].ReservedSpace) {
+			q = q.Arg("reservedSpace", opts[i].ReservedSpace)
+		}
+		// `minFreeSpace` optional argument
+		if !querybuilder.IsZeroValue(opts[i].MinFreeSpace) {
+			q = q.Arg("minFreeSpace", opts[i].MinFreeSpace)
+		}
+		// `targetSpace` optional argument
+		if !querybuilder.IsZeroValue(opts[i].TargetSpace) {
+			q = q.Arg("targetSpace", opts[i].TargetSpace)
+		}
+	}
+
+	return q.Execute(ctx)
+}
+
+// The minimum amount of disk space this policy is guaranteed to retain.
+func (r *EngineCache) ReservedSpace(ctx context.Context) (int, error) {
+	if r.reservedSpace != nil {
+		return *r.reservedSpace, nil
+	}
+	q := r.query.Select("reservedSpace")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The target number of bytes to keep when pruning.
+func (r *EngineCache) TargetSpace(ctx context.Context) (int, error) {
+	if r.targetSpace != nil {
+		return *r.targetSpace, nil
+	}
+	q := r.query.Select("targetSpace")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// AsNode returns this EngineCache as a Node.
+// This is a local type conversion — no GraphQL call.
+func (r *EngineCache) AsNode() Node {
+	return &NodeClient{
+		query: r.query,
+	}
+}
+
+// An individual cache entry in a cache entry set
+type EngineCacheEntry struct {
+	query *querybuilder.Selection
+
+	activelyUsed              *bool
+	createdTimeUnixNano       *int
+	dagqlCall                 *string
+	description               *string
+	diskSpaceBytes            *int
+	id                        *EngineCacheEntryID
+	mostRecentUseTimeUnixNano *int
+	recordType                *string
+}
+
+func (r *EngineCacheEntry) WithGraphQLQuery(q *querybuilder.Selection) *EngineCacheEntry {
+	return &EngineCacheEntry{
+		query: q,
+	}
+}
+
+// Whether the cache entry is actively being used.
+func (r *EngineCacheEntry) ActivelyUsed(ctx context.Context) (bool, error) {
+	if r.activelyUsed != nil {
+		return *r.activelyUsed, nil
+	}
+	q := r.query.Select("activelyUsed")
+
+	var response bool
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The time the cache entry was created, in Unix nanoseconds.
+func (r *EngineCacheEntry) CreatedTimeUnixNano(ctx context.Context) (int, error) {
+	if r.createdTimeUnixNano != nil {
+		return *r.createdTimeUnixNano, nil
+	}
+	q := r.query.Select("createdTimeUnixNano")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The DagQL call that produced this cache entry.
+func (r *EngineCacheEntry) DagqlCall(ctx context.Context) (string, error) {
+	if r.dagqlCall != nil {
+		return *r.dagqlCall, nil
+	}
+	q := r.query.Select("dagqlCall")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The description of the cache entry.
+func (r *EngineCacheEntry) Description(ctx context.Context) (string, error) {
+	if r.description != nil {
+		return *r.description, nil
+	}
+	q := r.query.Select("description")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The disk space used by the cache entry.
+func (r *EngineCacheEntry) DiskSpaceBytes(ctx context.Context) (int, error) {
+	if r.diskSpaceBytes != nil {
+		return *r.diskSpaceBytes, nil
+	}
+	q := r.query.Select("diskSpaceBytes")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A unique identifier for this EngineCacheEntry.
+func (r *EngineCacheEntry) ID(ctx context.Context) (EngineCacheEntryID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response EngineCacheEntryID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *EngineCacheEntry) XXX_GraphQLType() string {
+	return "EngineCacheEntry"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *EngineCacheEntry) XXX_GraphQLIDType() string {
+	return "ID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *EngineCacheEntry) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *EngineCacheEntry) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+
+// The most recent time the cache entry was used, in Unix nanoseconds.
+func (r *EngineCacheEntry) MostRecentUseTimeUnixNano(ctx context.Context) (int, error) {
+	if r.mostRecentUseTimeUnixNano != nil {
+		return *r.mostRecentUseTimeUnixNano, nil
+	}
+	q := r.query.Select("mostRecentUseTimeUnixNano")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The type of the cache record (e.g. regular, internal, frontend, source.local, source.git.checkout, exec.cachemount).
+func (r *EngineCacheEntry) RecordType(ctx context.Context) (string, error) {
+	if r.recordType != nil {
+		return *r.recordType, nil
+	}
+	q := r.query.Select("recordType")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The storage record types represented by this cache entry.
+func (r *EngineCacheEntry) RecordTypes(ctx context.Context) ([]string, error) {
+	q := r.query.Select("recordTypes")
+
+	var response []string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// AsNode returns this EngineCacheEntry as a Node.
+// This is a local type conversion — no GraphQL call.
+func (r *EngineCacheEntry) AsNode() Node {
+	return &NodeClient{
+		query: r.query,
+	}
+}
+
+// A set of cache entries returned by a query to a cache
+type EngineCacheEntrySet struct {
+	query *querybuilder.Selection
+
+	diskSpaceBytes *int
+	entryCount     *int
+	id             *EngineCacheEntrySetID
+}
+
+func (r *EngineCacheEntrySet) WithGraphQLQuery(q *querybuilder.Selection) *EngineCacheEntrySet {
+	return &EngineCacheEntrySet{
+		query: q,
+	}
+}
+
+// The total disk space used by the cache entries in this set.
+func (r *EngineCacheEntrySet) DiskSpaceBytes(ctx context.Context) (int, error) {
+	if r.diskSpaceBytes != nil {
+		return *r.diskSpaceBytes, nil
+	}
+	q := r.query.Select("diskSpaceBytes")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The list of individual cache entries in the set
+func (r *EngineCacheEntrySet) Entries(ctx context.Context) ([]EngineCacheEntry, error) {
+	q := r.query.Select("entries")
+
+	q = q.Select("id")
+
+	type entries struct {
+		Id EngineCacheEntryID
+	}
+
+	convert := func(fields []entries) []EngineCacheEntry {
+		out := []EngineCacheEntry{}
+
+		for i := range fields {
+			val := EngineCacheEntry{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "EngineCacheEntry")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []entries
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
+// The number of cache entries in this set.
+func (r *EngineCacheEntrySet) EntryCount(ctx context.Context) (int, error) {
+	if r.entryCount != nil {
+		return *r.entryCount, nil
+	}
+	q := r.query.Select("entryCount")
+
+	var response int
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A unique identifier for this EngineCacheEntrySet.
+func (r *EngineCacheEntrySet) ID(ctx context.Context) (EngineCacheEntrySetID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response EngineCacheEntrySetID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *EngineCacheEntrySet) XXX_GraphQLType() string {
+	return "EngineCacheEntrySet"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *EngineCacheEntrySet) XXX_GraphQLIDType() string {
+	return "ID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *EngineCacheEntrySet) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *EngineCacheEntrySet) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+
+// AsNode returns this EngineCacheEntrySet as a Node.
+// This is a local type conversion — no GraphQL call.
+func (r *EngineCacheEntrySet) AsNode() Node {
+	return &NodeClient{
+		query: r.query,
+	}
+}
+
 // A definition of a custom enum defined in a Module.
 type EnumTypeDef struct {
 	query *querybuilder.Selection
@@ -4666,15 +5143,6 @@ func (r *EnumTypeDef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *EnumTypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = EnumTypeDef{query: selectNode(dag.query, id, "EnumTypeDef")}
-	return nil
 }
 
 // The members of the enum.
@@ -4870,15 +5338,6 @@ func (r *EnumValueTypeDef) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *EnumValueTypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = EnumValueTypeDef{query: selectNode(dag.query, id, "EnumValueTypeDef")}
-	return nil
-}
 
 // The name of the enum member.
 func (r *EnumValueTypeDef) Name(ctx context.Context) (string, error) {
@@ -5034,15 +5493,6 @@ func (r *EnvFile) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *EnvFile) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = EnvFile{query: selectNode(dag.query, id, "EnvFile")}
-	return nil
-}
 
 // Filters variables by prefix and removes the pref from keys. Variables without the prefix are excluded. For example, with the prefix "MY_APP_" and variables: MY_APP_TOKEN=topsecret MY_APP_NAME=hello FOO=bar the resulting environment will contain: TOKEN=topsecret NAME=hello
 func (r *EnvFile) Namespace(prefix string) *EnvFile {
@@ -5182,15 +5632,6 @@ func (r *EnvVariable) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *EnvVariable) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = EnvVariable{query: selectNode(dag.query, id, "EnvVariable")}
-	return nil
-}
 
 // The environment variable name.
 func (r *EnvVariable) Name(ctx context.Context) (string, error) {
@@ -5285,15 +5726,6 @@ func (r *Error) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Error) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Error{query: selectNode(dag.query, id, "Error")}
-	return nil
 }
 
 // A description of the error.
@@ -5414,15 +5846,6 @@ func (r *ErrorValue) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *ErrorValue) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = ErrorValue{query: selectNode(dag.query, id, "ErrorValue")}
-	return nil
-}
 
 // The name of the value.
 func (r *ErrorValue) Name(ctx context.Context) (string, error) {
@@ -5540,15 +5963,6 @@ func (r *FieldTypeDef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *FieldTypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = FieldTypeDef{query: selectNode(dag.query, id, "FieldTypeDef")}
-	return nil
 }
 
 // The name of the field in lowerCamelCase format.
@@ -5778,15 +6192,6 @@ func (r *File) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *File) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = File{query: selectNode(dag.query, id, "File")}
-	return nil
 }
 
 // Retrieves the name of the file.
@@ -6145,15 +6550,6 @@ func (r *Function) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Function) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Function{query: selectNode(dag.query, id, "Function")}
-	return nil
-}
 
 // The name of the function.
 func (r *Function) Name(ctx context.Context) (string, error) {
@@ -6483,15 +6879,6 @@ func (r *FunctionArg) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *FunctionArg) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = FunctionArg{query: selectNode(dag.query, id, "FunctionArg")}
-	return nil
-}
 
 // Only applies to arguments of type Directory. The ignore patterns are applied to the input directory, and matching entries are filtered out, in a cache-efficient manner.
 func (r *FunctionArg) Ignore(ctx context.Context) ([]string, error) {
@@ -6598,15 +6985,6 @@ func (r *FunctionCall) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *FunctionCall) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = FunctionCall{query: selectNode(dag.query, id, "FunctionCall")}
-	return nil
 }
 
 // The argument values the function is being invoked with.
@@ -6766,15 +7144,6 @@ func (r *FunctionCallArgValue) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *FunctionCallArgValue) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = FunctionCallArgValue{query: selectNode(dag.query, id, "FunctionCallArgValue")}
-	return nil
-}
 
 // The name of the argument.
 func (r *FunctionCallArgValue) Name(ctx context.Context) (string, error) {
@@ -6878,15 +7247,6 @@ func (r *GeneratedCode) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *GeneratedCode) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = GeneratedCode{query: selectNode(dag.query, id, "GeneratedCode")}
-	return nil
 }
 
 // List of paths to mark generated in version control (i.e. .gitattributes).
@@ -7034,15 +7394,6 @@ func (r *Generator) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Generator) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Generator{query: selectNode(dag.query, id, "Generator")}
-	return nil
 }
 
 // Whether changeset from the last generator run is empty or not
@@ -7194,15 +7545,6 @@ func (r *GeneratorGroup) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *GeneratorGroup) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = GeneratorGroup{query: selectNode(dag.query, id, "GeneratorGroup")}
-	return nil
-}
 
 // Whether the generated changeset from the last run is empty or not
 func (r *GeneratorGroup) IsEmpty(ctx context.Context) (bool, error) {
@@ -7352,15 +7694,6 @@ func (r *GitRef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *GitRef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = GitRef{query: selectNode(dag.query, id, "GitRef")}
-	return nil
 }
 
 // The resolved ref name at this ref.
@@ -7531,15 +7864,6 @@ func (r *GitRepository) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *GitRepository) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = GitRepository{query: selectNode(dag.query, id, "GitRepository")}
-	return nil
-}
 
 // Returns details of a ref.
 func (r *GitRepository) Ref(name string) *GitRef {
@@ -7707,15 +8031,6 @@ func (r *HealthcheckConfig) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *HealthcheckConfig) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = HealthcheckConfig{query: selectNode(dag.query, id, "HealthcheckConfig")}
-	return nil
-}
 
 // Interval between running healthcheck. Example:30s
 func (r *HealthcheckConfig) Interval(ctx context.Context) (string, error) {
@@ -7798,6 +8113,236 @@ func (r *HealthcheckConfig) Timeout(ctx context.Context) (string, error) {
 // AsNode returns this HealthcheckConfig as a Node.
 // This is a local type conversion — no GraphQL call.
 func (r *HealthcheckConfig) AsNode() Node {
+	return &NodeClient{
+		query: r.query,
+	}
+}
+
+// Information about the host environment.
+type Host struct {
+	query *querybuilder.Selection
+
+	findUp *string
+	id     *HostID
+}
+
+func (r *Host) WithGraphQLQuery(q *querybuilder.Selection) *Host {
+	return &Host{
+		query: q,
+	}
+}
+
+// Accesses a container image on the host.
+func (r *Host) ContainerImage(name string) *Container {
+	q := r.query.Select("containerImage")
+	q = q.Arg("name", name)
+
+	return &Container{
+		query: q,
+	}
+}
+
+// HostDirectoryOpts contains options for Host.Directory
+type HostDirectoryOpts struct {
+	// Exclude artifacts that match the given pattern (e.g., ["node_modules/", ".git*"]).
+	Exclude []string
+	// Include only artifacts that match the given pattern (e.g., ["app/", "package.*"]).
+	Include []string
+	// If true, the directory will always be reloaded from the host.
+	NoCache bool
+	// Apply .gitignore filter rules inside the directory
+	Gitignore bool
+}
+
+// Accesses a directory on the host.
+func (r *Host) Directory(path string, opts ...HostDirectoryOpts) *Directory {
+	q := r.query.Select("directory")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `exclude` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Exclude) {
+			q = q.Arg("exclude", opts[i].Exclude)
+		}
+		// `include` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Include) {
+			q = q.Arg("include", opts[i].Include)
+		}
+		// `noCache` optional argument
+		if !querybuilder.IsZeroValue(opts[i].NoCache) {
+			q = q.Arg("noCache", opts[i].NoCache)
+		}
+		// `gitignore` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Gitignore) {
+			q = q.Arg("gitignore", opts[i].Gitignore)
+		}
+	}
+	q = q.Arg("path", path)
+
+	return &Directory{
+		query: q,
+	}
+}
+
+// HostFileOpts contains options for Host.File
+type HostFileOpts struct {
+	// If true, the file will always be reloaded from the host.
+	NoCache bool
+}
+
+// Accesses a file on the host.
+func (r *Host) File(path string, opts ...HostFileOpts) *File {
+	q := r.query.Select("file")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `noCache` optional argument
+		if !querybuilder.IsZeroValue(opts[i].NoCache) {
+			q = q.Arg("noCache", opts[i].NoCache)
+		}
+	}
+	q = q.Arg("path", path)
+
+	return &File{
+		query: q,
+	}
+}
+
+// HostFindUpOpts contains options for Host.FindUp
+type HostFindUpOpts struct {
+	NoCache bool
+}
+
+// Search for a file or directory by walking up the tree from system workdir. Return its relative path. If no match, return null
+func (r *Host) FindUp(ctx context.Context, name string, opts ...HostFindUpOpts) (string, error) {
+	if r.findUp != nil {
+		return *r.findUp, nil
+	}
+	q := r.query.Select("findUp")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `noCache` optional argument
+		if !querybuilder.IsZeroValue(opts[i].NoCache) {
+			q = q.Arg("noCache", opts[i].NoCache)
+		}
+	}
+	q = q.Arg("name", name)
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A unique identifier for this Host.
+func (r *Host) ID(ctx context.Context) (HostID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response HostID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *Host) XXX_GraphQLType() string {
+	return "Host"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *Host) XXX_GraphQLIDType() string {
+	return "ID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *Host) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *Host) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+
+// HostServiceOpts contains options for Host.Service
+type HostServiceOpts struct {
+	// Upstream host to forward traffic to.
+	//
+	// Default: "localhost"
+	Host string
+}
+
+// Creates a service that forwards traffic to a specified address via the host.
+func (r *Host) Service(ports []PortForward, opts ...HostServiceOpts) *Service {
+	q := r.query.Select("service")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `host` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Host) {
+			q = q.Arg("host", opts[i].Host)
+		}
+	}
+	q = q.Arg("ports", ports)
+
+	return &Service{
+		query: q,
+	}
+}
+
+// HostTunnelOpts contains options for Host.Tunnel
+type HostTunnelOpts struct {
+	// Map each service port to the same port on the host, as if the service were running natively.
+	//
+	// Note: enabling may result in port conflicts.
+	Native bool
+	// Configure explicit port forwarding rules for the tunnel.
+	//
+	// If a port's frontend is unspecified or 0, a random port will be chosen by the host.
+	//
+	// If no ports are given, all of the service's ports are forwarded. If native is true, each port maps to the same port on the host. If native is false, each port maps to a random port chosen by the host.
+	//
+	// If ports are given and native is true, the ports are additive.
+	Ports []PortForward
+}
+
+// Creates a tunnel that forwards traffic from the host to a service.
+func (r *Host) Tunnel(service *Service, opts ...HostTunnelOpts) *Service {
+	assertNotNil("service", service)
+	q := r.query.Select("tunnel")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `native` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Native) {
+			q = q.Arg("native", opts[i].Native)
+		}
+		// `ports` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Ports) {
+			q = q.Arg("ports", opts[i].Ports)
+		}
+	}
+	q = q.Arg("service", service)
+
+	return &Service{
+		query: q,
+	}
+}
+
+// Accesses a Unix socket on the host.
+func (r *Host) UnixSocket(path string) *Socket {
+	q := r.query.Select("unixSocket")
+	q = q.Arg("path", path)
+
+	return &Socket{
+		query: q,
+	}
+}
+
+// AsNode returns this Host as a Node.
+// This is a local type conversion — no GraphQL call.
+func (r *Host) AsNode() Node {
 	return &NodeClient{
 		query: r.query,
 	}
@@ -7891,15 +8436,6 @@ func (r *InputTypeDef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *InputTypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = InputTypeDef{query: selectNode(dag.query, id, "InputTypeDef")}
-	return nil
 }
 
 // The name of the input object.
@@ -8023,15 +8559,6 @@ func (r *InterfaceTypeDef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *InterfaceTypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = InterfaceTypeDef{query: selectNode(dag.query, id, "InterfaceTypeDef")}
-	return nil
 }
 
 // The name of the interface.
@@ -8265,15 +8792,6 @@ func (r *JSONValue) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *JSONValue) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = JSONValue{query: selectNode(dag.query, id, "JSONValue")}
-	return nil
-}
 
 // Encode a boolean to json
 func (r *JSONValue) NewBoolean(value bool) *JSONValue {
@@ -8409,15 +8927,6 @@ func (r *LLM) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *LLM) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = LLM{query: selectNode(dag.query, id, "LLM")}
-	return nil
 }
 
 // The text of the model's most recent reply.
@@ -8691,15 +9200,6 @@ func (r *LLMTokenUsage) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *LLMTokenUsage) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = LLMTokenUsage{query: selectNode(dag.query, id, "LLMTokenUsage")}
-	return nil
-}
 
 // Uncached input tokens sent to the model.
 func (r *LLMTokenUsage) InputTokens(ctx context.Context) (int, error) {
@@ -8802,15 +9302,6 @@ func (r *Label) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Label) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Label{query: selectNode(dag.query, id, "Label")}
-	return nil
-}
 
 // The label name.
 func (r *Label) Name(ctx context.Context) (string, error) {
@@ -8906,15 +9397,6 @@ func (r *ListTypeDef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *ListTypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = ListTypeDef{query: selectNode(dag.query, id, "ListTypeDef")}
-	return nil
 }
 
 // AsNode returns this ListTypeDef as a Node.
@@ -9146,15 +9628,6 @@ func (r *Module) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Module) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Module{query: selectNode(dag.query, id, "Module")}
-	return nil
 }
 
 // Interfaces served by this module.
@@ -9490,15 +9963,6 @@ func (r *ModuleConfigClient) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *ModuleConfigClient) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = ModuleConfigClient{query: selectNode(dag.query, id, "ModuleConfigClient")}
-	return nil
-}
 
 // AsNode returns this ModuleConfigClient as a Node.
 // This is a local type conversion — no GraphQL call.
@@ -9813,15 +10277,6 @@ func (r *ModuleSource) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *ModuleSource) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = ModuleSource{query: selectNode(dag.query, id, "ModuleSource")}
-	return nil
 }
 
 // The introspection schema JSON file for this module source.
@@ -10408,15 +10863,6 @@ func (r *ObjectTypeDef) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *ObjectTypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = ObjectTypeDef{query: selectNode(dag.query, id, "ObjectTypeDef")}
-	return nil
-}
 
 // The name of the object.
 func (r *ObjectTypeDef) Name(ctx context.Context) (string, error) {
@@ -10542,15 +10988,6 @@ func (r *Port) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Port) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Port{query: selectNode(dag.query, id, "Port")}
-	return nil
 }
 
 // The port number.
@@ -10730,6 +11167,17 @@ func (r *Query) CurrentTypeDefs(ctx context.Context, opts ...CurrentTypeDefsOpts
 	return convert(response), nil
 }
 
+// Detect and return the current workspace.
+//
+// Experimental: Highly experimental API extracted from a more ambitious workspace implementation.
+func (r *Query) CurrentWorkspace() *Workspace {
+	q := r.query.Select("currentWorkspace")
+
+	return &Workspace{
+		query: q,
+	}
+}
+
 // The default platform of the engine.
 func (r *Query) DefaultPlatform(ctx context.Context) (Platform, error) {
 	q := r.query.Select("defaultPlatform")
@@ -10745,6 +11193,15 @@ func (r *Query) Directory() *Directory {
 	q := r.query.Select("directory")
 
 	return &Directory{
+		query: q,
+	}
+}
+
+// The Dagger engine container configuration and state
+func (r *Query) Engine() *Engine {
+	q := r.query.Select("engine")
+
+	return &Engine{
 		query: q,
 	}
 }
@@ -10890,6 +11347,15 @@ func (r *Query) Git(url string, opts ...GitOpts) *GitRepository {
 	}
 }
 
+// Queries the host environment.
+func (r *Query) Host() *Host {
+	q := r.query.Select("host")
+
+	return &Host{
+		query: q,
+	}
+}
+
 // HTTPOpts contains options for Query.HTTP
 type HTTPOpts struct {
 	// File name to use for the file. Defaults to the last part of the URL.
@@ -10965,15 +11431,6 @@ func (r *Query) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Query) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Query{query: selectNode(dag.query, id, "Query")}
-	return nil
 }
 
 // Initialize a JSON value
@@ -11114,6 +11571,46 @@ func (r *Query) LoadDirectoryFromID(id DirectoryID) *Directory {
 	}
 }
 
+// Load a EngineCacheEntry from its ID.
+func (r *Query) LoadEngineCacheEntryFromID(id EngineCacheEntryID) *EngineCacheEntry {
+	q := r.query.Select("loadEngineCacheEntryFromID")
+	q = q.Arg("id", id)
+
+	return &EngineCacheEntry{
+		query: q,
+	}
+}
+
+// Load a EngineCacheEntrySet from its ID.
+func (r *Query) LoadEngineCacheEntrySetFromID(id EngineCacheEntrySetID) *EngineCacheEntrySet {
+	q := r.query.Select("loadEngineCacheEntrySetFromID")
+	q = q.Arg("id", id)
+
+	return &EngineCacheEntrySet{
+		query: q,
+	}
+}
+
+// Load a EngineCache from its ID.
+func (r *Query) LoadEngineCacheFromID(id EngineCacheID) *EngineCache {
+	q := r.query.Select("loadEngineCacheFromID")
+	q = q.Arg("id", id)
+
+	return &EngineCache{
+		query: q,
+	}
+}
+
+// Load a Engine from its ID.
+func (r *Query) LoadEngineFromID(id EngineID) *Engine {
+	q := r.query.Select("loadEngineFromID")
+	q = q.Arg("id", id)
+
+	return &Engine{
+		query: q,
+	}
+}
+
 // Load a EnumTypeDef from its ID.
 func (r *Query) LoadEnumTypeDefFromID(id EnumTypeDefID) *EnumTypeDef {
 	q := r.query.Select("loadEnumTypeDefFromID")
@@ -11199,6 +11696,16 @@ func (r *Query) LoadFileFromID(id FileID) *File {
 	q = q.Arg("id", id)
 
 	return &File{
+		query: q,
+	}
+}
+
+// Load a Frontend from its ID.
+func (r *Query) LoadFrontendFromID(id FrontendID) *Frontend {
+	q := r.query.Select("loadFrontendFromID")
+	q = q.Arg("id", id)
+
+	return &Frontend{
 		query: q,
 	}
 }
@@ -11293,42 +11800,22 @@ func (r *Query) LoadGitRepositoryFromID(id GitRepositoryID) *GitRepository {
 	}
 }
 
-// Load a GoDirectory from its ID.
-func (r *Query) LoadGoDirectoryFromID(id GoDirectoryID) *GoDirectory {
-	q := r.query.Select("loadGoDirectoryFromID")
-	q = q.Arg("id", id)
-
-	return &GoDirectory{
-		query: q,
-	}
-}
-
-// Load a Go from its ID.
-func (r *Query) LoadGoFromID(id GoID) *Go {
-	q := r.query.Select("loadGoFromID")
-	q = q.Arg("id", id)
-
-	return &Go{
-		query: q,
-	}
-}
-
-// Load a GoModule from its ID.
-func (r *Query) LoadGoModuleFromID(id GoModuleID) *GoModule {
-	q := r.query.Select("loadGoModuleFromID")
-	q = q.Arg("id", id)
-
-	return &GoModule{
-		query: q,
-	}
-}
-
 // Load a HealthcheckConfig from its ID.
 func (r *Query) LoadHealthcheckConfigFromID(id HealthcheckConfigID) *HealthcheckConfig {
 	q := r.query.Select("loadHealthcheckConfigFromID")
 	q = q.Arg("id", id)
 
 	return &HealthcheckConfig{
+		query: q,
+	}
+}
+
+// Load a Host from its ID.
+func (r *Query) LoadHostFromID(id HostID) *Host {
+	q := r.query.Select("loadHostFromID")
+	q = q.Arg("id", id)
+
+	return &Host{
 		query: q,
 	}
 }
@@ -11805,15 +12292,6 @@ func (r *SDKConfig) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *SDKConfig) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = SDKConfig{query: selectNode(dag.query, id, "SDKConfig")}
-	return nil
-}
 
 // Source of the SDK. Either a name of a builtin SDK or a module source ref string pointing to the SDK's implementation.
 func (r *SDKConfig) Source(ctx context.Context) (string, error) {
@@ -11903,15 +12381,6 @@ func (r *ScalarTypeDef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *ScalarTypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = ScalarTypeDef{query: selectNode(dag.query, id, "ScalarTypeDef")}
-	return nil
 }
 
 // The name of the scalar.
@@ -12028,15 +12497,6 @@ func (r *SearchResult) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *SearchResult) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = SearchResult{query: selectNode(dag.query, id, "SearchResult")}
-	return nil
 }
 
 // The first line that matched.
@@ -12173,15 +12633,6 @@ func (r *SearchSubmatch) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *SearchSubmatch) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = SearchSubmatch{query: selectNode(dag.query, id, "SearchSubmatch")}
-	return nil
-}
 
 // The match's start offset within the matched lines.
 func (r *SearchSubmatch) Start(ctx context.Context) (int, error) {
@@ -12271,15 +12722,6 @@ func (r *Secret) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Secret) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Secret{query: selectNode(dag.query, id, "Secret")}
-	return nil
 }
 
 // The name of this secret.
@@ -12442,15 +12884,6 @@ func (r *Service) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Service) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Service{query: selectNode(dag.query, id, "Service")}
-	return nil
 }
 
 // Retrieves the list of ports provided by the service.
@@ -12666,15 +13099,6 @@ func (r *Socket) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Socket) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Socket{query: selectNode(dag.query, id, "Socket")}
-	return nil
-}
 
 // AsNode returns this Socket as a Node.
 // This is a local type conversion — no GraphQL call.
@@ -12766,15 +13190,6 @@ func (r *SourceMap) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *SourceMap) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = SourceMap{query: selectNode(dag.query, id, "SourceMap")}
-	return nil
 }
 
 // The line number within the filename.
@@ -12893,15 +13308,6 @@ func (r *Stat) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Stat) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Stat{query: selectNode(dag.query, id, "Stat")}
-	return nil
-}
 
 // file name
 func (r *Stat) Name(ctx context.Context) (string, error) {
@@ -13002,15 +13408,6 @@ func (r *Terminal) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Terminal) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Terminal{query: selectNode(dag.query, id, "Terminal")}
-	return nil
 }
 
 // Forces evaluation of the pipeline in the engine.
@@ -13160,15 +13557,6 @@ func (r *TypeDef) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *TypeDef) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = TypeDef{query: selectNode(dag.query, id, "TypeDef")}
-	return nil
 }
 
 // The kind of type this is (e.g. primitive, list, object).
@@ -13570,15 +13958,6 @@ func (r *Up) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Up) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Up{query: selectNode(dag.query, id, "Up")}
-	return nil
-}
 
 // Return the command name of the service. Entrypoint targets omit the module prefix.
 func (r *Up) Name(ctx context.Context) (string, error) {
@@ -13687,15 +14066,6 @@ func (r *UpGroup) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *UpGroup) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = UpGroup{query: selectNode(dag.query, id, "UpGroup")}
-	return nil
 }
 
 // Return a list of individual services and their details
@@ -13969,15 +14339,6 @@ func (r *Workspace) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Workspace) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Workspace{query: selectNode(dag.query, id, "Workspace")}
-	return nil
-}
 
 // Whether .dagger/config.toml exists.
 func (r *Workspace) Initialized(ctx context.Context) (bool, error) {
@@ -14101,15 +14462,6 @@ func (r *Exportable) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *Exportable) UnmarshalJSON(bs []byte) error {
-	var id ExportableID
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Exportable{query: selectNode(dag.query, id, "Exportable")}
-	return nil
-}
 
 // Concrete loads and returns the underlying concrete type of this
 // interface, which can then be used with a type switch.
@@ -14197,15 +14549,6 @@ func (r *NodeClient) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(id)
 }
-func (r *NodeClient) UnmarshalJSON(bs []byte) error {
-	var id string
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = NodeClient{query: selectNode(dag.query, id, "Node")}
-	return nil
-}
 
 // An object that can be force-evaluated.
 //
@@ -14261,15 +14604,6 @@ func (r *Syncer) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(id)
-}
-func (r *Syncer) UnmarshalJSON(bs []byte) error {
-	var id SyncerID
-	err := json.Unmarshal(bs, &id)
-	if err != nil {
-		return err
-	}
-	*r = Syncer{query: selectNode(dag.query, id, "Syncer")}
-	return nil
 }
 
 func (r *Syncer) Sync(ctx context.Context) (*Syncer, error) {
@@ -15250,25 +15584,73 @@ const (
 	TypeDefKindEnumKind TypeDefKind = "ENUM_KIND"
 )
 
+// Client is the Dagger Engine Client
 type Client struct {
 	*Query
+	dag    *dagger.Client
 	client graphql.Client
 }
 
-var dag *Client
+// ClientOpt holds a client option
+type ClientOpt = dagger.ClientOpt
 
-func init() {
-	gqlClient, q := getClientParams()
-	dag = &Client{
-		Query: &Query{
-			query: q.Client(gqlClient),
-		},
-		client: gqlClient,
+// Request contains all the values required to build queries executed by the graphql.Client
+type Request = dagger.Request
+
+// Response contains data returned by the GraphQL API
+type Response = dagger.Response
+
+// WithWorkdir sets the engine workdir
+var WithWorkdir = dagger.WithWorkdir
+
+// WithWorkspace sets the workspace binding for the engine session
+var WithWorkspace = dagger.WithWorkspace
+
+// WithLogOutput sets the progress writer
+var WithLogOutput = dagger.WithLogOutput
+
+// WithLoadWorkspaceModules opts this client into loading workspace modules
+// based on the working directory when the session is created via the CLI.
+var WithLoadWorkspaceModules = dagger.WithLoadWorkspaceModules
+
+// WithConn sets the engine connection explicitly
+var WithConn = dagger.WithConn
+
+// WithVersionOverride requests a specific schema version from the engine
+var WithVersionOverride = dagger.WithVersionOverride
+
+// WithVerbosity sets the verbosity level for the progress output
+var WithVerbosity = dagger.WithVerbosity
+
+// WithRunnerHost sets the runner host URL
+var WithRunnerHost = dagger.WithRunnerHost
+
+// WithEnvironmentVariable sets an environment variable in the CLI subprocess
+var WithEnvironmentVariable = dagger.WithEnvironmentVariable
+
+func Connect(ctx context.Context, opts ...ClientOpt) (*Client, error) {
+	dag, err := dagger.Connect(ctx, opts...)
+	if err != nil {
+		return nil, err
 	}
+
+	c := &Client{
+		Query: &Query{
+			query: dag.QueryBuilder(),
+		},
+		client: dag.GraphQLClient(),
+		dag:    dag,
+	}
+
+	if err := serveBoundModule(ctx, c); err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
-func Connect() *Client {
-	return dag
+func (c *Client) Close() error {
+	return c.dag.Close()
 }
 
 // GraphQLClient returns the underlying graphql.Client
@@ -15276,78 +15658,24 @@ func (c *Client) GraphQLClient() graphql.Client {
 	return c.client
 }
 
-// QueryBuilder returns the underlying query builder.
+// QueryBuilder returns the underlying query builder
 func (c *Client) QueryBuilder() *querybuilder.Selection {
 	return c.Query.query
 }
 
-func getClientParams() (graphql.Client, *querybuilder.Selection) {
-	portStr, ok := os.LookupEnv("DAGGER_SESSION_PORT")
-	if !ok {
-		panic("DAGGER_SESSION_PORT is not set")
-	}
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		panic(fmt.Errorf("DAGGER_SESSION_PORT %q is invalid: %w", portStr, err))
-	}
-
-	sessionToken := os.Getenv("DAGGER_SESSION_TOKEN")
-	if sessionToken == "" {
-		panic("DAGGER_SESSION_TOKEN is not set")
-	}
-
-	host := fmt.Sprintf("127.0.0.1:%d", port)
-
-	dialTransport := &http.Transport{
-		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-			return net.Dial("tcp", host)
-		},
-	}
-	httpClient := &http.Client{
-		Transport: roundTripperFunc(func(r *http.Request) (*http.Response, error) {
-			r.SetBasicAuth(sessionToken, "")
-
-			// detect $TRACEPARENT set by 'dagger run'
-			r = r.WithContext(fallbackSpanContext(r.Context()))
-
-			// propagate span context via headers (i.e. for Dagger-in-Dagger)
-			telemetry.Propagator.Inject(r.Context(), propagation.HeaderCarrier(r.Header))
-
-			return dialTransport.RoundTrip(r)
-		}),
-	}
-	gqlClient := errorWrappedClient{graphql.NewClient(fmt.Sprintf("http://%s/query", host), httpClient)}
-
-	return gqlClient, querybuilder.Query()
+// Do executes a raw GraphQL request using the client's session
+func (c *Client) Do(ctx context.Context, req *Request, resp *Response) error {
+	return c.dag.Do(ctx, req, resp)
 }
 
-func fallbackSpanContext(ctx context.Context) context.Context {
-	if trace.SpanContextFromContext(ctx).IsValid() {
-		return ctx
-	}
-	return telemetry.Propagator.Extract(ctx, telemetry.NewEnvCarrier(true))
-}
-
-// TODO: pollutes namespace, move to non internal package in dagger.io/dagger
-type roundTripperFunc func(*http.Request) (*http.Response, error)
-
-func (fn roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return fn(req)
-}
-
-type errorWrappedClient struct {
-	graphql.Client
-}
-
-func (c errorWrappedClient) MakeRequest(ctx context.Context, req *graphql.Request, resp *graphql.Response) error {
-	err := c.Client.MakeRequest(ctx, req, resp)
-	if err != nil {
-		if e := getCustomError(err); e != nil {
-			return e
-		}
-		return err
-	}
-	return nil
+// serveBoundModule serves the single module this client is bound to into the
+// session, so its constructor resolves on the schema.
+func serveBoundModule(ctx context.Context, client *Client) error {
+	return client.
+		CurrentWorkspace().
+		ModuleSource("/.dagger/frontend").
+		AsModule().
+		Serve(ctx)
 }
 
 // selectNode returns a query selection for node(id:) scoped to the

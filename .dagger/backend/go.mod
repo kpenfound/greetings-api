@@ -8,8 +8,11 @@ require (
 )
 
 require (
+	dagger.io/dagger v1.0.0-beta.12 // indirect
 	github.com/99designs/gqlgen v0.17.89 // indirect
+	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 )
 

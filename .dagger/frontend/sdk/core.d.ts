@@ -132,6 +132,12 @@ type BuildArg = {
     value: string;
 };
 /**
+ * Arbitrary binary data, represented as a base64-encoded string.
+ */
+type Bytes = string & {
+    __Bytes: never;
+};
+/**
  * Sharing mode of the cache volume.
  */
 declare enum CacheSharingMode {
@@ -355,6 +361,10 @@ type ContainerFileOpts = {
     expand?: boolean;
 };
 type ContainerFromOpts = {
+    /**
+     * Version query used to select an image tag. The address must not contain a tag or digest.
+     */
+    version?: string;
     /**
      * Service to use as the registry endpoint for the image address.
      *
@@ -1428,6 +1438,12 @@ type GeneratorGroupChangesOpts = {
      */
     onConflict?: ChangesetsMergeConflict;
 };
+type GeneratorGroupWorkspaceOpts = {
+    /**
+     * Strategy to apply on conflicts between generators
+     */
+    onConflict?: ChangesetsMergeConflict;
+};
 type GitCommitAncestorReleaseTagOpts = {
     /**
      * Include pre-release tags when choosing the latest tag.
@@ -1500,11 +1516,29 @@ type GitRepositoryBranchesOpts = {
      */
     patterns?: string[];
 };
+type GitRepositoryBundleOpts = {
+    /**
+     * A Git ref whose reachable objects are omitted and recorded as a prerequisite.
+     */
+    base?: GitRef;
+};
+type GitRepositoryLatestOpts = {
+    /**
+     * Version query used to select the greatest matching release ref.
+     */
+    version?: string;
+};
 type GitRepositoryTagsOpts = {
     /**
      * Glob patterns (e.g., "refs/tags/v*").
      */
     patterns?: string[];
+};
+type GitRepositoryWithBundleOpts = {
+    /**
+     * An optional remote ref hint for fetching a prerequisite when the remote does not allow fetches by object ID.
+     */
+    prerequisiteRef?: string;
 };
 type HostDirectoryOpts = {
     /**
@@ -1900,6 +1934,12 @@ type PortForward = {
      */
     protocol?: NetworkProtocol;
 };
+type ClientBlobOpts = {
+    /**
+     * Permissions of the new file. Example: 0600
+     */
+    permissions?: number;
+};
 type ClientCacheVolumeOpts = {
     /**
      * Identifier of the directory to use as the cache volume's root.
@@ -2021,6 +2061,10 @@ type ClientLLMOpts = {
     provider?: string;
 };
 type ClientModuleSourceOpts = {
+    /**
+     * Version query for a Git module source.
+     */
+    version?: string;
     /**
      * The pinned version of the module source
      */
@@ -2468,6 +2512,22 @@ type WorkspaceServicesOpts = {
      */
     include?: string[];
 };
+type WorkspaceTerminalsOpts = {
+    /**
+     * Only include terminal targets matching the specified patterns
+     */
+    include?: string[];
+};
+type WorkspaceWithClientOpts = {
+    /**
+     * Optional SDK name. Inspect all installed SDKs when omitted.
+     */
+    sdk?: string;
+    /**
+     * Explicit SDK-module constructor setting overrides for this scope. Requires an explicit SDK name.
+     */
+    settings?: JSON;
+};
 type WorkspaceWithConfigEnvOpts = {
     /**
      * Write to the workspace config directory at the workspace cwd.
@@ -2484,45 +2544,25 @@ type WorkspaceWithConfigValueOpts = {
      */
     here?: boolean;
 };
-type WorkspaceWithInitClientOpts = {
+type WorkspaceWithFileOpts = {
     /**
-     * SDK-specific init arguments.
+     * Permissions of the added file. Defaults to the source file permissions.
      */
-    args?: JSON;
-    /**
-     * Write to the workspace config directory at the workspace cwd.
-     */
-    here?: boolean;
-    /**
-     * Skip running the SDK's generators for the new client.
-     */
-    noGenerate?: boolean;
+    permissions?: number;
 };
 type WorkspaceWithInitModuleOpts = {
     /**
-     * Path for the new module, relative to the workspace cwd; a leading "/" is relative to the workspace root. Defaults to .dagger/modules/<name> beside the workspace config.
+     * Module name. The engine infers it from path, the active config file, or the workspace root when omitted.
+     */
+    name?: string;
+    /**
+     * Module path relative to the workspace cwd, or an absolute workspace path. Defaults to .dagger/modules/<name> beside the active workspace config.
      */
     path?: string;
     /**
-     * Source subpath within the new module.
+     * Explicit SDK-module constructor setting overrides for this scope.
      */
-    source?: string;
-    /**
-     * Additional include patterns for the module.
-     */
-    include?: string[];
-    /**
-     * SDK-specific init arguments.
-     */
-    args?: JSON;
-    /**
-     * Write to the workspace config directory at the workspace cwd.
-     */
-    here?: boolean;
-    /**
-     * Skip running the SDK's generators for the new module.
-     */
-    noGenerate?: boolean;
+    settings?: JSON;
 };
 type WorkspaceWithModuleOpts = {
     /**
@@ -2550,9 +2590,41 @@ type WorkspaceWithSdkOpts = {
      */
     here?: boolean;
     /**
-     * User-facing SDK name to persist under `[modules.<name>.as-sdk] name = ...`.
+     * Optional override for the SDK name conventionally derived from the installed module name.
      */
     asSdkName?: string;
+};
+type WorkspaceWithUpdatedClientsOpts = {
+    /**
+     * Recorded client targets to update. All targets in the selected scopes are updated when omitted.
+     */
+    modules?: string[];
+    /**
+     * Select clients in every scope instead of only the scopes containing the workspace cwd.
+     */
+    all?: boolean;
+    /**
+     * Optional SDK name. All installed SDK modules are selected when omitted.
+     */
+    sdk?: string;
+};
+type WorkspaceWithUpdatedLockOpts = {
+    /**
+     * Do not regenerate SDK client scopes.
+     */
+    noGenerate?: boolean;
+};
+type WorkspaceWithUpdatedModulesOpts = {
+    /**
+     * Installed module names to refresh. An empty list refreshes all installed modules.
+     */
+    names?: string[];
+};
+type WorkspaceWithoutClientOpts = {
+    /**
+     * Optional SDK name. Search all installed SDKs when omitted.
+     */
+    sdk?: string;
 };
 type WorkspaceWithoutConfigEnvOpts = {
     /**
@@ -2647,6 +2719,10 @@ declare class Address extends BaseClient {
      * Load a volume from the address.
      */
     volume: () => Volume;
+    /**
+     * Load a workspace from a module reference.
+     */
+    workspace: () => Workspace;
 }
 declare class Agent extends BaseClient {
     private readonly _id?;
@@ -3099,6 +3175,7 @@ declare class Container extends BaseClient {
      * @param address Address of the container image to download, in standard OCI ref format. Example: "registry.dagger.io/engine:latest".
      *
      * An address without a tag or digest selects the greatest stable release tag, falling back to the literal "latest" tag when no eligible release exists.
+     * @param opts.version Version query used to select an image tag. The address must not contain a tag or digest.
      * @param opts.registryService Service to use as the registry endpoint for the image address.
      *
      * The service will be started only for this pull.
@@ -3652,13 +3729,6 @@ declare class CurrentModule extends BaseClient {
      */
     id: () => Promise<ID>;
     /**
-     * Treat the currently executing module as an SDK installed in the given workspace, exposing the modules and clients it manages.
-     *
-     * Errors if the current module is not installed as an SDK in this workspace.
-     * @param workspace The workspace to resolve SDK-role data against.
-     */
-    asSDK: (workspace: Workspace) => CurrentModuleAsSDK;
-    /**
      * The dependencies of the module.
      */
     dependencies: () => Promise<Module_[]>;
@@ -3693,85 +3763,6 @@ declare class CurrentModule extends BaseClient {
      * @param path Location of the file to retrieve (e.g., "README.md").
      */
     workdirFile: (path: string) => File;
-}
-/**
- * The SDK-role data for the currently executing module, as installed in the supplied workspace.
- */
-declare class CurrentModuleAsSDK extends BaseClient {
-    private readonly _id?;
-    private readonly _name?;
-    /**
-     * Constructor is used for internal usage only, do not create object from it.
-     */
-    constructor(ctx?: Context, _id?: ID, _name?: string);
-    /**
-     * A unique identifier for this CurrentModuleAsSDK.
-     */
-    id: () => Promise<ID>;
-    /**
-     * The generated clients this SDK produces in the workspace.
-     */
-    clients: () => Promise<CurrentModuleAsSDKClient[]>;
-    /**
-     * The managed modules relevant to the bound workspace cwd: every module at or below it, plus the nearest enclosing module when the cwd itself is not managed.
-     */
-    modules: () => Promise<CurrentModuleAsSDKModule[]>;
-    /**
-     * The user-facing name of this SDK in the workspace.
-     */
-    name: () => Promise<string>;
-}
-/**
- * A generated client the current SDK produces in the workspace.
- */
-declare class CurrentModuleAsSDKClient extends BaseClient {
-    private readonly _id?;
-    private readonly _module?;
-    private readonly _path?;
-    private readonly _pin?;
-    /**
-     * Constructor is used for internal usage only, do not create object from it.
-     */
-    constructor(ctx?: Context, _id?: ID, _module?: string, _path?: string, _pin?: string);
-    /**
-     * A unique identifier for this CurrentModuleAsSDKClient.
-     */
-    id: () => Promise<ID>;
-    /**
-     * The module the client is bound to (workspace-relative path or canonical ref).
-     */
-    module_: () => Promise<string>;
-    /**
-     * The resolved module source this client is bound to, including its dependency closure and pinned version.
-     */
-    moduleSource: () => ModuleSource;
-    /**
-     * Workspace-root-relative path of the generated client.
-     */
-    path: () => Promise<string>;
-    /**
-     * The pinned version of the bound module, if any.
-     */
-    pin: () => Promise<string>;
-}
-/**
- * A workspace-local module managed by the current SDK.
- */
-declare class CurrentModuleAsSDKModule extends BaseClient {
-    private readonly _id?;
-    private readonly _path?;
-    /**
-     * Constructor is used for internal usage only, do not create object from it.
-     */
-    constructor(ctx?: Context, _id?: ID, _path?: string);
-    /**
-     * A unique identifier for this CurrentModuleAsSDKModule.
-     */
-    id: () => Promise<ID>;
-    /**
-     * Workspace-root-relative path to the managed module.
-     */
-    path: () => Promise<string>;
 }
 declare class DiffStat extends BaseClient {
     private readonly _id?;
@@ -4543,6 +4534,10 @@ declare class File extends BaseClient {
      */
     asEnvFile: (opts?: FileAsEnvFileOpts) => EnvFile;
     /**
+     * Interpret this file as a Git bundle by lazily parsing its header.
+     */
+    asGitBundle: () => GitBundle;
+    /**
      * Parse the file contents as JSON.
      */
     asJSON: () => JSONValue;
@@ -4943,9 +4938,9 @@ declare class Generator extends BaseClient {
      */
     name: () => Promise<string>;
     /**
-     * The original module in which the generator has been defined
+     * The module that defined the generator, or null for an engine-defined generator
      */
-    originalModule: () => Module_;
+    originalModule: () => Promise<Module_ | null>;
     /**
      * The path of the generator within its module
      */
@@ -5000,11 +4995,86 @@ declare class GeneratorGroup extends BaseClient {
      */
     run: () => GeneratorGroup;
     /**
+     * The workspace with the combined output from the last generator run
+     * @param opts.onConflict Strategy to apply on conflicts between generators
+     */
+    workspace: (opts?: GeneratorGroupWorkspaceOpts) => Workspace;
+    /**
      * Call the provided function with current GeneratorGroup.
      *
      * This is useful for reusability and readability by not breaking the calling chain.
      */
     with: (arg: (param: GeneratorGroup) => GeneratorGroup) => GeneratorGroup;
+}
+/**
+ * A Git bundle: a self-describing container of refs and the objects needed to reconstruct them, optionally rooted at prerequisite commits.
+ */
+declare class GitBundle extends BaseClient {
+    private readonly _id?;
+    private readonly _objectFormat?;
+    private readonly _version?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID, _objectFormat?: string, _version?: number);
+    /**
+     * A unique identifier for this GitBundle.
+     */
+    id: () => Promise<ID>;
+    /**
+     * Return the bundle bytes as a File.
+     */
+    asFile: () => File;
+    /**
+     * Object format capability: sha1 or sha256.
+     */
+    objectFormat: () => Promise<string>;
+    /**
+     * Commits that must already exist wherever this bundle is applied.
+     */
+    prerequisiteSHAs: () => Promise<string[]>;
+    /**
+     * Refs advertised by the bundle and the object IDs they resolve to.
+     */
+    refs: () => Promise<GitBundleRef[]>;
+    /**
+     * Perform full structural verification of the bundle and error if it is malformed.
+     */
+    validate: () => GitBundle;
+    /**
+     * Bundle format version (2 or 3).
+     */
+    version: () => Promise<number>;
+    /**
+     * Call the provided function with current GitBundle.
+     *
+     * This is useful for reusability and readability by not breaking the calling chain.
+     */
+    with: (arg: (param: GitBundle) => GitBundle) => GitBundle;
+}
+/**
+ * A ref advertised by a Git bundle.
+ */
+declare class GitBundleRef extends BaseClient {
+    private readonly _id?;
+    private readonly _name?;
+    private readonly _sha?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID, _name?: string, _sha?: string);
+    /**
+     * A unique identifier for this GitBundleRef.
+     */
+    id: () => Promise<ID>;
+    /**
+     * The advertised ref name.
+     */
+    name: () => Promise<string>;
+    /**
+     * The object ID the advertised ref resolves to.
+     */
+    sha: () => Promise<string>;
 }
 /**
  * An immutable git commit.
@@ -5196,6 +5266,12 @@ declare class GitRepository extends BaseClient {
      */
     branches: (opts?: GitRepositoryBranchesOpts) => Promise<string[]>;
     /**
+     * Pack the given refs and the objects needed to reconstruct them into a Git bundle.
+     * @param refs Refs to advertise in the bundle. At least one named ref is required.
+     * @param opts.base A Git ref whose reachable objects are omitted and recorded as a prerequisite.
+     */
+    bundle: (refs: string[], opts?: GitRepositoryBundleOpts) => GitBundle;
+    /**
      * Returns details of a commit.
      * @param id Identifier of the commit (e.g., "b6315d8f2810962c601af73f86831f6866ea798b").
      */
@@ -5208,8 +5284,9 @@ declare class GitRepository extends BaseClient {
      * Return the latest stable release tag, falling back to HEAD when no release exists.
      *
      * Release selection accepts an optional "v" prefix, incomplete versions, and zero-padded numeric components. This operation is pinned.
+     * @param opts.version Version query used to select the greatest matching release ref.
      */
-    latest: () => GitRef;
+    latest: (opts?: GitRepositoryLatestOpts) => GitRef;
     /**
      * Returns details of a ref.
      * @param name Ref's name (can be a commit identifier, a tag name, a branch name, or a fully-qualified ref).
@@ -5233,6 +5310,18 @@ declare class GitRepository extends BaseClient {
      * The URL of the git repository.
      */
     url: () => Promise<string>;
+    /**
+     * Import a Git bundle after fetching and verifying all of its prerequisites.
+     * @param bundle The Git bundle to import.
+     * @param opts.prerequisiteRef An optional remote ref hint for fetching a prerequisite when the remote does not allow fetches by object ID.
+     */
+    withBundle: (bundle: GitBundle, opts?: GitRepositoryWithBundleOpts) => GitRepository;
+    /**
+     * Call the provided function with current GitRepository.
+     *
+     * This is useful for reusability and readability by not breaking the calling chain.
+     */
+    with: (arg: (param: GitRepository) => GitRepository) => GitRepository;
 }
 /**
  * An internal persistent HTTP state.
@@ -6133,13 +6222,6 @@ declare class ModuleSource extends BaseClient {
      */
     generate: (workspace: Workspace) => Workspace;
     /**
-     * Generate this module's transitive local dependency closure and return the staged changes as a single changeset against the unstaged workspace root.
-     *
-     * Each local dependency is generated by its own SDK against a workspace scoped to it, carrying the dependency's own already-generated dependencies. Remote (git) dependencies are assumed committed and skipped. Overlay the result onto the workspace before generating this module; it is not this module's own generated code.
-     * @param workspace The workspace to generate the local dependencies against.
-     */
-    generateLocalDependencies: (workspace: Workspace) => Changeset;
-    /**
      * The generated files and directories made on top of the module source's context directory, returned as a Changeset.
      */
     generatedContextChangeset: () => Changeset;
@@ -6455,6 +6537,13 @@ declare class Client extends BaseClient {
      */
     address: (value: string) => Address;
     /**
+     * Creates a file from arbitrary binary contents.
+     * @param name Name of the new file. Example: "archive.tar"
+     * @param contents Binary contents of the new file, encoded as base64 at the GraphQL boundary.
+     * @param opts.permissions Permissions of the new file. Example: 0600
+     */
+    blob: (name: string, contents: Bytes, opts?: ClientBlobOpts) => File;
+    /**
      * Constructs a cache volume for a given cache key.
      * @param key A string identifier to target this cache volume (e.g., "modules-cache").
      * @param opts.source Identifier of the directory to use as the cache volume's root.
@@ -6601,6 +6690,7 @@ declare class Client extends BaseClient {
     /**
      * Create a new module source instance from a source ref string
      * @param refString The string ref representation of the module source
+     * @param opts.version Version query for a Git module source.
      * @param opts.refPin The pinned version of the module source
      * @param opts.disableFindUp If true, do not attempt to find a module config file in a parent directory of the provided path. Only relevant for local module sources.
      * @param opts.allowNotExists If true, do not error out if the provided ref string is a local path and does not exist yet. Useful when initializing new modules in directories that don't exist yet.
@@ -7048,6 +7138,60 @@ declare class Terminal extends BaseClient {
      */
     sync: () => Promise<Terminal>;
 }
+declare class TerminalGroup extends BaseClient {
+    private readonly _id?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID);
+    /**
+     * A unique identifier for this TerminalGroup.
+     */
+    id: () => Promise<ID>;
+    /**
+     * Return the selected terminal targets and their details
+     */
+    list: () => Promise<TerminalTarget[]>;
+    /**
+     * Open the selected terminal target
+     */
+    run: () => TerminalGroup;
+    /**
+     * Call the provided function with current TerminalGroup.
+     *
+     * This is useful for reusability and readability by not breaking the calling chain.
+     */
+    with: (arg: (param: TerminalGroup) => TerminalGroup) => TerminalGroup;
+}
+declare class TerminalTarget extends BaseClient {
+    private readonly _id?;
+    private readonly _description?;
+    private readonly _name?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID, _description?: string, _name?: string);
+    /**
+     * A unique identifier for this TerminalTarget.
+     */
+    id: () => Promise<ID>;
+    /**
+     * The description of the terminal target
+     */
+    description: () => Promise<string>;
+    /**
+     * Return the fully qualified name of the terminal target
+     */
+    name: () => Promise<string>;
+    /**
+     * The module in which the terminal target is defined
+     */
+    originalModule: () => Module_;
+    /**
+     * The path of the terminal target within its module
+     */
+    path: () => Promise<string[]>;
+}
 /**
  * A definition of a parameter or return type in a Module.
  */
@@ -7264,12 +7408,13 @@ declare class Workspace extends BaseClient {
     private readonly _configFile?;
     private readonly _configRead?;
     private readonly _cwd?;
+    private readonly _detectScope?;
     private readonly _export?;
     private readonly _findUp?;
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _address?: string, _configFile?: string, _configRead?: string, _cwd?: string, _export?: Void, _findUp?: string);
+    constructor(ctx?: Context, _id?: ID, _address?: string, _configFile?: string, _configRead?: string, _cwd?: string, _detectScope?: string, _export?: Void, _findUp?: string);
     /**
      * A unique identifier for this Workspace.
      */
@@ -7322,6 +7467,11 @@ declare class Workspace extends BaseClient {
      */
     cwd: () => Promise<string>;
     /**
+     * Return the selected SDK module's current scope at this workspace location.
+     * @param sdk SDK name to probe. Required.
+     */
+    detectScope: (sdk: string) => Promise<string>;
+    /**
      * Returns a Directory from the workspace.
      *
      * Relative paths resolve from the workspace cwd. Absolute paths resolve from the workspace root.
@@ -7336,7 +7486,9 @@ declare class Workspace extends BaseClient {
      */
     envList: () => Promise<string[]>;
     /**
-     * Write this workspace's pending changes to its local Git workspace.
+     * Write this workspace's pending changes to its local Git workspace on the current client's host.
+     *
+     * Like Directory.export, the write is a side effect on the client that makes the call — never on the client that created the workspace. Inside a module, this cannot reach the caller's host.
      */
     export: () => Promise<void>;
     /**
@@ -7451,10 +7603,24 @@ declare class Workspace extends BaseClient {
      */
     services: (opts?: WorkspaceServicesOpts) => UpGroup;
     /**
+     * Return all terminal targets from modules loaded in the workspace.
+     * @param opts.include Only include terminal targets matching the specified patterns
+     */
+    terminals: (opts?: WorkspaceTerminalsOpts) => TerminalGroup;
+    /**
      * Return this workspace with a changeset applied, without mutating the source.
      * @param changes Changes to apply.
      */
     withChanges: (changes: Changeset) => Workspace;
+    /**
+     * Return this workspace with a generated module client added to one SDK scope.
+     *
+     * Select the deepest detected or registered scope. Fail if several SDKs have that deepest scope.
+     * @param module Explicit local path or module address to generate a client for. Installed module names are not supported.
+     * @param opts.sdk Optional SDK name. Inspect all installed SDKs when omitted.
+     * @param opts.settings Explicit SDK-module constructor setting overrides for this scope. Requires an explicit SDK name.
+     */
+    withClient: (module_: string, opts?: WorkspaceWithClientOpts) => Workspace;
     /**
      * Return this workspace with a named config environment created.
      * @param name Environment name.
@@ -7480,31 +7646,22 @@ declare class Workspace extends BaseClient {
      */
     withDirectory: (path: string, source: Directory) => Workspace;
     /**
-     * Return this workspace with a generated API client initialized.
-     *
-     * The SDK's generators run for the new client, so the returned workspace carries its generated bindings.
-     * @param path Output directory for the generated client, relative to the workspace cwd; a leading "/" is relative to the workspace root.
-     * @param sdk Workspace SDK name or module entry name to use.
-     * @param module Workspace-relative path or canonical ref for the module the client binds to.
-     * @param opts.args SDK-specific init arguments.
-     * @param opts.here Write to the workspace config directory at the workspace cwd.
-     * @param opts.noGenerate Skip running the SDK's generators for the new client.
+     * Return this workspace with a file added or replaced, without mutating the source.
+     * @param path Destination path. Relative paths resolve from the workspace cwd.
+     * @param source File to add.
+     * @param opts.permissions Permissions of the added file. Defaults to the source file permissions.
      */
-    withInitClient: (path: string, sdk: string, module_: string, opts?: WorkspaceWithInitClientOpts) => Workspace;
+    withFile: (path: string, source: File, opts?: WorkspaceWithFileOpts) => Workspace;
     /**
-     * Return this workspace with a new module initialized.
+     * Return this workspace with a location initialized as a module scope.
      *
-     * The SDK's generators run for the new module, so the returned workspace carries the generated code it needs to be loadable.
-     * @param name Name of the new module.
-     * @param sdk Workspace SDK name or module entry name to use.
-     * @param opts.path Path for the new module, relative to the workspace cwd; a leading "/" is relative to the workspace root. Defaults to .dagger/modules/<name> beside the workspace config.
-     * @param opts.source Source subpath within the new module.
-     * @param opts.include Additional include patterns for the module.
-     * @param opts.args SDK-specific init arguments.
-     * @param opts.here Write to the workspace config directory at the workspace cwd.
-     * @param opts.noGenerate Skip running the SDK's generators for the new module.
+     * The selected SDK module records the scope and generates the module source.
+     * @param sdk Workspace SDK name or module entry name to use. Required.
+     * @param opts.name Module name. The engine infers it from path, the active config file, or the workspace root when omitted.
+     * @param opts.path Module path relative to the workspace cwd, or an absolute workspace path. Defaults to .dagger/modules/<name> beside the active workspace config.
+     * @param opts.settings Explicit SDK-module constructor setting overrides for this scope.
      */
-    withInitModule: (name: string, sdk: string, opts?: WorkspaceWithInitModuleOpts) => Workspace;
+    withInitModule: (sdk: string, opts?: WorkspaceWithInitModuleOpts) => Workspace;
     /**
      * Return this workspace with a module installed in its config.
      *
@@ -7550,18 +7707,49 @@ declare class Workspace extends BaseClient {
      * @param ref SDK module reference to install.
      * @param opts.name Override name for the installed SDK entry.
      * @param opts.here Write to the workspace config directory at the workspace cwd.
-     * @param opts.asSdkName User-facing SDK name to persist under `[modules.<name>.as-sdk] name = ...`.
+     * @param opts.asSdkName Optional override for the SDK name conventionally derived from the installed module name.
      */
     withSDK: (ref: string, opts?: WorkspaceWithSdkOpts) => Workspace;
     /**
-     * Return this workspace with refreshed lockfile state.
+     * Return this workspace with the selected module clients updated.
+     *
+     * The engine re-reads the source of each selected client target and writes the lock entries that those targets reach.
+     *
+     * The selected SDK module then regenerates every scope that owns one of the targets.
+     * @param opts.modules Recorded client targets to update. All targets in the selected scopes are updated when omitted.
+     * @param opts.all Select clients in every scope instead of only the scopes containing the workspace cwd.
+     * @param opts.sdk Optional SDK name. All installed SDK modules are selected when omitted.
      */
-    withUpdatedLock: () => Workspace;
+    withUpdatedClients: (opts?: WorkspaceWithUpdatedClientsOpts) => Workspace;
+    /**
+     * Return this workspace with refreshed lockfile state.
+     *
+     * SDK client scopes are regenerated unless noGenerate is true.
+     * @param opts.noGenerate Do not regenerate SDK client scopes.
+     */
+    withUpdatedLock: (opts?: WorkspaceWithUpdatedLockOpts) => Workspace;
+    /**
+     * Return this workspace with refreshed lockfile state for installed modules.
+     *
+     * An SDK client scope is regenerated when it targets an updated module.
+     * @param opts.names Installed module names to refresh. An empty list refreshes all installed modules.
+     */
+    withUpdatedModules: (opts?: WorkspaceWithUpdatedModulesOpts) => Workspace;
     /**
      * Return this workspace with its working directory pointed at the given workspace-relative path.
      * @param path Workspace-relative path to use as the working directory.
      */
     withWorkdir: (path: string) => Workspace;
+    /**
+     * Return this workspace with a module client removed from the deepest matching recorded scope.
+     *
+     * Fail if several SDKs have that deepest scope. The selected SDK module regenerates the complete scope.
+     *
+     * If invalid client targets remain, save the removal and skip generation until those targets are corrected or removed.
+     * @param module The recorded target to remove.
+     * @param opts.sdk Optional SDK name. Search all installed SDKs when omitted.
+     */
+    withoutClient: (module_: string, opts?: WorkspaceWithoutClientOpts) => Workspace;
     /**
      * Return this workspace with a named config environment removed.
      * @param name Environment name.
@@ -7706,6 +7894,10 @@ declare class WorkspaceModule extends BaseClient {
      */
     entrypoint: () => Promise<boolean>;
     /**
+     * List the functions of this module's main object, in GraphQL field form.
+     */
+    functions: () => Promise<string[]>;
+    /**
      * The module name.
      */
     name: () => Promise<string>;
@@ -7725,12 +7917,13 @@ declare class WorkspaceModuleSetting extends BaseClient {
     private readonly _id?;
     private readonly _description?;
     private readonly _isList?;
+    private readonly _isObject?;
     private readonly _key?;
     private readonly _value?;
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _description?: string, _isList?: boolean, _key?: string, _value?: string);
+    constructor(ctx?: Context, _id?: ID, _description?: string, _isList?: boolean, _isObject?: boolean, _key?: string, _value?: string);
     /**
      * A unique identifier for this WorkspaceModuleSetting.
      */
@@ -7743,6 +7936,10 @@ declare class WorkspaceModuleSetting extends BaseClient {
      * Whether the setting accepts a list of values.
      */
     isList: () => Promise<boolean>;
+    /**
+     * Whether the setting is an object type resolved from an address string (Container, Directory, File, Secret, Service, ...), which may be a module reference.
+     */
+    isObject: () => Promise<boolean>;
     /**
      * The setting key.
      */
@@ -7860,7 +8057,7 @@ declare abstract class DaggerSDKError extends Error {
     /**
      * @hidden
      */
-    get [Symbol.toStringTag](): "DockerImageRefValidationError" | "EngineSessionConnectParamsParseError" | "EngineSessionConnectionTimeoutError" | "EngineSessionError" | "ExecError" | "GraphQLRequestError" | "InitEngineSessionBinaryError" | "IntrospectionError" | "NotAwaitedRequestError" | "TooManyNestedObjectsError" | "UnknownDaggerError";
+    get [Symbol.toStringTag](): "GraphQLRequestError" | "UnknownDaggerError" | "TooManyNestedObjectsError" | "EngineSessionConnectParamsParseError" | "EngineSessionConnectionTimeoutError" | "EngineSessionError" | "InitEngineSessionBinaryError" | "DockerImageRefValidationError" | "NotAwaitedRequestError" | "ExecError" | "IntrospectionError";
     /**
      * Pretty prints the error
      */
@@ -8247,7 +8444,5 @@ declare const enumType: () => (<T extends Class>(constructor: T) => T);
  */
 declare const argument: (opts?: ArgumentOptions) => ((target: object, propertyKey: string | undefined, parameterIndex: number) => void);
 
-declare function entrypoint(files: string[]): Promise<void>;
-
-export { Address, Agent, AgentGroup, BaseClient, CacheSharingMode, CacheSharingModeNameToValue, CacheSharingModeValueToName, CacheVolume, Changeset, ChangesetMergeConflict, ChangesetMergeConflictNameToValue, ChangesetMergeConflictValueToName, ChangesetsMergeConflict, ChangesetsMergeConflictNameToValue, ChangesetsMergeConflictValueToName, Check, CheckGroup, Client, ClientFilesyncMirror, Cloud, Container, Context, CurrentModule, CurrentModuleAsSDK, CurrentModuleAsSDKClient, CurrentModuleAsSDKModule, DaggerSDKError, DiffStat, DiffStatKind, DiffStatKindNameToValue, DiffStatKindValueToName, Directory, DockerImageRefValidationError, ERROR_CODES, Engine, EngineCache, EngineCacheEntry, EngineCacheEntrySet, EngineSessionConnectParamsParseError, EngineSessionConnectionTimeoutError, EngineSessionError, EnumTypeDef, EnumValueTypeDef, EnvFile, EnvVariable, Error$1 as Error, ErrorValue, ExecError, ExistsType, ExistsTypeNameToValue, ExistsTypeValueToName, FieldTypeDef, File, FileType, FileTypeNameToValue, FileTypeValueToName, FunctionArg, FunctionCachePolicy, FunctionCachePolicyNameToValue, FunctionCachePolicyValueToName, FunctionCall, FunctionCallArgValue, FunctionNotFound, Function_, GeneratedCode, Generator, GeneratorGroup, GitCommit, GitRef, GitRepository, GraphQLRequestError, HTTPState, HealthcheckConfig, Host, ImageLayerCompression, ImageLayerCompressionNameToValue, ImageLayerCompressionValueToName, ImageMediaTypes, ImageMediaTypesNameToValue, ImageMediaTypesValueToName, InitEngineSessionBinaryError, InputTypeDef, InterfaceTypeDef, IntrospectionError, JSONValue, LLM, LLMContentBlock, LLMContentBlockKind, LLMContentBlockKindNameToValue, LLMContentBlockKindValueToName, LLMMessage, LLMMessageRole, LLMMessageRoleNameToValue, LLMMessageRoleValueToName, LLMSkill, LLMTokenUsage, Label, ListTypeDef, ModuleConfigClient, ModuleSource, ModuleSourceExperimentalFeature, ModuleSourceExperimentalFeatureNameToValue, ModuleSourceExperimentalFeatureValueToName, ModuleSourceKind, ModuleSourceKindNameToValue, ModuleSourceKindValueToName, Module_, NetworkProtocol, NetworkProtocolNameToValue, NetworkProtocolValueToName, NotAwaitedRequestError, ObjectTypeDef, PatchConflict, PatchConflictNameToValue, PatchConflictValueToName, Port, RegistryProtocol, RegistryProtocolNameToValue, RegistryProtocolValueToName, RemoteGitMirror, ReturnType, ReturnTypeNameToValue, ReturnTypeValueToName, SDKConfig, ScalarTypeDef, Schema, SearchResult, SearchSubmatch, Secret, Service, Socket, SourceMap, Stat, Terminal, TooManyNestedObjectsError, TypeDef, TypeDefKind, TypeDefKindNameToValue, TypeDefKindValueToName, UnknownDaggerError, Up, UpGroup, Volume, Workspace, WorkspaceGit, WorkspaceMigration, WorkspaceMigrationStep, WorkspaceModule, WorkspaceModuleSetting, WorkspaceSDK, _ExportableClient, _NodeClient, _SyncerClient, agent, argument, check, connect, connection, dag, entrypoint, enumType, field, func, generate, getRegisteredClass, getTracer, object, up };
-export type { AddressDirectoryOpts, AddressFileOpts, AgentGroupComposeOpts, BuildArg, CallbackFct, ChangesetWithChangesetOpts, ChangesetWithChangesetsOpts, CheckGroupRunOpts, ClientCacheVolumeOpts, ClientContainerOpts, ClientCurrentTypeDefsOpts, ClientEngineVolumeOpts, ClientEnvFileOpts, ClientFileOpts, ClientGitOpts, ClientHttpOpts, ClientLLMOpts, ClientModuleSourceOpts, ClientSecretOpts, ClientSshfsVolumeOpts, ConnectOpts, ContainerAsServiceOpts, ContainerAsTarballOpts, ContainerDirectoryOpts, ContainerExistsOpts, ContainerExportImageOpts, ContainerExportOpts, ContainerFileOpts, ContainerFromOpts, ContainerImportOpts, ContainerLayerOpts, ContainerManifestOpts, ContainerPublishOpts, ContainerStatOpts, ContainerTerminalOpts, ContainerUpOpts, ContainerWithDefaultTerminalCmdOpts, ContainerWithDirectoryOpts, ContainerWithDockerHealthcheckOpts, ContainerWithEntrypointOpts, ContainerWithEnvVariableOpts, ContainerWithExecOpts, ContainerWithExposedPortOpts, ContainerWithFileOpts, ContainerWithFilesOpts, ContainerWithMountedCacheOpts, ContainerWithMountedDirectoryOpts, ContainerWithMountedFileOpts, ContainerWithMountedSecretOpts, ContainerWithMountedTempOpts, ContainerWithMountedVolumeOpts, ContainerWithNewFileOpts, ContainerWithSymlinkOpts, ContainerWithUnixSocketOpts, ContainerWithWorkdirOpts, ContainerWithoutDirectoryOpts, ContainerWithoutEntrypointOpts, ContainerWithoutExposedPortOpts, ContainerWithoutFileOpts, ContainerWithoutFilesOpts, ContainerWithoutMountOpts, ContainerWithoutUnixSocketOpts, CurrentModuleGeneratorsOpts, CurrentModuleWorkdirOpts, DirectoryAsModuleOpts, DirectoryAsModuleSourceOpts, DirectoryAsWorkspaceOpts, DirectoryDockerBuildOpts, DirectoryEntriesOpts, DirectoryExistsOpts, DirectoryExportOpts, DirectoryFilterOpts, DirectorySearchOpts, DirectoryStatOpts, DirectoryTerminalOpts, DirectoryWithDirectoryOpts, DirectoryWithFileOpts, DirectoryWithFilesOpts, DirectoryWithNewDirectoryOpts, DirectoryWithNewFileOpts, DirectoryWithPatchFileOpts, DirectoryWithPatchOpts, EngineCacheEntrySetOpts, EngineCachePruneOpts, EnvFileGetOpts, EnvFileVariablesOpts, Exportable, FileAsEnvFileOpts, FileContentsOpts, FileDigestOpts, FileExportOpts, FileSearchOpts, FileWithReplacedOpts, FunctionWithArgOpts, FunctionWithCachePolicyOpts, FunctionWithDeprecatedOpts, GeneratorGroupChangesOpts, GitCommitAncestorReleaseTagOpts, GitCommitReleaseTagOpts, GitCommitTreeOpts, GitRefAsWorkspaceOpts, GitRefLogOpts, GitRefTreeOpts, GitRepositoryAsWorkspaceOpts, GitRepositoryBranchesOpts, GitRepositoryTagsOpts, HostDirectoryOpts, HostFileOpts, HostFindUpOpts, HostServiceOpts, HostTunnelOpts, ID, JSON, JSONValueContentsOpts, LLMContentBlockInput, LLMLoopOpts, LLMStepOpts, LLMWithModelOpts, LLMWithResponseOpts, LLMWithToolsOpts, ModuleChecksOpts, ModuleGeneratorsOpts, ModuleServeOpts, ModuleServicesOpts, Node, PipelineLabel, Platform, PortForward, ServiceEndpointOpts, ServiceStopOpts, ServiceTerminalOpts, ServiceUpOpts, Syncer, TypeDefWithEnumMemberOpts, TypeDefWithEnumOpts, TypeDefWithEnumValueOpts, TypeDefWithFieldOpts, TypeDefWithInterfaceOpts, TypeDefWithObjectOpts, TypeDefWithScalarOpts, Void, WorkspaceAgentsOpts, WorkspaceChangesOpts, WorkspaceChecksOpts, WorkspaceConfigReadOpts, WorkspaceDirectoryOpts, WorkspaceFindRootsOpts, WorkspaceFindUpOpts, WorkspaceGeneratorsOpts, WorkspaceSearchOpts, WorkspaceServicesOpts, WorkspaceWithConfigEnvOpts, WorkspaceWithConfigValueOpts, WorkspaceWithInitClientOpts, WorkspaceWithInitModuleOpts, WorkspaceWithModuleOpts, WorkspaceWithNewFileOpts, WorkspaceWithSdkOpts, WorkspaceWithoutConfigEnvOpts, WorkspaceWithoutConfigValueOpts, WorkspaceWithoutModuleOpts, WorkspaceWithoutSdkOpts, __DirectiveArgsOpts, __FieldArgsOpts, __TypeEnumValuesOpts, __TypeFieldsOpts, __TypeInputFieldsOpts, float };
+export { Address, Agent, AgentGroup, BaseClient, CacheSharingMode, CacheSharingModeNameToValue, CacheSharingModeValueToName, CacheVolume, Changeset, ChangesetMergeConflict, ChangesetMergeConflictNameToValue, ChangesetMergeConflictValueToName, ChangesetsMergeConflict, ChangesetsMergeConflictNameToValue, ChangesetsMergeConflictValueToName, Check, CheckGroup, Client, ClientFilesyncMirror, Cloud, Container, Context, CurrentModule, DaggerSDKError, DiffStat, DiffStatKind, DiffStatKindNameToValue, DiffStatKindValueToName, Directory, DockerImageRefValidationError, ERROR_CODES, Engine, EngineCache, EngineCacheEntry, EngineCacheEntrySet, EngineSessionConnectParamsParseError, EngineSessionConnectionTimeoutError, EngineSessionError, EnumTypeDef, EnumValueTypeDef, EnvFile, EnvVariable, Error$1 as Error, ErrorValue, ExecError, ExistsType, ExistsTypeNameToValue, ExistsTypeValueToName, FieldTypeDef, File, FileType, FileTypeNameToValue, FileTypeValueToName, FunctionArg, FunctionCachePolicy, FunctionCachePolicyNameToValue, FunctionCachePolicyValueToName, FunctionCall, FunctionCallArgValue, FunctionNotFound, Function_, GeneratedCode, Generator, GeneratorGroup, GitBundle, GitBundleRef, GitCommit, GitRef, GitRepository, GraphQLRequestError, HTTPState, HealthcheckConfig, Host, ImageLayerCompression, ImageLayerCompressionNameToValue, ImageLayerCompressionValueToName, ImageMediaTypes, ImageMediaTypesNameToValue, ImageMediaTypesValueToName, InitEngineSessionBinaryError, InputTypeDef, InterfaceTypeDef, IntrospectionError, JSONValue, LLM, LLMContentBlock, LLMContentBlockKind, LLMContentBlockKindNameToValue, LLMContentBlockKindValueToName, LLMMessage, LLMMessageRole, LLMMessageRoleNameToValue, LLMMessageRoleValueToName, LLMSkill, LLMTokenUsage, Label, ListTypeDef, ModuleConfigClient, ModuleSource, ModuleSourceExperimentalFeature, ModuleSourceExperimentalFeatureNameToValue, ModuleSourceExperimentalFeatureValueToName, ModuleSourceKind, ModuleSourceKindNameToValue, ModuleSourceKindValueToName, Module_, NetworkProtocol, NetworkProtocolNameToValue, NetworkProtocolValueToName, NotAwaitedRequestError, ObjectTypeDef, PatchConflict, PatchConflictNameToValue, PatchConflictValueToName, Port, RegistryProtocol, RegistryProtocolNameToValue, RegistryProtocolValueToName, RemoteGitMirror, ReturnType, ReturnTypeNameToValue, ReturnTypeValueToName, SDKConfig, ScalarTypeDef, Schema, SearchResult, SearchSubmatch, Secret, Service, Socket, SourceMap, Stat, Terminal, TerminalGroup, TerminalTarget, TooManyNestedObjectsError, TypeDef, TypeDefKind, TypeDefKindNameToValue, TypeDefKindValueToName, UnknownDaggerError, Up, UpGroup, Volume, Workspace, WorkspaceGit, WorkspaceMigration, WorkspaceMigrationStep, WorkspaceModule, WorkspaceModuleSetting, WorkspaceSDK, _ExportableClient, _NodeClient, _SyncerClient, agent, argument, check, connect, connection, dag, enumType, field, func, generate, getRegisteredClass, getTracer, object, up };
+export type { AddressDirectoryOpts, AddressFileOpts, AgentGroupComposeOpts, BuildArg, Bytes, CallbackFct, ChangesetWithChangesetOpts, ChangesetWithChangesetsOpts, CheckGroupRunOpts, ClientBlobOpts, ClientCacheVolumeOpts, ClientContainerOpts, ClientCurrentTypeDefsOpts, ClientEngineVolumeOpts, ClientEnvFileOpts, ClientFileOpts, ClientGitOpts, ClientHttpOpts, ClientLLMOpts, ClientModuleSourceOpts, ClientSecretOpts, ClientSshfsVolumeOpts, ConnectOpts, ContainerAsServiceOpts, ContainerAsTarballOpts, ContainerDirectoryOpts, ContainerExistsOpts, ContainerExportImageOpts, ContainerExportOpts, ContainerFileOpts, ContainerFromOpts, ContainerImportOpts, ContainerLayerOpts, ContainerManifestOpts, ContainerPublishOpts, ContainerStatOpts, ContainerTerminalOpts, ContainerUpOpts, ContainerWithDefaultTerminalCmdOpts, ContainerWithDirectoryOpts, ContainerWithDockerHealthcheckOpts, ContainerWithEntrypointOpts, ContainerWithEnvVariableOpts, ContainerWithExecOpts, ContainerWithExposedPortOpts, ContainerWithFileOpts, ContainerWithFilesOpts, ContainerWithMountedCacheOpts, ContainerWithMountedDirectoryOpts, ContainerWithMountedFileOpts, ContainerWithMountedSecretOpts, ContainerWithMountedTempOpts, ContainerWithMountedVolumeOpts, ContainerWithNewFileOpts, ContainerWithSymlinkOpts, ContainerWithUnixSocketOpts, ContainerWithWorkdirOpts, ContainerWithoutDirectoryOpts, ContainerWithoutEntrypointOpts, ContainerWithoutExposedPortOpts, ContainerWithoutFileOpts, ContainerWithoutFilesOpts, ContainerWithoutMountOpts, ContainerWithoutUnixSocketOpts, CurrentModuleGeneratorsOpts, CurrentModuleWorkdirOpts, DirectoryAsModuleOpts, DirectoryAsModuleSourceOpts, DirectoryAsWorkspaceOpts, DirectoryDockerBuildOpts, DirectoryEntriesOpts, DirectoryExistsOpts, DirectoryExportOpts, DirectoryFilterOpts, DirectorySearchOpts, DirectoryStatOpts, DirectoryTerminalOpts, DirectoryWithDirectoryOpts, DirectoryWithFileOpts, DirectoryWithFilesOpts, DirectoryWithNewDirectoryOpts, DirectoryWithNewFileOpts, DirectoryWithPatchFileOpts, DirectoryWithPatchOpts, EngineCacheEntrySetOpts, EngineCachePruneOpts, EnvFileGetOpts, EnvFileVariablesOpts, Exportable, FileAsEnvFileOpts, FileContentsOpts, FileDigestOpts, FileExportOpts, FileSearchOpts, FileWithReplacedOpts, FunctionWithArgOpts, FunctionWithCachePolicyOpts, FunctionWithDeprecatedOpts, GeneratorGroupChangesOpts, GeneratorGroupWorkspaceOpts, GitCommitAncestorReleaseTagOpts, GitCommitReleaseTagOpts, GitCommitTreeOpts, GitRefAsWorkspaceOpts, GitRefLogOpts, GitRefTreeOpts, GitRepositoryAsWorkspaceOpts, GitRepositoryBranchesOpts, GitRepositoryBundleOpts, GitRepositoryLatestOpts, GitRepositoryTagsOpts, GitRepositoryWithBundleOpts, HostDirectoryOpts, HostFileOpts, HostFindUpOpts, HostServiceOpts, HostTunnelOpts, ID, JSON, JSONValueContentsOpts, LLMContentBlockInput, LLMLoopOpts, LLMStepOpts, LLMWithModelOpts, LLMWithResponseOpts, LLMWithToolsOpts, ModuleChecksOpts, ModuleGeneratorsOpts, ModuleServeOpts, ModuleServicesOpts, Node, PipelineLabel, Platform, PortForward, ServiceEndpointOpts, ServiceStopOpts, ServiceTerminalOpts, ServiceUpOpts, Syncer, TypeDefWithEnumMemberOpts, TypeDefWithEnumOpts, TypeDefWithEnumValueOpts, TypeDefWithFieldOpts, TypeDefWithInterfaceOpts, TypeDefWithObjectOpts, TypeDefWithScalarOpts, Void, WorkspaceAgentsOpts, WorkspaceChangesOpts, WorkspaceChecksOpts, WorkspaceConfigReadOpts, WorkspaceDirectoryOpts, WorkspaceFindRootsOpts, WorkspaceFindUpOpts, WorkspaceGeneratorsOpts, WorkspaceSearchOpts, WorkspaceServicesOpts, WorkspaceTerminalsOpts, WorkspaceWithClientOpts, WorkspaceWithConfigEnvOpts, WorkspaceWithConfigValueOpts, WorkspaceWithFileOpts, WorkspaceWithInitModuleOpts, WorkspaceWithModuleOpts, WorkspaceWithNewFileOpts, WorkspaceWithSdkOpts, WorkspaceWithUpdatedClientsOpts, WorkspaceWithUpdatedLockOpts, WorkspaceWithUpdatedModulesOpts, WorkspaceWithoutClientOpts, WorkspaceWithoutConfigEnvOpts, WorkspaceWithoutConfigValueOpts, WorkspaceWithoutModuleOpts, WorkspaceWithoutSdkOpts, __DirectiveArgsOpts, __FieldArgsOpts, __TypeEnumValuesOpts, __TypeFieldsOpts, __TypeInputFieldsOpts, float };
