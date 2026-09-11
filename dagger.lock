@@ -10,6 +10,7 @@
 ["","git-latest",["github.com/dagger/typescript-sdk"],"refs/tags/v1"]
 ["","git-sha",["github.com/dagger/eslint","refs/heads/main"],"35a0cc0923fdf625608afb1c2b276e00262c0f81"]
 ["","git-sha",["github.com/dagger/go","refs/heads/main"],"8d294186ba876b781ba4abd12d96735d0d0fb331"]
+["","git-sha",["github.com/dagger/go-sdk","main"],"9967a494e7316903a451c5575a6ff2e97dc699d2"]
 ["","git-sha",["github.com/dagger/go-sdk","refs/heads/main"],"9967a494e7316903a451c5575a6ff2e97dc699d2"]
 ["","git-sha",["github.com/dagger/go-sdk","refs/tags/v1.0.1"],"e42e8fbbf3c5136fab93657f15bd8fdf20259106"]
 ["","git-sha",["github.com/dagger/playwright","refs/heads/main"],"7a6aa5388fcef513f037d31fb0a3251ad4025ed2"]
