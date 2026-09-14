@@ -11,7 +11,6 @@ export {
   object,
   field,
   enumType,
-  entrypoint,
   getRegisteredClass,
 } from "./core.js"
 
