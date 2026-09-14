@@ -34,20 +34,23 @@ source = "github.com/dagger/playwright"
 [modules.playwright.settings]
 service = "frontend:serve"
 
-[modules.dagger-go-sdk.as-sdk]
-name = "go"
+[sdks.go]
+module = "dagger-go-sdk"
 
-[[modules.dagger-go-sdk.as-sdk.modules]]
-path = ".dagger/modules/greetings"
+[sdks.go.scopes.".dagger/backend"]
+is-module = true
+clients = ["github.com/dagger/go@548de867d65d3074c5730c70f317094f167709c7"]
 
-[[modules.dagger-go-sdk.as-sdk.modules]]
-path = ".dagger/backend"
+[sdks.go.scopes.".dagger/modules/greetings"]
+is-module = true
+clients = ["./.dagger/backend", "./.dagger/frontend", "github.com/kpenfound/dag/github-issue@2b76331a92be6da3fead95305e7bf2a70726c1e6", "github.com/kpenfound/jpadams-github-release@c6081b3210407d5ea49fce8874c5104afa8373cb", "./.dagger/workspace"]
 
-[[modules.dagger-go-sdk.as-sdk.modules]]
-path = ".dagger/workspace"
+[sdks.go.scopes.".dagger/workspace"]
+is-module = true
+name = "code-workspace"
 
-[modules.dagger-typescript-sdk.as-sdk]
-name = "typescript"
+[sdks.typescript]
+module = "dagger-typescript-sdk"
 
-[[modules.dagger-typescript-sdk.as-sdk.modules]]
-path = ".dagger/frontend"
+[sdks.typescript.scopes.".dagger/frontend"]
+is-module = true
