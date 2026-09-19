@@ -3,7 +3,6 @@
 # Run `dagger workspace update` to refresh the pinned versions.
 [["version","2"]]
 ["","git-latest",["github.com/dagger/eslint"],"refs/heads/main"]
-["","git-latest",["github.com/dagger/go"],"refs/tags/v0.1.0"]
 ["","git-latest",["github.com/dagger/go-sdk"],"refs/tags/v1.1.0"]
 ["","git-latest",["github.com/dagger/playwright"],"refs/heads/main"]
 ["","git-latest",["github.com/dagger/sdk-helpers",["version","v1"]],"refs/tags/v1.0.4"]
