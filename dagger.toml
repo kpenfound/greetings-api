@@ -23,7 +23,7 @@ source = "github.com/dagger/go"
 # GREETINGS_API_URL) and it runs the tests itself. Without this its test check
 # would run without the variable, and the e2e tests skip when that is unset,
 # which looks exactly like passing.
-base = "backend:go-test-base"
+base = "dag://backend/go-test-base"
 
 [modules.eslint]
 source = "github.com/dagger/eslint"
@@ -32,7 +32,7 @@ source = "github.com/dagger/eslint"
 source = "github.com/dagger/playwright"
 
 [modules.playwright.settings]
-service = "frontend:serve"
+service = "dag://frontend/serve"
 
 [sdks.go]
 module = "dagger-go-sdk"
