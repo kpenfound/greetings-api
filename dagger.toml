@@ -15,7 +15,7 @@ source = "github.com/dagger/go-sdk"
 source = "github.com/dagger/typescript-sdk"
 
 [modules.go]
-source = "github.com/dagger/go"
+source = "github.com/dagger/go@collections"
 
 [modules.go.settings]
 # The e2e tests in e2e_test.go need the API running. The toolchain cannot start
