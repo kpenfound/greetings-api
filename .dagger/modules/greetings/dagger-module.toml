@@ -1,6 +1,5 @@
 name = "greetings"
 engineVersion = "v0.20.6"
-source = "../.."
 disableDefaultFunctionCaching = true
 
 [runtime]
@@ -8,20 +7,8 @@ disableDefaultFunctionCaching = true
 
 [[dependencies]]
   name = "backend"
-  source = "../../backend"
-
-[[dependencies]]
-  name = "code-workspace"
-  source = "../../workspace"
+  source = "../backend"
 
 [[dependencies]]
   name = "frontend"
-  source = "../../frontend"
-
-[[dependencies]]
-  name = "github-issue"
-  source = "github.com/kpenfound/dag/github-issue@2b76331a92be6da3fead95305e7bf2a70726c1e6"
-
-[[dependencies]]
-  name = "github-release"
-  source = "github.com/kpenfound/jpadams-github-release@c6081b3210407d5ea49fce8874c5104afa8373cb"
+  source = "../frontend"

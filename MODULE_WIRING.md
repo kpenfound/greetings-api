@@ -18,7 +18,7 @@ Both wires live in [dagger.toml](./dagger.toml).
 
 ### go ← backend:go-test-base
 
-The go module's `base` setting is the container it derives every `go test` run from. This project wires it to a function on the [backend](./.dagger/backend/main.go) module:
+The go module's `base` setting is the container it derives every `go test` run from. This project wires it to a function on the [backend](./.dagger/modules/backend/main.go) module:
 
 ```toml
 [modules.go.settings]
@@ -47,7 +47,7 @@ That last point is why the wiring matters. A skipped test reports the same as a 
 
 ### playwright ← frontend:serve
 
-The playwright module's `service` setting is the service it runs the browser tests against. This project wires it to the [frontend](./.dagger/frontend/src/index.ts) module's `serve` function, the same one `dagger up` uses:
+The playwright module's `service` setting is the service it runs the browser tests against. This project wires it to the [frontend](./.dagger/modules/frontend/src/index.ts) module's `serve` function, the same one `dagger up` uses:
 
 ```toml
 [modules.playwright.settings]

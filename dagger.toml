@@ -3,10 +3,10 @@ source = ".dagger/modules/greetings"
 entrypoint = true
 
 [modules.backend]
-source = ".dagger/backend"
+source = ".dagger/modules/backend"
 
 [modules.frontend]
-source = ".dagger/frontend"
+source = ".dagger/modules/frontend"
 
 [modules.dagger-go-sdk]
 source = "github.com/dagger/go-sdk"
@@ -25,8 +25,11 @@ source = "github.com/dagger/go@collections"
 # which looks exactly like passing.
 base = "dag://backend/go-test-base"
 
+[modules.golangci-lint]
+source = "dagger.io/go/golangci-lint@do-not-merge-hack"
+
 [modules.eslint]
-source = "github.com/dagger/eslint"
+source = "dagger.io/js/eslint@pull/13/head"
 
 [modules.playwright]
 source = "github.com/dagger/playwright"
@@ -37,20 +40,15 @@ service = "dag://frontend/serve"
 [sdks.go]
 module = "dagger-go-sdk"
 
-[sdks.go.scopes.".dagger/backend"]
+[sdks.go.scopes.".dagger/modules/backend"]
 is-module = true
-clients = ["github.com/dagger/go@548de867d65d3074c5730c70f317094f167709c7"]
 
 [sdks.go.scopes.".dagger/modules/greetings"]
 is-module = true
-clients = ["./.dagger/backend", "./.dagger/frontend", "github.com/kpenfound/dag/github-issue@2b76331a92be6da3fead95305e7bf2a70726c1e6", "github.com/kpenfound/jpadams-github-release@c6081b3210407d5ea49fce8874c5104afa8373cb", "./.dagger/workspace"]
-
-[sdks.go.scopes.".dagger/workspace"]
-is-module = true
-name = "code-workspace"
+clients = ["./.dagger/modules/backend", "./.dagger/modules/frontend"]
 
 [sdks.typescript]
 module = "dagger-typescript-sdk"
 
-[sdks.typescript.scopes.".dagger/frontend"]
+[sdks.typescript.scopes.".dagger/modules/frontend"]
 is-module = true

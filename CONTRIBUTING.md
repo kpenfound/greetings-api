@@ -55,11 +55,10 @@ greetings-api/
 │   ├── package.json    # Frontend dependencies
 │   ├── playwright.config.ts  # E2E test configuration
 │   └── tests/          # Playwright E2E tests
-├── .dagger/             # Dagger modules
+├── .dagger/modules/     # Dagger modules
+│   ├── greetings/      # Entrypoint module (build)
 │   ├── backend/        # Backend build module
-│   ├── frontend/       # Frontend build module
-│   ├── workspace/      # Agent workspace module
-│   └── modules/greetings/  # Entrypoint module configuration
+│   └── frontend/       # Frontend build module
 ├── dagger.toml          # Dagger workspace configuration
 └── dagger.lock          # Dagger dependency lock file
 ```
@@ -84,7 +83,7 @@ greetings-api/
 ### CI/CD Architecture
 
 - **Tool**: Dagger for CI/CD operations
-- **Modules**: Project modules for backend, frontend, and agent workspace management, plus reusable modules installed in `dagger.toml`: [go](https://github.com/dagger/go) (Go lint/test), [eslint](https://github.com/dagger/eslint) (JS/TS lint), and [playwright](https://github.com/dagger/playwright) (E2E tests)
+- **Modules**: Project modules for backend and frontend, plus reusable modules installed in `dagger.toml`: [go](https://github.com/dagger/go) (Go lint/test), [golangci-lint](https://github.com/dagger/go/tree/do-not-merge-hack/golangci-lint) (Go lint), [eslint](https://github.com/dagger/eslint) (JS/TS lint), and [playwright](https://github.com/dagger/playwright) (E2E tests)
 - **Wiring**: Reusable modules get project services through settings in `dagger.toml` rather than custom check functions. The go module's `base` is `backend:go-test-base`, a Go container with `backend:serve` bound as `GREETINGS_API_URL`, so `go:test-all` runs the e2e tests against the real API. The playwright module's `service` is `frontend:serve`, so `playwright:test` runs the browser tests against the served site
 - **Checks**: All validation runs through `dagger check`; services run through `dagger up`
 
@@ -134,6 +133,7 @@ npm run test:e2e
 ```bash
 # Using Dagger
 dagger check go:lint-all
+dagger check golangci-lint:lint-all
 ```
 
 **Frontend Linting:**
@@ -153,7 +153,6 @@ npm run lint
 - `dagger up` - Serve the application locally (backend :8080, frontend :8081)
 - `dagger up -l` - List all available services
 - `dagger api call build` - Build the backend and frontend
-- `dagger api call release` - Create a GitHub release
 - `dagger api call --help` - List all available functions
 
 ## Making Changes
