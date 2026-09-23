@@ -9,13 +9,10 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-// A unique identifier for an object.
-type GreetingsID = ID // greetings (../../../../../:0:0)
-
 type Greetings struct { // greetings (../../../../../:0:0)
 	query *querybuilder.Selection
 
-	id *GreetingsID
+	id *ID
 }
 
 func (r *Greetings) WithGraphQLQuery(q *querybuilder.Selection) *Greetings {
@@ -34,13 +31,13 @@ func (r *Greetings) Build() *Directory {
 }
 
 // A unique identifier for this Greetings.
-func (r *Greetings) ID(ctx context.Context) (GreetingsID, error) {
+func (r *Greetings) ID(ctx context.Context) (ID, error) {
 	if r.id != nil {
 		return *r.id, nil
 	}
 	q := r.query.Select("id")
 
-	var response GreetingsID
+	var response ID
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)

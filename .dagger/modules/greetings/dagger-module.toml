@@ -1,5 +1,5 @@
 name = "greetings"
-engineVersion = "v0.20.6"
+engineVersion = "v1.0.0-0"
 disableDefaultFunctionCaching = true
 
 [runtime]

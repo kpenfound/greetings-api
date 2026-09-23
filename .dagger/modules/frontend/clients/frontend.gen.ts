@@ -9,10 +9,7 @@ import {
   Service
 } from "./dagger.gen.js"
 import type {
-  DirectoryID,
-  FrontendID,
-  ID,
-  ServiceID
+  ID
 } from "./dagger.gen.js"
 
 
@@ -22,14 +19,14 @@ export type ClientFrontendOpts = {
 
 
 export class Frontend extends BaseClient { // frontend (.dagger/modules/frontend/src/index.ts:15:14)
-  private readonly _id?: FrontendID = undefined
+  private readonly _id?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: FrontendID,
+     _id?: ID,
    ) {
      super(ctx)
 
@@ -39,7 +36,7 @@ export class Frontend extends BaseClient { // frontend (.dagger/modules/frontend
   /**
    * A unique identifier for this Frontend.
    */
-  id = async (): Promise<FrontendID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -48,7 +45,7 @@ export class Frontend extends BaseClient { // frontend (.dagger/modules/frontend
       "id",
     )
 
-    const response: Awaited<FrontendID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response

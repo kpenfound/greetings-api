@@ -12,7 +12,7 @@ import (
 type Backend struct { // backend (../../../../../.dagger/modules/backend/main.go:9:6)
 	query *querybuilder.Selection
 
-	id *BackendID
+	id *ID
 }
 
 func (r *Backend) WithGraphQLQuery(q *querybuilder.Selection) *Backend {
@@ -106,13 +106,13 @@ func (r *Backend) GoTestBase() *Container { // backend (../../../../../.dagger/m
 }
 
 // A unique identifier for this Backend.
-func (r *Backend) ID(ctx context.Context) (BackendID, error) {
+func (r *Backend) ID(ctx context.Context) (ID, error) {
 	if r.id != nil {
 		return *r.id, nil
 	}
 	q := r.query.Select("id")
 
-	var response BackendID
+	var response ID
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)

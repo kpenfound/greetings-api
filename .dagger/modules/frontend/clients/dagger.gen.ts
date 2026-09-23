@@ -62,8 +62,6 @@ import {
 } from "./frontend.gen.js"
 export * from "./frontend.gen.js"
 
-export type QueryID = string & { __QueryID: never }
-
 export type AddressDirectoryOpts = {
   exclude?: string[]
   include?: string[]
@@ -78,10 +76,255 @@ export type AddressFileOpts = {
   noCache?: boolean
 }
 
+export type AgentNotifyOpts = {
+  /**
+   * The lifecycle states that fire an event. IDLE events carry the turn's final reply; FAILED events carry the loop error.
+   */
+  on?: AgentState[]
+}
+
+export type AgentPauseOpts = {
+  /**
+   * Preempt the in-flight step instead of letting it finish. All completed steps are kept and the interrupted turn stays open: messages it consumed remain pending, while unconsumed mailbox messages are discarded. Resume continues the turn from the last committed step. On an idle, never-started, or failed agent there is nothing to preempt, so this is a plain pause.
+   */
+  interrupt?: boolean
+}
+
+export type AgentSendOpts = {
+  /**
+   * The ref of a message in the SENDER's own mailbox this send answers (e.g. "#3", from its attribution header). The recipient sees the two paired, and awaiters of the replied-to message resolve with this reply immediately instead of at the sender's turn end.
+   */
+  replyTo?: string
+
+  /**
+   * Ordered TEXT, IMAGE, AUDIO, or DOCUMENT user content blocks. File inputs are resolved and all content is validated before enqueueing. Pass an empty message for media-only sends.
+   */
+  content?: LLMContentBlockInput[]
+}
+
+export type AgentStopOpts = {
+  /**
+   * Cancel the loop immediately instead of letting an in-flight step finish. Either way the completed steps are preserved in the snapshot.
+   */
+  kill?: boolean
+}
+
 /**
- * A unique identifier for an object.
+ * EXPERIMENTAL: Agent APIs are likely to change.
+ * 
+ * How a message landed in an agent's evaluation.
  */
-export type AddressID = string & {__AddressID: never}
+export enum AgentMessageDelivery {
+
+  /**
+   * The message is queued: the agent is paused or failed, and a resume will drain it.
+   */
+  Queued = "QUEUED",
+
+  /**
+   * The message opened a new turn: the agent was idle or newly started.
+   */
+  Started = "STARTED",
+
+  /**
+   * The message was absorbed into the in-flight turn at a step boundary, steering it.
+   */
+  Steered = "STEERED",
+}
+
+/**
+ * Utility function to convert a AgentMessageDelivery value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function AgentMessageDeliveryValueToName(value: AgentMessageDelivery): string {
+  switch (value) {
+    case AgentMessageDelivery.Queued:
+      return "QUEUED"
+    case AgentMessageDelivery.Started:
+      return "STARTED"
+    case AgentMessageDelivery.Steered:
+      return "STEERED"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a AgentMessageDelivery name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function AgentMessageDeliveryNameToValue(name: string): AgentMessageDelivery {
+  switch (name) {
+    case "QUEUED":
+      return AgentMessageDelivery.Queued
+    case "STARTED":
+      return AgentMessageDelivery.Started
+    case "STEERED":
+      return AgentMessageDelivery.Steered
+    default:
+      return name as AgentMessageDelivery
+  }
+}
+/**
+ * EXPERIMENTAL: Agent APIs are likely to change.
+ * 
+ * Computed lifecycle state of an agent.
+ */
+export enum AgentState {
+
+  /**
+   * The loop failed; snapshot holds the completed prefix. Resume retries.
+   */
+  Failed = "FAILED",
+
+  /**
+   * Mailbox empty, turn complete; blocked in receive.
+   */
+  Idle = "IDLE",
+
+  /**
+   * Mailbox accepting but not draining, until resume.
+   */
+  Paused = "PAUSED",
+
+  /**
+   * A model request or tool evaluation is in flight.
+   */
+  Running = "RUNNING",
+
+  /**
+   * Runtime released; snapshot remains readable.
+   */
+  Stopped = "STOPPED",
+
+  /**
+   * Blocked on input from the user (derived; see waitingOn).
+   */
+  WaitingInput = "WAITING_INPUT",
+}
+
+/**
+ * Utility function to convert a AgentState value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function AgentStateValueToName(value: AgentState): string {
+  switch (value) {
+    case AgentState.Failed:
+      return "FAILED"
+    case AgentState.Idle:
+      return "IDLE"
+    case AgentState.Paused:
+      return "PAUSED"
+    case AgentState.Running:
+      return "RUNNING"
+    case AgentState.Stopped:
+      return "STOPPED"
+    case AgentState.WaitingInput:
+      return "WAITING_INPUT"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a AgentState name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function AgentStateNameToValue(name: string): AgentState {
+  switch (name) {
+    case "FAILED":
+      return AgentState.Failed
+    case "IDLE":
+      return AgentState.Idle
+    case "PAUSED":
+      return AgentState.Paused
+    case "RUNNING":
+      return AgentState.Running
+    case "STOPPED":
+      return AgentState.Stopped
+    case "WAITING_INPUT":
+      return AgentState.WaitingInput
+    default:
+      return name as AgentState
+  }
+}
+export type ArtifactUriOpts = {
+  /**
+   * Prefix the workspace's Git address and commit: dag://<workspace>@<commit>:<path>. Fails if the workspace has no Git address.
+   */
+  absolute?: boolean
+
+  /**
+   * Include the dimension keys as a query. Without them, the address is a path selector.
+   */
+  dimensionKeys?: boolean
+
+  /**
+   * Include the artifact type in the scheme: dag+container://.
+   */
+  typeAssertion?: boolean
+}
+
+export type ArtifactValueOpts = {
+  /**
+   * Field arguments as a JSON object.
+   */
+  arguments: JSON
+}
+
+export type ArtifactsFilterCheckCommandOpts = {
+  /**
+   * Include generated-file checks. Defaults to the workspace check-generated setting, or true when unset.
+   */
+  generated?: boolean
+}
+
+export type ArtifactsFilterDirectivesOpts = {
+  /**
+   * Remove the matching artifacts instead.
+   */
+  exclude?: boolean
+}
+
+export type ArtifactsFilterParentDirectivesOpts = {
+  /**
+   * Remove the matching artifacts instead.
+   */
+  exclude?: boolean
+}
+
+export type ArtifactsFilterParentTypesOpts = {
+  /**
+   * Remove the matching artifacts instead.
+   */
+  exclude?: boolean
+}
+
+export type ArtifactsFilterTypesOpts = {
+  /**
+   * Remove the matching artifacts instead.
+   */
+  exclude?: boolean
+}
+
+export type ArtifactsPathDefinitionsOpts = {
+  /**
+   * Prefix each address with the workspace's Git address and commit.
+   */
+  absolute?: boolean
+}
+
+export type ArtifactsValuesOpts = {
+  /**
+   * Cancel remaining work after the first failure.
+   */
+  failFast?: boolean
+
+  /**
+   * Field arguments applied to each artifact, as a JSON object.
+   */
+  arguments?: JSON
+}
 
 export type BuildArg = {
   /**
@@ -94,6 +337,11 @@ export type BuildArg = {
    */
   value: string
 }
+
+/**
+ * Arbitrary binary data, represented as a base64-encoded string.
+ */
+export type Bytes = string & {__Bytes: never}
 
 /**
  * Sharing mode of the cache volume.
@@ -149,10 +397,17 @@ export function CacheSharingModeNameToValue(name: string): CacheSharingMode {
       return name as CacheSharingMode
   }
 }
-/**
- * A unique identifier for an object.
- */
-export type CacheVolumeID = string & {__CacheVolumeID: never}
+export type ChangesetFilterOpts = {
+  /**
+   * Only include changes at paths matching these patterns. Empty includes all paths.
+   */
+  include?: string[]
+
+  /**
+   * Exclude changes at paths matching these patterns.
+   */
+  exclude?: string[]
+}
 
 export type ChangesetWithChangesetOpts = {
   /**
@@ -167,11 +422,6 @@ export type ChangesetWithChangesetsOpts = {
    */
   onConflict?: ChangesetsMergeConflict
 }
-
-/**
- * A unique identifier for an object.
- */
-export type ChangesetID = string & {__ChangesetID: never}
 
 /**
  * Strategy to use when merging changesets with conflicting changes.
@@ -290,28 +540,6 @@ export function ChangesetsMergeConflictNameToValue(name: string): ChangesetsMerg
       return name as ChangesetsMergeConflict
   }
 }
-export type CheckGroupRunOpts = {
-  /**
-   * If true, stop running checks as soon as any check fails.
-   */
-  failFast?: boolean
-}
-
-/**
- * A unique identifier for an object.
- */
-export type CheckGroupID = string & {__CheckGroupID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type CheckID = string & {__CheckID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type CloudID = string & {__CloudID: never}
-
 export type ContainerAsServiceOpts = {
   /**
    * Command to run instead of the container's default command (e.g., ["go", "run", "main.go"]).
@@ -371,39 +599,6 @@ export type ContainerAsTarballOpts = {
   mediaTypes?: ImageMediaTypes
 }
 
-export type ContainerBuildOpts = {
-  /**
-   * Path to the Dockerfile to use.
-   */
-  dockerfile?: string
-
-  /**
-   * Target build stage to build.
-   */
-  target?: string
-
-  /**
-   * Additional build arguments.
-   */
-  buildArgs?: BuildArg[]
-
-  /**
-   * Secrets to pass to the build.
-   * 
-   * They will be mounted at /run/secrets/[secret-name] in the build container
-   * 
-   * They can be accessed in the Dockerfile using the "secret" mount type and mount path /run/secrets/[secret-name], e.g. RUN --mount=type=secret,id=my-secret curl [http://example.com?token=$(cat /run/secrets/my-secret)](http://example.com?token=$(cat /run/secrets/my-secret))
-   */
-  secrets?: Secret[]
-
-  /**
-   * If set, skip the automatic init process injected into containers created by RUN statements.
-   * 
-   * This should only be used if the user requires that their exec processes be the pid 1 process in the container. Otherwise it may result in unexpected behavior.
-   */
-  noInit?: boolean
-}
-
 export type ContainerDirectoryOpts = {
   /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
@@ -421,6 +616,11 @@ export type ContainerExistsOpts = {
    * If specified, do not follow symlinks.
    */
   doNotFollowSymlinks?: boolean
+
+  /**
+   * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+   */
+  expand?: boolean
 }
 
 export type ContainerExportOpts = {
@@ -481,11 +681,65 @@ export type ContainerFileOpts = {
   expand?: boolean
 }
 
+export type ContainerFromOpts = {
+  /**
+   * Version query used to select an image tag. The address must not contain a tag or digest.
+   */
+  version?: string
+
+  /**
+   * Service to use as the registry endpoint for the image address.
+   * 
+   * The service will be started only for this pull.
+   */
+  registryService?: Service
+
+  /**
+   * Protocol to use for registry communication.
+   * 
+   * Defaults to "HTTPS". Use "HTTP" only for plain HTTP registries.
+   */
+  protocol?: RegistryProtocol
+
+  /**
+   * Allow HTTPS registry communication without verifying the server certificate.
+   */
+  insecureSkipTLSVerify?: boolean
+}
+
 export type ContainerImportOpts = {
   /**
    * Identifies the tag to import from the archive, if the archive bundles multiple tags.
    */
   tag?: string
+}
+
+export type ContainerLayerOpts = {
+  /**
+   * Force each layer of the image to use the specified compression algorithm.
+   * 
+   * If this is unset, then if a layer already has a compressed blob in the engine's cache, that will be used (this can result in a mix of compression algorithms for different layers). If this is unset and a layer has no compressed blob in the engine's cache, then it will be compressed using Gzip.
+   */
+  forcedCompression?: ImageLayerCompression
+
+  /**
+   * Media types to use for image layers. Defaults to OCI.
+   */
+  mediaTypes?: ImageMediaTypes
+}
+
+export type ContainerManifestOpts = {
+  /**
+   * Force each layer of the image to use the specified compression algorithm.
+   * 
+   * If this is unset, then if a layer already has a compressed blob in the engine's cache, that will be used (this can result in a mix of compression algorithms for different layers). If this is unset and a layer has no compressed blob in the engine's cache, then it will be compressed using Gzip.
+   */
+  forcedCompression?: ImageLayerCompression
+
+  /**
+   * Media types to use for image layers. Defaults to OCI.
+   */
+  mediaTypes?: ImageMediaTypes
 }
 
 export type ContainerPublishOpts = {
@@ -509,6 +763,25 @@ export type ContainerPublishOpts = {
    * Defaults to "OCI", which is compatible with most recent registries, but "Docker" may be needed for older registries without OCI support.
    */
   mediaTypes?: ImageMediaTypes
+
+  /**
+   * Service to use as the registry endpoint for the image address.
+   * 
+   * The service will be started only for this push.
+   */
+  registryService?: Service
+
+  /**
+   * Protocol to use for registry communication.
+   * 
+   * Defaults to "HTTPS". Use "HTTP" only for plain HTTP registries.
+   */
+  protocol?: RegistryProtocol
+
+  /**
+   * Allow HTTPS registry communication without verifying the server certificate.
+   */
+  insecureSkipTLSVerify?: boolean
 }
 
 export type ContainerStatOpts = {
@@ -621,9 +894,15 @@ export type ContainerWithDirectoryOpts = {
   owner?: string
 
   /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
+
+  /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    */
   expand?: boolean
+  permissions?: number
 }
 
 export type ContainerWithDockerHealthcheckOpts = {
@@ -761,6 +1040,11 @@ export type ContainerWithFileOpts = {
   owner?: string
 
   /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
+
+  /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
    */
   expand?: boolean
@@ -780,6 +1064,11 @@ export type ContainerWithFilesOpts = {
    * If the group is omitted, it defaults to the same as the user.
    */
   owner?: string
+
+  /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
 
   /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
@@ -810,6 +1099,11 @@ export type ContainerWithMountedCacheOpts = {
   owner?: string
 
   /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
+
+  /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    */
   expand?: boolean
@@ -824,6 +1118,16 @@ export type ContainerWithMountedDirectoryOpts = {
    * If the group is omitted, it defaults to the same as the user.
    */
   owner?: string
+
+  /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
+
+  /**
+   * Mount the directory read-only.
+   */
+  readOnly?: boolean
 
   /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
@@ -842,6 +1146,11 @@ export type ContainerWithMountedFileOpts = {
   owner?: string
 
   /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
+
+  /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
    */
   expand?: boolean
@@ -856,6 +1165,11 @@ export type ContainerWithMountedSecretOpts = {
    * If the group is omitted, it defaults to the same as the user.
    */
   owner?: string
+
+  /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
 
   /**
    * Permission given to the mounted secret (e.g., 0600).
@@ -882,6 +1196,18 @@ export type ContainerWithMountedTempOpts = {
   expand?: boolean
 }
 
+export type ContainerWithMountedVolumeOpts = {
+  /**
+   * Mount the volume read-only.
+   */
+  readOnly?: boolean
+
+  /**
+   * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+   */
+  expand?: boolean
+}
+
 export type ContainerWithNewFileOpts = {
   /**
    * Permissions of the new file. Example: 0600
@@ -896,6 +1222,11 @@ export type ContainerWithNewFileOpts = {
    * If the group is omitted, it defaults to the same as the user.
    */
   owner?: string
+
+  /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
 
   /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
@@ -919,6 +1250,11 @@ export type ContainerWithUnixSocketOpts = {
    * If the group is omitted, it defaults to the same as the user.
    */
   owner?: string
+
+  /**
+   * Set the owner to the container's current user.
+   */
+  inheritOwner?: boolean
 
   /**
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
@@ -982,18 +1318,6 @@ export type ContainerWithoutUnixSocketOpts = {
   expand?: boolean
 }
 
-/**
- * A unique identifier for an object.
- */
-export type ContainerID = string & {__ContainerID: never}
-
-export type CurrentModuleGeneratorsOpts = {
-  /**
-   * Only include generators matching the specified patterns
-   */
-  include?: string[]
-}
-
 export type CurrentModuleWorkdirOpts = {
   /**
    * Exclude artifacts that match the given pattern (e.g., ["node_modules/", ".git*"]).
@@ -1010,16 +1334,6 @@ export type CurrentModuleWorkdirOpts = {
    */
   gitignore?: boolean
 }
-
-/**
- * A unique identifier for an object.
- */
-export type CurrentModuleID = string & {__CurrentModuleID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type DiffStatID = string & {__DiffStatID: never}
 
 /**
  * The type of change for a diff stat entry.
@@ -1100,6 +1414,13 @@ export type DirectoryAsModuleSourceOpts = {
    * If not set, the module source code is loaded from the root of the directory.
    */
   sourceRootPath?: string
+}
+
+export type DirectoryAsWorkspaceOpts = {
+  /**
+   * Current working directory inside the workspace root. Defaults to the workspace root.
+   */
+  cwd?: string
 }
 
 export type DirectoryDockerBuildOpts = {
@@ -1300,6 +1621,11 @@ export type DirectoryWithDirectoryOpts = {
    * If the group is omitted, it defaults to the same as the user.
    */
   owner?: string
+
+  /**
+   * Permission given to the copied directory and contents (e.g., 0755).
+   */
+  permissions?: number
 }
 
 export type DirectoryWithFileOpts = {
@@ -1339,10 +1665,19 @@ export type DirectoryWithNewFileOpts = {
   permissions?: number
 }
 
-/**
- * A unique identifier for an object.
- */
-export type DirectoryID = string & {__DirectoryID: never}
+export type DirectoryWithPatchOpts = {
+  /**
+   * How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
+   */
+  onConflict?: PatchConflict
+}
+
+export type DirectoryWithPatchFileOpts = {
+  /**
+   * How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
+   */
+  onConflict?: PatchConflict
+}
 
 export type EngineCacheEntrySetOpts = {
   key?: string
@@ -1350,7 +1685,7 @@ export type EngineCacheEntrySetOpts = {
 
 export type EngineCachePruneOpts = {
   /**
-   * Use the engine-wide default pruning policy if true, otherwise prune the whole cache of any releasable entries.
+   * Use enabled engine-wide default disk and structural policies. If no default disk policy is enabled, the disk stage falls back to pruning all releasable disk-cache entries. If false, explicit options select stages; with no options, all releasable disk-cache entries are pruned.
    */
   useDefaultPolicy?: boolean
 
@@ -1373,37 +1708,17 @@ export type EngineCachePruneOpts = {
    * Override the target disk space to keep after pruning (e.g. "200GB" or "50%").
    */
   targetSpace?: string
+
+  /**
+   * Override the maximum structural metadata estimate in absolute bytes. Explicit values must be positive; the configured/default value is used when omitted.
+   */
+  maxEstimatedBytes?: number
+
+  /**
+   * Override the structural metadata estimate to target in absolute bytes. Explicit values must be positive and lower than the resolved maximum; the configured/default value is used when omitted.
+   */
+  targetEstimatedBytes?: number
 }
-
-/**
- * A unique identifier for an object.
- */
-export type EngineCacheEntryID = string & {__EngineCacheEntryID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type EngineCacheEntrySetID = string & {__EngineCacheEntrySetID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type EngineCacheID = string & {__EngineCacheID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type EngineID = string & {__EngineID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type EnumTypeDefID = string & {__EnumTypeDefID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type EnumValueTypeDefID = string & {__EnumValueTypeDefID: never}
 
 export type EnvFileGetOpts = {
   /**
@@ -1418,26 +1733,6 @@ export type EnvFileVariablesOpts = {
    */
   raw?: boolean
 }
-
-/**
- * A unique identifier for an object.
- */
-export type EnvFileID = string & {__EnvFileID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type EnvVariableID = string & {__EnvVariableID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type ErrorID = string & {__ErrorID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type ErrorValueID = string & {__ErrorValueID: never}
 
 /**
  * File type.
@@ -1493,16 +1788,6 @@ export function ExistsTypeNameToValue(name: string): ExistsType {
       return name as ExistsType
   }
 }
-/**
- * A unique identifier for an object.
- */
-export type ExportableID = string & {__ExportableID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type FieldTypeDefID = string & {__FieldTypeDefID: never}
-
 export type FileAsEnvFileOpts = {
   /**
    * Replace "${VAR}" or "$VAR" with the value of other vars
@@ -1595,14 +1880,39 @@ export type FileWithReplacedOpts = {
 }
 
 /**
- * A unique identifier for an object.
- */
-export type FileID = string & {__FileID: never}
-
-/**
  * File type.
  */
 export enum FileType {
+
+  /**
+   * directory file type
+   */
+  Directory = "DIRECTORY",
+
+  /**
+   * directory file type
+   */
+  DirectoryType = FileType.Directory,
+
+  /**
+   * regular file type
+   */
+  Regular = "REGULAR",
+
+  /**
+   * regular file type
+   */
+  RegularType = FileType.Regular,
+
+  /**
+   * symlink file type
+   */
+  Symlink = "SYMLINK",
+
+  /**
+   * symlink file type
+   */
+  SymlinkType = FileType.Symlink,
 
   /**
    * unknown file type
@@ -1616,6 +1926,12 @@ export enum FileType {
  */
 export function FileTypeValueToName(value: FileType): string {
   switch (value) {
+    case FileType.Directory:
+      return "DIRECTORY"
+    case FileType.Regular:
+      return "REGULAR"
+    case FileType.Symlink:
+      return "SYMLINK"
     case FileType.Unknown:
       return "UNKNOWN"
     default:
@@ -1629,17 +1945,18 @@ export function FileTypeValueToName(value: FileType): string {
  */
 export function FileTypeNameToValue(name: string): FileType {
   switch (name) {
+    case "DIRECTORY":
+      return FileType.Directory
+    case "REGULAR":
+      return FileType.Regular
+    case "SYMLINK":
+      return FileType.Symlink
     case "UNKNOWN":
       return FileType.Unknown
     default:
       return name as FileType
   }
 }
-/**
- * A unique identifier for an object.
- */
-export type FrontendID = string & {__FrontendID: never}
-
 export type FunctionWithArgOpts = {
   /**
    * A doc string for the argument, if any
@@ -1688,11 +2005,6 @@ export type FunctionWithDeprecatedOpts = {
 }
 
 /**
- * A unique identifier for an object.
- */
-export type FunctionArgID = string & {__FunctionArgID: never}
-
-/**
  * The behavior configured for function result caching.
  */
 export enum FunctionCachePolicy {
@@ -1734,42 +2046,152 @@ export function FunctionCachePolicyNameToValue(name: string): FunctionCachePolic
       return name as FunctionCachePolicy
   }
 }
-/**
- * A unique identifier for an object.
- */
-export type FunctionCallArgValueID = string & {__FunctionCallArgValueID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type FunctionCallID = string & {__FunctionCallID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type FunctionID = string & {__FunctionID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type GeneratedCodeID = string & {__GeneratedCodeID: never}
-
-export type GeneratorGroupChangesOpts = {
+export type GitCommitAncestorReleaseTagOpts = {
   /**
-   * Strategy to apply on conflicts between generators
+   * Include pre-release tags when choosing the latest tag.
    */
-  onConflict?: ChangesetsMergeConflict
+  includePreRelease?: boolean
+}
+
+export type GitCommitChangesOpts = {
+  /**
+   * Use this commit as the comparison base instead of the first parent. The comparison commit may belong to an unrelated history or repository.
+   */
+  against?: GitCommit
+}
+
+export type GitCommitReleaseTagOpts = {
+  /**
+   * Include pre-release tags when choosing the latest tag.
+   */
+  includePreRelease?: boolean
+}
+
+export type GitCommitTreeOpts = {
+  /**
+   * Set to true to discard .git directory.
+   */
+  discardGitDir?: boolean
+
+  /**
+   * The depth of the tree to fetch.
+   */
+  depth?: number
+
+  /**
+   * Set to true to populate tag refs in the local checkout .git.
+   */
+  includeTags?: boolean
 }
 
 /**
- * A unique identifier for an object.
+ * How a Git push updated the remote ref.
  */
-export type GeneratorGroupID = string & {__GeneratorGroupID: never}
+export enum GitPushDisposition {
+
+  /**
+   * The remote ref was created.
+   */
+  Created = "CREATED",
+
+  /**
+   * The remote ref was fast-forwarded.
+   */
+  FastForward = "FAST_FORWARD",
+
+  /**
+   * The remote ref was replaced under an explicit lease.
+   */
+  Forced = "FORCED",
+
+  /**
+   * The remote ref already pointed to this commit.
+   */
+  UpToDate = "UP_TO_DATE",
+}
 
 /**
- * A unique identifier for an object.
+ * Utility function to convert a GitPushDisposition value to its name so
+ * it can be uses as argument to call a exposed function.
  */
-export type GeneratorID = string & {__GeneratorID: never}
+export function GitPushDispositionValueToName(value: GitPushDisposition): string {
+  switch (value) {
+    case GitPushDisposition.Created:
+      return "CREATED"
+    case GitPushDisposition.FastForward:
+      return "FAST_FORWARD"
+    case GitPushDisposition.Forced:
+      return "FORCED"
+    case GitPushDisposition.UpToDate:
+      return "UP_TO_DATE"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a GitPushDisposition name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function GitPushDispositionNameToValue(name: string): GitPushDisposition {
+  switch (name) {
+    case "CREATED":
+      return GitPushDisposition.Created
+    case "FAST_FORWARD":
+      return GitPushDisposition.FastForward
+    case "FORCED":
+      return GitPushDisposition.Forced
+    case "UP_TO_DATE":
+      return GitPushDisposition.UpToDate
+    default:
+      return name as GitPushDisposition
+  }
+}
+export type GitRefAsWorkspaceOpts = {
+  /**
+   * Current working directory inside the workspace root. Defaults to the workspace root.
+   */
+  cwd?: string
+}
+
+export type GitRefLogOpts = {
+  /**
+   * Maximum number of commits to return.
+   */
+  limit?: number
+
+  /**
+   * Only include commits touching these paths, relative to the root of the repository.
+   */
+  paths?: string[]
+
+  /**
+   * Exclude commits reachable from this ref, i.e. only list commits added on top of it.
+   */
+  base?: GitRef
+}
+
+export type GitRefPushOpts = {
+  /**
+   * Destination remote repository. Defaults to the origin remote's push routing, or the source's repository URL when none is registered. Required when the source has no remote URL.
+   */
+  to?: GitRepository
+
+  /**
+   * Name of a registered remote to push to (see GitRepository.withRemote). Defaults to origin. The remote's push URLs, or its URL, become the destination; more than one push URL requires an explicit to instead.
+   */
+  remote?: string
+
+  /**
+   * Destination branch; a refs/ prefix is used verbatim. Defaults to this ref's branch name. Required for detached and non-branch refs.
+   */
+  branch?: string
+
+  /**
+   * Optional lease: a full lowercase object ID allows replacement only if the remote ref still has that value. Checked even for up-to-date pushes. Empty or omitted uses normal non-force rules, creating the ref if it does not exist.
+   */
+  expectedRemoteSHA?: string
+}
 
 export type GitRefTreeOpts = {
   /**
@@ -1788,16 +2210,59 @@ export type GitRefTreeOpts = {
   includeTags?: boolean
 }
 
-/**
- * A unique identifier for an object.
- */
-export type GitRefID = string & {__GitRefID: never}
+export type GitRefWithCommitOpts = {
+  /**
+   * Committer name. Defaults to authorName.
+   */
+  committerName?: string
+
+  /**
+   * Committer email. Defaults to authorEmail.
+   */
+  committerEmail?: string
+
+  /**
+   * RFC3339 committer date. Defaults to date.
+   */
+  committerDate?: string
+
+  /**
+   * Allow a commit whose tree matches its parent, including when the supplied edits are already present. Defaults to false.
+   */
+  allowEmpty?: boolean
+
+  /**
+   * Add a Signed-off-by trailer using the commit author's name and email.
+   */
+  signoff?: boolean
+}
+
+export type GitRepositoryAsWorkspaceOpts = {
+  /**
+   * Current working directory inside the workspace root. Defaults to the workspace root.
+   */
+  cwd?: string
+}
 
 export type GitRepositoryBranchesOpts = {
   /**
    * Glob patterns (e.g., "refs/tags/v*").
    */
   patterns?: string[]
+}
+
+export type GitRepositoryBundleOpts = {
+  /**
+   * A Git ref whose reachable objects are omitted and recorded as a prerequisite.
+   */
+  base?: GitRef
+}
+
+export type GitRepositoryLatestOpts = {
+  /**
+   * Version query used to select the greatest matching release ref.
+   */
+  version?: string
 }
 
 export type GitRepositoryTagsOpts = {
@@ -1807,15 +2272,19 @@ export type GitRepositoryTagsOpts = {
   patterns?: string[]
 }
 
-/**
- * A unique identifier for an object.
- */
-export type GitRepositoryID = string & {__GitRepositoryID: never}
+export type GitRepositoryWithBundleOpts = {
+  /**
+   * An optional remote ref hint for fetching a prerequisite when the remote does not allow fetches by object ID.
+   */
+  prerequisiteRef?: string
+}
 
-/**
- * A unique identifier for an object.
- */
-export type HealthcheckConfigID = string & {__HealthcheckConfigID: never}
+export type GitRepositoryWithRemoteOpts = {
+  /**
+   * Push destination, when pushes go somewhere other than url. Empty uses url.
+   */
+  pushUrl?: string
+}
 
 export type HostDirectoryOpts = {
   /**
@@ -1880,11 +2349,6 @@ export type HostTunnelOpts = {
 /**
  * A unique identifier for an object.
  */
-export type HostID = string & {__HostID: never}
-
-/**
- * A unique identifier for an object.
- */
 export type ID = string & {__ID: never}
 
 /**
@@ -1892,6 +2356,7 @@ export type ID = string & {__ID: never}
  */
 export enum ImageLayerCompression {
   EStarGz = "EStarGZ",
+  Estargz = ImageLayerCompression.EStarGz,
   Gzip = "Gzip",
   Uncompressed = "Uncompressed",
   Zstd = "Zstd",
@@ -1938,8 +2403,10 @@ export function ImageLayerCompressionNameToValue(name: string): ImageLayerCompre
  * Mediatypes to use in published or exported image metadata.
  */
 export enum ImageMediaTypes {
-  DockerMediaTypes = "DockerMediaTypes",
-  OciMediaTypes = "OCIMediaTypes",
+  Docker = "DockerMediaTypes",
+  DockerMediaTypes = ImageMediaTypes.Docker,
+  Oci = "OCIMediaTypes",
+  OciMediaTypes = ImageMediaTypes.Oci,
 }
 
 /**
@@ -1948,10 +2415,10 @@ export enum ImageMediaTypes {
  */
 export function ImageMediaTypesValueToName(value: ImageMediaTypes): string {
   switch (value) {
-    case ImageMediaTypes.DockerMediaTypes:
-      return "DockerMediaTypes"
-    case ImageMediaTypes.OciMediaTypes:
-      return "OCIMediaTypes"
+    case ImageMediaTypes.Docker:
+      return "DOCKER"
+    case ImageMediaTypes.Oci:
+      return "OCI"
     default:
       return value
   }
@@ -1963,24 +2430,14 @@ export function ImageMediaTypesValueToName(value: ImageMediaTypes): string {
  */
 export function ImageMediaTypesNameToValue(name: string): ImageMediaTypes {
   switch (name) {
-    case "DockerMediaTypes":
-      return ImageMediaTypes.DockerMediaTypes
-    case "OCIMediaTypes":
-      return ImageMediaTypes.OciMediaTypes
+    case "DOCKER":
+      return ImageMediaTypes.Docker
+    case "OCI":
+      return ImageMediaTypes.Oci
     default:
       return name as ImageMediaTypes
   }
 }
-/**
- * A unique identifier for an object.
- */
-export type InputTypeDefID = string & {__InputTypeDefID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type InterfaceTypeDefID = string & {__InterfaceTypeDefID: never}
-
 /**
  * An arbitrary JSON-encoded value.
  */
@@ -1998,45 +2455,397 @@ export type JSONValueContentsOpts = {
   indent?: string
 }
 
-/**
- * A unique identifier for an object.
- */
-export type JSONValueID = string & {__JSONValueID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type LLMID = string & {__LLMID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type LLMTokenUsageID = string & {__LLMTokenUsageID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type LabelID = string & {__LabelID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type ListTypeDefID = string & {__ListTypeDefID: never}
-
-export type ModuleChecksOpts = {
+export type LLMLoopOpts = {
   /**
-   * Only include checks matching the specified patterns
+   * Cap the number of steps. The loop fails if the cap is reached before the model ends its turn.
    */
-  include?: string[]
+  maxSteps?: number
+
+  /**
+   * Cap the model's output tokens on each step. Defaults to the model's maximum.
+   */
+  maxTokens?: number
 }
 
-export type ModuleGeneratorsOpts = {
+export type LLMSpawnOpts = {
   /**
-   * Only include generators matching the specified patterns
+   * Display label for the agent — telemetry and error messages; carries no identity. Defaults to a short name derived from the conversation.
    */
-  include?: string[]
+  name?: string
+
+  /**
+   * The runtime handle to restore the instance under, as published on its loop span as dagger.io/agent.id. Omit to mint a fresh instance.
+   */
+  handle?: string
+
+  /**
+   * The lifecycle state to create the agent in, as facts on the entry: IDLE is ready to be prompted, PAUSED parks it, FAILED holds an error a resume retries past, STOPPED preserves a dormant snapshot that send or resume can relaunch.
+   * 
+   * RUNNING and WAITING_INPUT are refused: they describe a loop, and a restored loop died with the session that published it — restore such an agent as IDLE, its interrupted turn's input still pending on the conversation.
+   */
+  state?: AgentState
+
+  /**
+   * The loop error to create the agent with, for state FAILED. Refused with any other state.
+   */
+  error?: string
 }
 
+export type LLMStepOpts = {
+  /**
+   * Cap the model's output tokens for this step. Defaults to the model's maximum.
+   */
+  maxTokens?: number
+}
+
+export type LLMWithContentOpts = {
+  /**
+   * The message's recorded provenance.
+   */
+  origin?: LLMMessageOriginInput
+}
+
+export type LLMWithContentFileOpts = {
+  /**
+   * The media MIME type; inferred from the file's contents when omitted.
+   */
+  mimeType?: string
+}
+
+export type LLMWithModelOpts = {
+  /**
+   * The provider serving the model, e.g. "openai". Overrides the provider otherwise inferred from the model name — useful when the name matches no known pattern (e.g. a fine-tune), or matches the wrong one.
+   */
+  provider?: string
+}
+
+export type LLMWithPromptOpts = {
+  /**
+   * The message's recorded provenance, when it arrived through an agent mailbox rather than from the user. Rendered to the model as an attribution header at request-build time.
+   */
+  origin?: LLMMessageOriginInput
+}
+
+export type LLMWithResponseOpts = {
+  /**
+   * Uncached input tokens sent
+   */
+  inputTokens?: number
+
+  /**
+   * Tokens received from the model, including text and tool calls
+   */
+  outputTokens?: number
+
+  /**
+   * Cached input tokens read
+   */
+  cachedTokenReads?: number
+
+  /**
+   * Cached input tokens written
+   */
+  cachedTokenWrites?: number
+
+  /**
+   * Total tokens consumed by this response
+   */
+  totalTokens?: number
+}
+
+export type LLMWithToolResultOpts = {
+  /**
+   * Ordered text and media returned by the tool
+   */
+  blocks?: LLMContentBlockInput[]
+}
+
+export type LLMWithToolsOpts = {
+  /**
+   * Method names to exclude from the toolset (e.g. constructors, entrypoints).
+   */
+  except?: string[]
+}
+
+export type LLMContentBlockInput = {
+  /**
+   * The arguments to pass to the tool (for TOOL_CALL kind).
+   */
+  arguments?: JSON
+
+  /**
+   * The unique ID of a tool call (for TOOL_CALL or TOOL_RESULT kinds).
+   */
+  callId?: string
+
+  /**
+   * Ordered TEXT or media blocks returned by a tool.
+   */
+  content?: LLMContentBlockInput[]
+
+  /**
+   * Base64-encoded media bytes. Supply exactly one of data or file for media.
+   */
+  data?: string
+
+  /**
+   * Whether the tool call resulted in an error (for TOOL_RESULT kind).
+   */
+  errored?: boolean
+
+  /**
+   * A media file to resolve to inline bytes.
+   */
+  file?: File
+
+  /**
+   * The kind of content block.
+   */
+  kind: LLMContentBlockKind
+
+  /**
+   * Media MIME type; required for inline data, inferred for a file.
+   */
+  mimeType?: string
+
+  /**
+   * Provider-specific opaque data (e.g. Anthropic thinking signature).
+   */
+  signature?: string
+
+  /**
+   * Text content (for TEXT, THINKING, or TOOL_RESULT kinds).
+   */
+  text?: string
+
+  /**
+   * The name of the tool to call (for TOOL_CALL kind).
+   */
+  toolName?: string
+}
+
+/**
+ * The kind of content in a message block.
+ */
+export enum LLMContentBlockKind {
+
+  /**
+   * Inline audio.
+   */
+  Audio = "AUDIO",
+
+  /**
+   * An inline PDF document.
+   */
+  Document = "DOCUMENT",
+
+  /**
+   * An inline image.
+   */
+  Image = "IMAGE",
+
+  /**
+   * Plain text content.
+   */
+  Text = "TEXT",
+
+  /**
+   * Model thinking/reasoning content (e.g. Anthropic extended thinking).
+   */
+  Thinking = "THINKING",
+
+  /**
+   * A tool/function call from the model.
+   */
+  ToolCall = "TOOL_CALL",
+
+  /**
+   * A tool/function result.
+   */
+  ToolResult = "TOOL_RESULT",
+}
+
+/**
+ * Utility function to convert a LLMContentBlockKind value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function LLMContentBlockKindValueToName(value: LLMContentBlockKind): string {
+  switch (value) {
+    case LLMContentBlockKind.Audio:
+      return "AUDIO"
+    case LLMContentBlockKind.Document:
+      return "DOCUMENT"
+    case LLMContentBlockKind.Image:
+      return "IMAGE"
+    case LLMContentBlockKind.Text:
+      return "TEXT"
+    case LLMContentBlockKind.Thinking:
+      return "THINKING"
+    case LLMContentBlockKind.ToolCall:
+      return "TOOL_CALL"
+    case LLMContentBlockKind.ToolResult:
+      return "TOOL_RESULT"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a LLMContentBlockKind name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function LLMContentBlockKindNameToValue(name: string): LLMContentBlockKind {
+  switch (name) {
+    case "AUDIO":
+      return LLMContentBlockKind.Audio
+    case "DOCUMENT":
+      return LLMContentBlockKind.Document
+    case "IMAGE":
+      return LLMContentBlockKind.Image
+    case "TEXT":
+      return LLMContentBlockKind.Text
+    case "THINKING":
+      return LLMContentBlockKind.Thinking
+    case "TOOL_CALL":
+      return LLMContentBlockKind.ToolCall
+    case "TOOL_RESULT":
+      return LLMContentBlockKind.ToolResult
+    default:
+      return name as LLMContentBlockKind
+  }
+}
+export type LLMMessageOriginInput = {
+  /**
+   * The display name of the sending or observed agent.
+   */
+  agentName?: string
+
+  /**
+   * Who put this message on the record.
+   */
+  kind: LLMMessageOriginKind
+
+  /**
+   * The message's short ref within the receiving agent's runtime, e.g. "#3".
+   */
+  ref?: string
+
+  /**
+   * The ref of the message this one answers, if any.
+   */
+  replyTo?: string
+}
+
+/**
+ * EXPERIMENTAL: Agent APIs are likely to change.
+ * 
+ * Who put a message on the conversation record.
+ */
+export enum LLMMessageOriginKind {
+
+  /**
+   * Another agent: the message was sent from within that agent's turn.
+   */
+  Agent = "AGENT",
+
+  /**
+   * The engine, reporting a subscribed agent's lifecycle transition.
+   */
+  Event = "EVENT",
+
+  /**
+   * The user: a prompt submitted by a client rather than sent by an agent.
+   */
+  User = "USER",
+}
+
+/**
+ * Utility function to convert a LLMMessageOriginKind value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function LLMMessageOriginKindValueToName(value: LLMMessageOriginKind): string {
+  switch (value) {
+    case LLMMessageOriginKind.Agent:
+      return "AGENT"
+    case LLMMessageOriginKind.Event:
+      return "EVENT"
+    case LLMMessageOriginKind.User:
+      return "USER"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a LLMMessageOriginKind name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function LLMMessageOriginKindNameToValue(name: string): LLMMessageOriginKind {
+  switch (name) {
+    case "AGENT":
+      return LLMMessageOriginKind.Agent
+    case "EVENT":
+      return LLMMessageOriginKind.Event
+    case "USER":
+      return LLMMessageOriginKind.User
+    default:
+      return name as LLMMessageOriginKind
+  }
+}
+/**
+ * The role that generated a message.
+ */
+export enum LLMMessageRole {
+
+  /**
+   * A reply from the model.
+   */
+  Assistant = "ASSISTANT",
+
+  /**
+   * A system prompt.
+   */
+  System = "SYSTEM",
+
+  /**
+   * A user prompt or tool response.
+   */
+  User = "USER",
+}
+
+/**
+ * Utility function to convert a LLMMessageRole value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function LLMMessageRoleValueToName(value: LLMMessageRole): string {
+  switch (value) {
+    case LLMMessageRole.Assistant:
+      return "ASSISTANT"
+    case LLMMessageRole.System:
+      return "SYSTEM"
+    case LLMMessageRole.User:
+      return "USER"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a LLMMessageRole name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function LLMMessageRoleNameToValue(name: string): LLMMessageRole {
+  switch (name) {
+    case "ASSISTANT":
+      return LLMMessageRole.Assistant
+    case "SYSTEM":
+      return LLMMessageRole.System
+    case "USER":
+      return LLMMessageRole.User
+    default:
+      return name as LLMMessageRole
+  }
+}
 export type ModuleServeOpts = {
   /**
    * Expose the dependencies of this module to the client
@@ -2048,23 +2857,6 @@ export type ModuleServeOpts = {
    */
   entrypoint?: boolean
 }
-
-export type ModuleServicesOpts = {
-  /**
-   * Only include services matching the specified patterns
-   */
-  include?: string[]
-}
-
-/**
- * A unique identifier for an object.
- */
-export type ModuleConfigClientID = string & {__ModuleConfigClientID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type ModuleID = string & {__ModuleID: never}
 
 /**
  * Experimental features of a module
@@ -2103,17 +2895,15 @@ export function ModuleSourceExperimentalFeatureNameToValue(name: string): Module
   }
 }
 /**
- * A unique identifier for an object.
- */
-export type ModuleSourceID = string & {__ModuleSourceID: never}
-
-/**
  * The kind of module source.
  */
 export enum ModuleSourceKind {
-  DirSource = "DIR_SOURCE",
-  GitSource = "GIT_SOURCE",
-  LocalSource = "LOCAL_SOURCE",
+  Dir = "DIR_SOURCE",
+  DirSource = ModuleSourceKind.Dir,
+  Git = "GIT_SOURCE",
+  GitSource = ModuleSourceKind.Git,
+  Local = "LOCAL_SOURCE",
+  LocalSource = ModuleSourceKind.Local,
 }
 
 /**
@@ -2122,12 +2912,12 @@ export enum ModuleSourceKind {
  */
 export function ModuleSourceKindValueToName(value: ModuleSourceKind): string {
   switch (value) {
-    case ModuleSourceKind.DirSource:
-      return "DIR_SOURCE"
-    case ModuleSourceKind.GitSource:
-      return "GIT_SOURCE"
-    case ModuleSourceKind.LocalSource:
-      return "LOCAL_SOURCE"
+    case ModuleSourceKind.Dir:
+      return "DIR"
+    case ModuleSourceKind.Git:
+      return "GIT"
+    case ModuleSourceKind.Local:
+      return "LOCAL"
     default:
       return value
   }
@@ -2139,12 +2929,12 @@ export function ModuleSourceKindValueToName(value: ModuleSourceKind): string {
  */
 export function ModuleSourceKindNameToValue(name: string): ModuleSourceKind {
   switch (name) {
-    case "DIR_SOURCE":
-      return ModuleSourceKind.DirSource
-    case "GIT_SOURCE":
-      return ModuleSourceKind.GitSource
-    case "LOCAL_SOURCE":
-      return ModuleSourceKind.LocalSource
+    case "DIR":
+      return ModuleSourceKind.Dir
+    case "GIT":
+      return ModuleSourceKind.Git
+    case "LOCAL":
+      return ModuleSourceKind.Local
     default:
       return name as ModuleSourceKind
   }
@@ -2187,10 +2977,50 @@ export function NetworkProtocolNameToValue(name: string): NetworkProtocol {
   }
 }
 /**
- * A unique identifier for an object.
+ * How to handle patch hunks that no longer apply to the target content.
  */
-export type ObjectTypeDefID = string & {__ObjectTypeDefID: never}
+export enum PatchConflict {
 
+  /**
+   * Fail the operation if any part of the patch does not apply.
+   */
+  Fail = "FAIL",
+
+  /**
+   * Apply the hunks that fit and insert conflict markers where hunks no longer match, instead of failing.
+   */
+  LeaveConflictMarkers = "LEAVE_CONFLICT_MARKERS",
+}
+
+/**
+ * Utility function to convert a PatchConflict value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function PatchConflictValueToName(value: PatchConflict): string {
+  switch (value) {
+    case PatchConflict.Fail:
+      return "FAIL"
+    case PatchConflict.LeaveConflictMarkers:
+      return "LEAVE_CONFLICT_MARKERS"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a PatchConflict name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function PatchConflictNameToValue(name: string): PatchConflict {
+  switch (name) {
+    case "FAIL":
+      return PatchConflict.Fail
+    case "LEAVE_CONFLICT_MARKERS":
+      return PatchConflict.LeaveConflictMarkers
+    default:
+      return name as PatchConflict
+  }
+}
 export type PipelineLabel = {
   /**
    * Label name.
@@ -2227,10 +3057,33 @@ export type PortForward = {
   protocol?: NetworkProtocol
 }
 
-/**
- * A unique identifier for an object.
- */
-export type PortID = string & {__PortID: never}
+export type ClientBlobOpts = {
+  /**
+   * Permissions of the new file. Example: 0600
+   */
+  permissions?: number
+}
+
+export type ClientCacheVolumeOpts = {
+  /**
+   * Identifier of the directory to use as the cache volume's root.
+   */
+  source?: Directory
+
+  /**
+   * Sharing mode of the cache volume.
+   */
+  sharing?: CacheSharingMode
+
+  /**
+   * A user:group to set for the cache volume root.
+   * 
+   * The user and group can either be an ID (1000:1000) or a name (foo:bar).
+   * 
+   * If the group is omitted, it defaults to the same as the user.
+   */
+  owner?: string
+}
 
 export type ClientContainerOpts = {
   /**
@@ -2241,11 +3094,23 @@ export type ClientContainerOpts = {
 
 export type ClientCurrentTypeDefsOpts = {
   /**
+   * Return the full referenced typedef closure instead of only top-level served typedefs.
+   */
+  returnAllTypes?: boolean
+
+  /**
    * Strip core API functions from the Query type, leaving only module-sourced functions (constructors, entrypoint proxies, etc.).
    * 
    * Core types (Container, Directory, etc.) are kept so return types and method chaining still work.
    */
   hideCore?: boolean
+}
+
+export type ClientEngineVolumeOpts = {
+  /**
+   * Optional existing subdirectory within the volume payload to mount.
+   */
+  subdir?: string
 }
 
 export type ClientEnvFileOpts = {
@@ -2315,6 +3180,11 @@ export type ClientHttpOpts = {
   permissions?: number
 
   /**
+   * Expected digest of the downloaded content (e.g., "sha256:...").
+   */
+  checksum?: string
+
+  /**
    * Secret used to populate the Authorization HTTP header
    */
   authHeader?: Secret
@@ -2332,12 +3202,17 @@ export type ClientLLMOpts = {
   model?: string
 
   /**
-   * Cap the number of API calls for this LLM
+   * The provider serving the model, e.g. "openai". Overrides the provider otherwise inferred from the model name — useful when the name matches no known pattern (e.g. a fine-tune), or matches the wrong one.
    */
-  maxAPICalls?: number
+  provider?: string
 }
 
 export type ClientModuleSourceOpts = {
+  /**
+   * Version query for a Git module source.
+   */
+  version?: string
+
   /**
    * The pinned version of the module source
    */
@@ -2370,6 +3245,72 @@ export type ClientSecretOpts = {
   cacheKey?: string
 }
 
+export type ClientServeModuleOpts = {
+  /**
+   * The pinned version of a remote module address.
+   */
+  refPin?: string
+}
+
+export type ClientSshfsVolumeOpts = {
+  /**
+   * known_hosts material used to verify the remote host key. Required unless insecureSkipHostKeyCheck is true.
+   */
+  knownHosts?: Secret
+
+  /**
+   * Optional cache equivalence key. If set, volumes with the same cacheKey may be considered equivalent for cache lookups, still subject to their resource dependencies.
+   */
+  cacheKey?: string
+
+  /**
+   * Disable SSH host key verification. This is insecure and must be explicitly opted into.
+   */
+  insecureSkipHostKeyCheck?: boolean
+
+  /**
+   * Service to use as the SSHFS network endpoint while verifying the original host key.
+   */
+  experimentalServiceHost?: Service
+}
+
+/**
+ * Transport protocol to use for registry operations.
+ */
+export enum RegistryProtocol {
+  Http = "HTTP",
+  Https = "HTTPS",
+}
+
+/**
+ * Utility function to convert a RegistryProtocol value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function RegistryProtocolValueToName(value: RegistryProtocol): string {
+  switch (value) {
+    case RegistryProtocol.Http:
+      return "HTTP"
+    case RegistryProtocol.Https:
+      return "HTTPS"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a RegistryProtocol name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function RegistryProtocolNameToValue(name: string): RegistryProtocol {
+  switch (name) {
+    case "HTTP":
+      return RegistryProtocol.Http
+    case "HTTPS":
+      return RegistryProtocol.Https
+    default:
+      return name as RegistryProtocol
+  }
+}
 /**
  * Expected return type of an execution
  */
@@ -2424,31 +3365,6 @@ export function ReturnTypeNameToValue(name: string): ReturnType {
       return name as ReturnType
   }
 }
-/**
- * A unique identifier for an object.
- */
-export type SDKConfigID = string & {__SDKConfigID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type ScalarTypeDefID = string & {__ScalarTypeDefID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type SearchResultID = string & {__SearchResultID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type SearchSubmatchID = string & {__SearchSubmatchID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type SecretID = string & {__SecretID: never}
-
 export type ServiceEndpointOpts = {
   /**
    * The exposed port number for the endpoint
@@ -2459,6 +3375,13 @@ export type ServiceEndpointOpts = {
    * Return a URL with the given scheme, eg. http for http://
    */
   scheme?: string
+}
+
+export type ServicePortsOpts = {
+  /**
+   * Return only container ports declared before startup. Other service types return an empty list.
+   */
+  declared?: boolean
 }
 
 export type ServiceStopOpts = {
@@ -2485,36 +3408,6 @@ export type ServiceUpOpts = {
    */
   random?: boolean
 }
-
-/**
- * A unique identifier for an object.
- */
-export type ServiceID = string & {__ServiceID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type SocketID = string & {__SocketID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type SourceMapID = string & {__SourceMapID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type StatID = string & {__StatID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type SyncerID = string & {__SyncerID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type TerminalID = string & {__TerminalID: never}
 
 export type TypeDefWithEnumOpts = {
   /**
@@ -2600,11 +3493,6 @@ export type TypeDefWithScalarOpts = {
 }
 
 /**
- * A unique identifier for an object.
- */
-export type TypeDefID = string & {__TypeDefID: never}
-
-/**
  * Distinguishes the different kinds of TypeDefs.
  */
 export enum TypeDefKind {
@@ -2612,67 +3500,132 @@ export enum TypeDefKind {
   /**
    * A boolean value.
    */
-  BooleanKind = "BOOLEAN_KIND",
+  Boolean = "BOOLEAN_KIND",
+
+  /**
+   * A boolean value.
+   */
+  BooleanKind = TypeDefKind.Boolean,
 
   /**
    * A GraphQL enum type and its values
    * 
    * Always paired with an EnumTypeDef.
    */
-  EnumKind = "ENUM_KIND",
+  Enum = "ENUM_KIND",
+
+  /**
+   * A GraphQL enum type and its values
+   * 
+   * Always paired with an EnumTypeDef.
+   */
+  EnumKind = TypeDefKind.Enum,
 
   /**
    * A float value.
    */
-  FloatKind = "FLOAT_KIND",
+  Float = "FLOAT_KIND",
+
+  /**
+   * A float value.
+   */
+  FloatKind = TypeDefKind.Float,
 
   /**
    * A graphql input type, used only when representing the core API via TypeDefs.
    */
-  InputKind = "INPUT_KIND",
+  Input = "INPUT_KIND",
+
+  /**
+   * A graphql input type, used only when representing the core API via TypeDefs.
+   */
+  InputKind = TypeDefKind.Input,
 
   /**
    * An integer value.
    */
-  IntegerKind = "INTEGER_KIND",
+  Integer = "INTEGER_KIND",
+
+  /**
+   * An integer value.
+   */
+  IntegerKind = TypeDefKind.Integer,
 
   /**
    * Always paired with an InterfaceTypeDef.
    * 
    * A named type of functions that can be matched+implemented by other objects+interfaces.
    */
-  InterfaceKind = "INTERFACE_KIND",
+  Interface = "INTERFACE_KIND",
+
+  /**
+   * Always paired with an InterfaceTypeDef.
+   * 
+   * A named type of functions that can be matched+implemented by other objects+interfaces.
+   */
+  InterfaceKind = TypeDefKind.Interface,
 
   /**
    * Always paired with a ListTypeDef.
    * 
    * A list of values all having the same type.
    */
-  ListKind = "LIST_KIND",
+  List = "LIST_KIND",
+
+  /**
+   * Always paired with a ListTypeDef.
+   * 
+   * A list of values all having the same type.
+   */
+  ListKind = TypeDefKind.List,
 
   /**
    * Always paired with an ObjectTypeDef.
    * 
    * A named type defined in the GraphQL schema, with fields and functions.
    */
-  ObjectKind = "OBJECT_KIND",
+  Object = "OBJECT_KIND",
+
+  /**
+   * Always paired with an ObjectTypeDef.
+   * 
+   * A named type defined in the GraphQL schema, with fields and functions.
+   */
+  ObjectKind = TypeDefKind.Object,
 
   /**
    * A scalar value of any basic kind.
    */
-  ScalarKind = "SCALAR_KIND",
+  Scalar = "SCALAR_KIND",
+
+  /**
+   * A scalar value of any basic kind.
+   */
+  ScalarKind = TypeDefKind.Scalar,
 
   /**
    * A string value.
    */
-  StringKind = "STRING_KIND",
+  String = "STRING_KIND",
+
+  /**
+   * A string value.
+   */
+  StringKind = TypeDefKind.String,
 
   /**
    * A special kind used to signify that no value is returned.
    * 
    * This is used for functions that have no return value. The outer TypeDef specifying this Kind is always Optional, as the Void is never actually represented.
    */
-  VoidKind = "VOID_KIND",
+  Void = "VOID_KIND",
+
+  /**
+   * A special kind used to signify that no value is returned.
+   * 
+   * This is used for functions that have no return value. The outer TypeDef specifying this Kind is always Optional, as the Void is never actually represented.
+   */
+  VoidKind = TypeDefKind.Void,
 }
 
 /**
@@ -2681,28 +3634,28 @@ export enum TypeDefKind {
  */
 export function TypeDefKindValueToName(value: TypeDefKind): string {
   switch (value) {
-    case TypeDefKind.BooleanKind:
-      return "BOOLEAN_KIND"
-    case TypeDefKind.EnumKind:
-      return "ENUM_KIND"
-    case TypeDefKind.FloatKind:
-      return "FLOAT_KIND"
-    case TypeDefKind.InputKind:
-      return "INPUT_KIND"
-    case TypeDefKind.IntegerKind:
-      return "INTEGER_KIND"
-    case TypeDefKind.InterfaceKind:
-      return "INTERFACE_KIND"
-    case TypeDefKind.ListKind:
-      return "LIST_KIND"
-    case TypeDefKind.ObjectKind:
-      return "OBJECT_KIND"
-    case TypeDefKind.ScalarKind:
-      return "SCALAR_KIND"
-    case TypeDefKind.StringKind:
-      return "STRING_KIND"
-    case TypeDefKind.VoidKind:
-      return "VOID_KIND"
+    case TypeDefKind.Boolean:
+      return "BOOLEAN"
+    case TypeDefKind.Enum:
+      return "ENUM"
+    case TypeDefKind.Float:
+      return "FLOAT"
+    case TypeDefKind.Input:
+      return "INPUT"
+    case TypeDefKind.Integer:
+      return "INTEGER"
+    case TypeDefKind.Interface:
+      return "INTERFACE"
+    case TypeDefKind.List:
+      return "LIST"
+    case TypeDefKind.Object:
+      return "OBJECT"
+    case TypeDefKind.Scalar:
+      return "SCALAR"
+    case TypeDefKind.String:
+      return "STRING"
+    case TypeDefKind.Void:
+      return "VOID"
     default:
       return value
   }
@@ -2714,42 +3667,32 @@ export function TypeDefKindValueToName(value: TypeDefKind): string {
  */
 export function TypeDefKindNameToValue(name: string): TypeDefKind {
   switch (name) {
-    case "BOOLEAN_KIND":
-      return TypeDefKind.BooleanKind
-    case "ENUM_KIND":
-      return TypeDefKind.EnumKind
-    case "FLOAT_KIND":
-      return TypeDefKind.FloatKind
-    case "INPUT_KIND":
-      return TypeDefKind.InputKind
-    case "INTEGER_KIND":
-      return TypeDefKind.IntegerKind
-    case "INTERFACE_KIND":
-      return TypeDefKind.InterfaceKind
-    case "LIST_KIND":
-      return TypeDefKind.ListKind
-    case "OBJECT_KIND":
-      return TypeDefKind.ObjectKind
-    case "SCALAR_KIND":
-      return TypeDefKind.ScalarKind
-    case "STRING_KIND":
-      return TypeDefKind.StringKind
-    case "VOID_KIND":
-      return TypeDefKind.VoidKind
+    case "BOOLEAN":
+      return TypeDefKind.Boolean
+    case "ENUM":
+      return TypeDefKind.Enum
+    case "FLOAT":
+      return TypeDefKind.Float
+    case "INPUT":
+      return TypeDefKind.Input
+    case "INTEGER":
+      return TypeDefKind.Integer
+    case "INTERFACE":
+      return TypeDefKind.Interface
+    case "LIST":
+      return TypeDefKind.List
+    case "OBJECT":
+      return TypeDefKind.Object
+    case "SCALAR":
+      return TypeDefKind.Scalar
+    case "STRING":
+      return TypeDefKind.String
+    case "VOID":
+      return TypeDefKind.Void
     default:
       return name as TypeDefKind
   }
 }
-/**
- * A unique identifier for an object.
- */
-export type UpGroupID = string & {__UpGroupID: never}
-
-/**
- * A unique identifier for an object.
- */
-export type UpID = string & {__UpID: never}
-
 /**
  * The absence of a value.
  * 
@@ -2757,11 +3700,42 @@ export type UpID = string & {__UpID: never}
  */
 export type Void = string & {__Void: never}
 
-export type WorkspaceChecksOpts = {
+export type WorkspaceArtifactsOpts = {
   /**
-   * Only include checks matching the specified patterns
+   * Only include artifacts matching these path patterns, as with checks and services. A path selects that path and its children.
    */
   include?: string[]
+}
+
+export type WorkspaceChangesOpts = {
+  /**
+   * An earlier workspace state to compare against.
+   */
+  from?: Workspace
+}
+
+export type WorkspaceCompareCommitsFromOpts = {
+  /**
+   * Full lowercase commit hashes or unambiguous lowercase hex prefixes (4-40 characters) to select, in any order. Prefixes resolve against the frozen source's Git objects and are recorded as full hashes; duplicate selections after resolution are rejected. Empty selects all new source commits. Selected commits must be within the source's latest 10000 commits.
+   */
+  commits?: string[]
+
+  /**
+   * Maximum commits in either differing history, from 1 to 1000. Exceeding the limit fails; nothing is silently omitted.
+   */
+  maxCommits?: number
+}
+
+export type WorkspaceConfigReadOpts = {
+  /**
+   * Dotted key path (e.g. modules.greeter.source). Empty for full config.
+   */
+  key?: string
+
+  /**
+   * Include the selected environment, user overrides, and legacy workspace settings.
+   */
+  effective?: boolean
 }
 
 export type WorkspaceDirectoryOpts = {
@@ -2781,6 +3755,35 @@ export type WorkspaceDirectoryOpts = {
   gitignore?: boolean
 }
 
+export type WorkspaceExportOpts = {
+  /**
+   * Destination checkout path on the calling client. Relative paths start at the client's working directory. Omit to apply a local workspace's overlay changes at its host root.
+   */
+  path?: string
+
+  /**
+   * Earlier workspace state to compare against. With path, this must be a previously exported frozen source workspace.
+   */
+  from?: Workspace
+}
+
+export type WorkspaceFindRootsOpts = {
+  /**
+   * Directory to start from. Relative paths resolve from the workspace cwd.
+   */
+  start?: string
+
+  /**
+   * File basenames that mark a project root (e.g. ["go.mod"] or ["deno.json", "deno.jsonc"]).
+   */
+  markers: string[]
+
+  /**
+   * Glob patterns pruning the walk below start (e.g. ["**\/node_modules/**"]).
+   */
+  exclude?: string[]
+}
+
 export type WorkspaceFindUpOpts = {
   /**
    * Path to start the search from. Relative paths resolve from the workspace cwd; absolute paths resolve from the workspace root.
@@ -2788,25 +3791,402 @@ export type WorkspaceFindUpOpts = {
   from?: string
 }
 
-export type WorkspaceGeneratorsOpts = {
+export type WorkspaceMigrateOpts = {
   /**
-   * Only include generators matching the specified patterns
+   * Additional local modules to migrate. Relative paths start at the workspace cwd; absolute paths start at the workspace root.
    */
-  include?: string[]
+  modules?: string[]
 }
 
-export type WorkspaceServicesOpts = {
+export type WorkspaceMigrateModuleOpts = {
   /**
-   * Only include services matching the specified patterns
+   * Module directory. Relative paths start at the workspace cwd; absolute paths start at the workspace root.
    */
-  include?: string[]
+  path?: string
+}
+
+export type WorkspaceSearchOpts = {
+  /**
+   * Directory or file paths to search
+   */
+  paths?: string[]
+
+  /**
+   * Glob patterns to match (e.g., "*.md")
+   */
+  globs?: string[]
+
+  /**
+   * The text to match.
+   */
+  pattern: string
+
+  /**
+   * Interpret the pattern as a literal string instead of a regular expression.
+   */
+  literal?: boolean
+
+  /**
+   * Enable searching across multiple lines.
+   */
+  multiline?: boolean
+
+  /**
+   * Allow the . pattern to match newlines in multiline mode.
+   */
+  dotall?: boolean
+
+  /**
+   * Enable case-insensitive matching.
+   */
+  insensitive?: boolean
+
+  /**
+   * Honor .gitignore, .ignore, and .rgignore files.
+   */
+  skipIgnored?: boolean
+
+  /**
+   * Skip hidden files (files starting with .).
+   */
+  skipHidden?: boolean
+
+  /**
+   * Only return matching files, not lines and content
+   */
+  filesOnly?: boolean
+
+  /**
+   * Limit the number of results to return
+   */
+  limit?: number
+}
+
+export type WorkspaceWithClientOpts = {
+  /**
+   * Optional SDK name. Inspect all installed SDKs when omitted.
+   */
+  sdk?: string
+
+  /**
+   * Explicit SDK-module constructor setting overrides for this scope. Requires an explicit SDK name.
+   */
+  settings?: JSON
+}
+
+export type WorkspaceWithCommitOpts = {
+  /**
+   * Author and committer name. Defaults to git config user.name in the calling client's working directory, otherwise Dagger.
+   */
+  authorName?: string
+
+  /**
+   * Author and committer email. Defaults to git config user.email in the calling client's working directory, otherwise dagger@localhost.
+   */
+  authorEmail?: string
+
+  /**
+   * Add a Signed-off-by trailer using the commit author's name and email.
+   */
+  signoff?: boolean
+}
+
+export type WorkspaceWithCommitsFromOpts = {
+  /**
+   * Full lowercase commit hashes or unambiguous lowercase hex prefixes (4-40 characters) to select, in any order. Prefixes resolve against the frozen source's Git objects and are recorded as full hashes; duplicate selections after resolution are rejected. Empty selects all new source commits. Selected commits must be within the source's latest 10000 commits.
+   */
+  commits?: string[]
+
+  /**
+   * Maximum commits in either differing history, from 1 to 1000. Exceeding the limit fails; nothing is silently omitted.
+   */
+  maxCommits?: number
+}
+
+export type WorkspaceWithConfigEnvOpts = {
+  /**
+   * Write to the workspace config directory at the workspace cwd.
+   */
+  here?: boolean
+}
+
+export type WorkspaceWithConfigValueOpts = {
+  /**
+   * List value to set. Elements are stored verbatim, with no auto-detection. Mutually exclusive with value.
+   */
+  values?: string[]
+
+  /**
+   * Write to the workspace config directory at the workspace cwd.
+   */
+  here?: boolean
+}
+
+export type WorkspaceWithFileOpts = {
+  /**
+   * Permissions of the added file. Defaults to the source file permissions.
+   */
+  permissions?: number
+}
+
+export type WorkspaceWithInitModuleOpts = {
+  /**
+   * Module name. The engine infers it from path, the active config file, or the workspace root when omitted.
+   */
+  name?: string
+
+  /**
+   * Module path relative to the workspace cwd, or an absolute workspace path. Defaults to .dagger/modules/<name> beside the active workspace config.
+   */
+  path?: string
+
+  /**
+   * Install the module. When omitted, install only if path is omitted.
+   */
+  install?: boolean
+
+  /**
+   * Select this module as the entrypoint and install it. False prevents automatic selection. When omitted, select only if both path and name are omitted and the module is installed.
+   */
+  entrypoint?: boolean
+
+  /**
+   * Explicit SDK-module constructor setting overrides for this scope.
+   */
+  settings?: JSON
+}
+
+export type WorkspaceWithModuleOpts = {
+  /**
+   * Override name for the installed module entry.
+   */
+  name?: string
+
+  /**
+   * Write to the workspace config directory at the workspace cwd.
+   */
+  here?: boolean
+}
+
+export type WorkspaceWithNewFileOpts = {
+  /**
+   * Permissions of the new file.
+   */
+  permissions?: number
+}
+
+export type WorkspaceWithResetOpts = {
+  /**
+   * Discard uncommitted changes, resetting the working tree to the commit.
+   */
+  hard?: boolean
+}
+
+export type WorkspaceWithSdkOpts = {
+  /**
+   * Override name for the installed SDK entry.
+   */
+  name?: string
+
+  /**
+   * Write to the workspace config directory at the workspace cwd.
+   */
+  here?: boolean
+
+  /**
+   * Optional override for the SDK name conventionally derived from the installed module name.
+   */
+  asSdkName?: string
+}
+
+export type WorkspaceWithUpdatedClientsOpts = {
+  /**
+   * Recorded client targets to update. All targets in the selected scopes are updated when omitted.
+   */
+  modules?: string[]
+
+  /**
+   * Select clients in every scope instead of only the scopes containing the workspace cwd.
+   */
+  all?: boolean
+
+  /**
+   * Optional SDK name. All installed SDK modules are selected when omitted.
+   */
+  sdk?: string
+}
+
+export type WorkspaceWithUpdatedLockOpts = {
+  /**
+   * Do not regenerate SDK client scopes.
+   */
+  noGenerate?: boolean
+}
+
+export type WorkspaceWithUpdatedModulesOpts = {
+  /**
+   * Installed module names or sources. A version suffix sets a new request. An empty list refreshes all installed modules.
+   */
+  names?: string[]
+
+  /**
+   * New version request for exactly one selected module. Cannot be combined with a version suffix.
+   */
+  version?: string
+}
+
+export type WorkspaceWithoutClientOpts = {
+  /**
+   * Optional SDK name. Search all installed SDKs when omitted.
+   */
+  sdk?: string
+}
+
+export type WorkspaceWithoutConfigEnvOpts = {
+  /**
+   * Write to the workspace config directory at the workspace cwd.
+   */
+  here?: boolean
+}
+
+export type WorkspaceWithoutConfigValueOpts = {
+  /**
+   * Write to the workspace config directory at the workspace cwd.
+   */
+  here?: boolean
+}
+
+export type WorkspaceWithoutModuleOpts = {
+  /**
+   * Write to the workspace config directory at the workspace cwd.
+   */
+  here?: boolean
+}
+
+export type WorkspaceWithoutSdkOpts = {
+  /**
+   * Write to the workspace config directory at the workspace cwd.
+   */
+  here?: boolean
 }
 
 /**
- * A unique identifier for an object.
+ * Why a source commit cannot be pulled.
  */
-export type WorkspaceID = string & {__WorkspaceID: never}
+export enum WorkspaceCommitPickReason {
 
+  /**
+   * The patch conflicts with committed content.
+   */
+  Content = "CONTENT",
+
+  /**
+   * The commit touches uncommitted paths in the receiving workspace.
+   */
+  Dirty = "DIRTY",
+
+  /**
+   * No conflict.
+   */
+  None = "NONE",
+}
+
+/**
+ * Utility function to convert a WorkspaceCommitPickReason value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function WorkspaceCommitPickReasonValueToName(value: WorkspaceCommitPickReason): string {
+  switch (value) {
+    case WorkspaceCommitPickReason.Content:
+      return "CONTENT"
+    case WorkspaceCommitPickReason.Dirty:
+      return "DIRTY"
+    case WorkspaceCommitPickReason.None:
+      return "NONE"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a WorkspaceCommitPickReason name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function WorkspaceCommitPickReasonNameToValue(name: string): WorkspaceCommitPickReason {
+  switch (name) {
+    case "CONTENT":
+      return WorkspaceCommitPickReason.Content
+    case "DIRTY":
+      return WorkspaceCommitPickReason.Dirty
+    case "NONE":
+      return WorkspaceCommitPickReason.None
+    default:
+      return name as WorkspaceCommitPickReason
+  }
+}
+/**
+ * Whether a source commit can be pulled.
+ */
+export enum WorkspaceCommitPickStatus {
+
+  /**
+   * The commit cannot be applied; see reason and conflictPaths.
+   */
+  Conflict = "CONFLICT",
+
+  /**
+   * The commit can be applied.
+   */
+  Pickable = "PICKABLE",
+
+  /**
+   * The commit is already present by hash or cherry-pick origin.
+   */
+  Picked = "PICKED",
+
+  /**
+   * The patch is already present, or applying it would be empty.
+   */
+  Redundant = "REDUNDANT",
+}
+
+/**
+ * Utility function to convert a WorkspaceCommitPickStatus value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function WorkspaceCommitPickStatusValueToName(value: WorkspaceCommitPickStatus): string {
+  switch (value) {
+    case WorkspaceCommitPickStatus.Conflict:
+      return "CONFLICT"
+    case WorkspaceCommitPickStatus.Pickable:
+      return "PICKABLE"
+    case WorkspaceCommitPickStatus.Picked:
+      return "PICKED"
+    case WorkspaceCommitPickStatus.Redundant:
+      return "REDUNDANT"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a WorkspaceCommitPickStatus name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function WorkspaceCommitPickStatusNameToValue(name: string): WorkspaceCommitPickStatus {
+  switch (name) {
+    case "CONFLICT":
+      return WorkspaceCommitPickStatus.Conflict
+    case "PICKABLE":
+      return WorkspaceCommitPickStatus.Pickable
+    case "PICKED":
+      return WorkspaceCommitPickStatus.Picked
+    case "REDUNDANT":
+      return WorkspaceCommitPickStatus.Redundant
+    default:
+      return name as WorkspaceCommitPickStatus
+  }
+}
 export type __DirectiveArgsOpts = {
   includeDeprecated?: boolean
 }
@@ -2832,7 +4212,7 @@ export type __TypeInputFieldsOpts = {
  * A standardized address to load containers, directories, secrets, and other object types. Address format depends on the type, and is validated at type selection.
  */
 export class Address extends BaseClient {
-  private readonly _id?: AddressID = undefined
+  private readonly _id?: ID = undefined
   private readonly _value?: string = undefined
 
   /**
@@ -2840,7 +4220,7 @@ export class Address extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: AddressID,
+     _id?: ID,
      _value?: string,
    ) {
      super(ctx)
@@ -2852,7 +4232,7 @@ export class Address extends BaseClient {
   /**
    * A unique identifier for this Address.
    */
-  id = async (): Promise<AddressID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -2861,7 +4241,7 @@ export class Address extends BaseClient {
       "id",
     )
 
-    const response: Awaited<AddressID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -2974,6 +4354,1476 @@ export class Address extends BaseClient {
     
     return response
   }
+
+  /**
+   * Load a volume from the address.
+   */
+  volume = (): Volume => {
+
+    const ctx = this._ctx.select(
+      "volume",
+    )
+    return new Volume(ctx)
+  }
+
+  /**
+   * Load a workspace from a module reference.
+   */
+  workspace = (): Workspace => {
+
+    const ctx = this._ctx.select(
+      "workspace",
+    )
+    return new Workspace(ctx)
+  }
+}
+
+/**
+ * EXPERIMENTAL: Agent APIs are likely to change.
+ * 
+ * A conversation loop running as an addressable, long-lived entity within the session. The conversation itself remains observable at any time as an immutable LLM value.
+ */
+export class Agent extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _error?: string = undefined
+  private readonly _handle?: string = undefined
+  private readonly _name?: string = undefined
+  private readonly _notify?: ID = undefined
+  private readonly _pause?: ID = undefined
+  private readonly _reseed?: ID = undefined
+  private readonly _resume?: ID = undefined
+  private readonly _send?: ID = undefined
+  private readonly _state?: AgentState = undefined
+  private readonly _stop?: ID = undefined
+  private readonly _wait?: ID = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _error?: string,
+     _handle?: string,
+     _name?: string,
+     _notify?: ID,
+     _pause?: ID,
+     _reseed?: ID,
+     _resume?: ID,
+     _send?: ID,
+     _state?: AgentState,
+     _stop?: ID,
+     _wait?: ID,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._error = _error
+     this._handle = _handle
+     this._name = _name
+     this._notify = _notify
+     this._pause = _pause
+     this._reseed = _reseed
+     this._resume = _resume
+     this._send = _send
+     this._state = _state
+     this._stop = _stop
+     this._wait = _wait
+   }
+
+  /**
+   * A unique identifier for this Agent.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Why the loop failed, for a FAILED agent; empty otherwise.
+   * 
+   * The snapshot holds the completed prefix — send or resume retries from it.
+   * @experimental
+   */
+  error = async (): Promise<string> => {
+    if (this._error) {
+      return this._error
+    }
+
+    const ctx = this._ctx.select(
+      "error",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The opaque runtime handle minted by the spawn that created this agent.
+   * 
+   * It is the same value the agent's loop span publishes as dagger.io/agent.id, so a client can correlate the agent with what it discovers in the trace. Two spawns of an identical composition have different handles; a display name is shared freely.
+   * @experimental
+   */
+  handle = async (): Promise<string> => {
+    if (this._handle) {
+      return this._handle
+    }
+
+    const ctx = this._ctx.select(
+      "handle",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Look up a previously sent message by its ref.
+   * 
+   * This is the lookup send pins its result's identity through: the returned handle's ID is an honest, replayable chain, addressable from any request in the session (the cancel-and-request-again contract).
+   * 
+   * Fails if the agent has no runtime entry in this session, or no record of the given ref.
+   * @param ref The message's short ref within this agent's runtime, e.g. "#3": the token its attribution header shows and a reply's replyTo names. A bare ordinal ("3") is accepted too.
+   * @experimental
+   */
+  message = (ref: string): AgentMessage => {
+
+    const ctx = this._ctx.select(
+      "message",
+      { ref },
+    )
+    return new AgentMessage(ctx)
+  }
+
+  /**
+   * Display label for the agent; carries no identity.
+   * @experimental
+   */
+  name = async (): Promise<string> => {
+    if (this._name) {
+      return this._name
+    }
+
+    const ctx = this._ctx.select(
+      "name",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Subscribe another agent to this agent's lifecycle: each transition into one of the given states enqueues an event message to the subscriber — steering its open turn, or waking it if idle, like any other message.
+   * 
+   * This is how a supervisor hears every completion and failure without polling or blocking: subscribe at spawn time, keep working, and events arrive as attributed messages.
+   * 
+   * Events never relaunch a stopped subscriber, and an already-reached state fires immediately at subscribe time, so a fast agent settling before the subscription lands is not missed.
+   * 
+   * Idempotent per subscriber; re-subscribing replaces the state set.
+   * @param subscriber The agent to deliver event messages to. You must hold its handle: subscriptions are capability-based like everything else.
+   * @param opts.on The lifecycle states that fire an event. IDLE events carry the turn's final reply; FAILED events carry the loop error.
+   * @experimental
+   */
+  notify = async (subscriber: Agent, 
+    opts?: AgentNotifyOpts): Promise<Agent> => {
+    const ctx = this._ctx.select(
+      "notify",
+      { subscriber, ...opts},
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return new Agent(ctx.copy().selectNode(response, "Agent"))
+  }
+
+  /**
+   * Stop draining the mailbox once the in-flight step completes, or immediately with interrupt.
+   * 
+   * Pause takes priority over pending work: a mid-turn pause suspends the turn, which resume continues. Messages sent while paused enqueue with QUEUED delivery until a resume.
+   * 
+   * Pausing a never-started agent leaves it paused for its eventual resume; pausing a failed agent is allowed (resume decides the retry); pausing a stopped agent fails.
+   * @param opts.interrupt Preempt the in-flight step instead of letting it finish. All completed steps are kept and the interrupted turn stays open: messages it consumed remain pending, while unconsumed mailbox messages are discarded. Resume continues the turn from the last committed step. On an idle, never-started, or failed agent there is nothing to preempt, so this is a plain pause.
+   * @experimental
+   */
+  pause = async (
+    opts?: AgentPauseOpts): Promise<Agent> => {
+    const ctx = this._ctx.select(
+      "pause",
+      { ...opts},
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return new Agent(ctx.copy().selectNode(response, "Agent"))
+  }
+
+  /**
+   * Replace this instance's committed conversation with the given one, keeping the entry: identity, mailbox, and lifecycle state are untouched. A paused suspended turn is abandoned and its consumed messages are resolved before replacement.
+   * 
+   * This is the continuity verb. Compaction, a workspace rebind, a model change, or rewinding an interrupted prompt produce a new conversation value for the SAME agent; reseed swaps it in place, where a stop-and-respawn would mint a successor instance and split the agent across two roster entries. It is the client-facing form of what a continuation tool already does mid-turn: the agent adopts a new conversation without changing who it is.
+   * 
+   * The next turn continues from the reseeded conversation, and queued messages drain onto it. A FAILED agent keeps its error — resume retries from the new conversation.
+   * 
+   * Fails if the instance has no runtime entry in this session (only a spawned or re-hydrated instance holds a conversation to replace), if a step is in flight, or if the agent is stopped.
+   * @param conversation The conversation that becomes the agent's committed history, replacing the current one.
+   * @experimental
+   */
+  reseed = async (conversation: LLM): Promise<Agent> => {
+    const ctx = this._ctx.select(
+      "reseed",
+      { conversation},
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return new Agent(ctx.copy().selectNode(response, "Agent"))
+  }
+
+  /**
+   * Resume draining the mailbox: a suspended turn continues from the last committed step, and queued messages drain.
+   * 
+   * Resuming a never-started agent starts its evaluation loop, detached from the calling request: it steps the conversation while input is pending, then idles awaiting further lifecycle operations. Resuming a FAILED agent retries its pending step. Resuming a STOPPED agent relaunches the same instance from its last committed snapshot.
+   * 
+   * No-op on a running or idle agent.
+   * @experimental
+   */
+  resume = async (): Promise<Agent> => {
+    const ctx = this._ctx.select(
+      "resume",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return new Agent(ctx.copy().selectNode(response, "Agent"))
+  }
+
+  /**
+   * Enqueue a message, on the record: it is consumed at a step boundary, appends to the agent's history, and steers the running turn or opens a new one.
+   * 
+   * Never blocks, never drops; concurrent sends queue in order.
+   * 
+   * The returned message is pinned through the message lookup field, so its handle is re-addressable from any request in the session: cancel a response request and request it again freely.
+   * 
+   * Sending to a never-started agent starts it (signal-with-start). Sending to a stopped agent restarts the same instance from its last committed snapshot. Sending to a paused or failed agent enqueues with QUEUED delivery, to be drained by a resume.
+   * @param message The message text, appended to the agent's history as a prompt when a turn consumes it. When content is supplied, nonempty text precedes those blocks in the same user message.
+   * @param opts.replyTo The ref of a message in the SENDER's own mailbox this send answers (e.g. "#3", from its attribution header). The recipient sees the two paired, and awaiters of the replied-to message resolve with this reply immediately instead of at the sender's turn end.
+   * @param opts.content Ordered TEXT, IMAGE, AUDIO, or DOCUMENT user content blocks. File inputs are resolved and all content is validated before enqueueing. Pass an empty message for media-only sends.
+   * @experimental
+   */
+  send = async (message: string, 
+    opts?: AgentSendOpts): Promise<ID> => {
+    if (this._send) {
+      return this._send
+    }
+
+    const ctx = this._ctx.select(
+      "send",
+      { message, ...opts},
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The conversation as of the last committed step: immutable, branchable, persistable.
+   * 
+   * The seed conversation if the agent never stepped.
+   * 
+   * Branching from it does not affect the agent.
+   * @experimental
+   */
+  snapshot = (): LLM => {
+
+    const ctx = this._ctx.select(
+      "snapshot",
+    )
+    return new LLM(ctx)
+  }
+
+  /**
+   * Computed lifecycle state; never stored.
+   * 
+   * An agent that was never started reports IDLE: its mailbox is empty and no turn is open.
+   * @experimental
+   */
+  state = async (): Promise<AgentState> => {
+    if (this._state) {
+      return this._state
+    }
+
+    const ctx = this._ctx.select(
+      "state",
+    )
+
+    const response: Awaited<AgentState> = await ctx.execute()
+
+    return AgentStateNameToValue(response)
+  }
+
+  /**
+   * Release the agent's runtime. The tombstone (state, snapshot) stays readable for the rest of the session.
+   * @param opts.kill Cancel the loop immediately instead of letting an in-flight step finish. Either way the completed steps are preserved in the snapshot.
+   * @experimental
+   */
+  stop = async (
+    opts?: AgentStopOpts): Promise<Agent> => {
+    const ctx = this._ctx.select(
+      "stop",
+      { ...opts},
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return new Agent(ctx.copy().selectNode(response, "Agent"))
+  }
+
+  /**
+   * Block until the agent settles: IDLE, FAILED, or STOPPED. Read which from state afterwards.
+   * 
+   * Unlike waiting for one exact state, this cannot hang merely because the agent settled in a different outcome.
+   * @experimental
+   */
+  wait = async (): Promise<Agent> => {
+    const ctx = this._ctx.select(
+      "wait",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return new Agent(ctx.copy().selectNode(response, "Agent"))
+  }
+}
+
+/**
+ * EXPERIMENTAL: Agent APIs are likely to change.
+ * 
+ * A message delivered to an agent's mailbox.
+ */
+export class AgentMessage extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _delivery?: AgentMessageDelivery = undefined
+  private readonly _ref?: string = undefined
+  private readonly _response?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _delivery?: AgentMessageDelivery,
+     _ref?: string,
+     _response?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._delivery = _delivery
+     this._ref = _ref
+     this._response = _response
+   }
+
+  /**
+   * A unique identifier for this AgentMessage.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * How the message conclusively landed: opened a new turn (STARTED), was absorbed into the running turn at a step boundary (STEERED), or queued behind it (QUEUED).
+   * 
+   * Blocks until provider or native lifecycle evidence is conclusive. Once recorded, the result or cancellation error is immutable.
+   * @experimental
+   */
+  delivery = async (): Promise<AgentMessageDelivery> => {
+    if (this._delivery) {
+      return this._delivery
+    }
+
+    const ctx = this._ctx.select(
+      "delivery",
+    )
+
+    const response: Awaited<AgentMessageDelivery> = await ctx.execute()
+
+    return AgentMessageDeliveryNameToValue(response)
+  }
+
+  /**
+   * The message's short ref within the receiving agent's runtime, e.g. "#3".
+   * 
+   * This is the deterministic token the recipient's attribution header shows and a reply's replyTo names — quote it when telling the recipient what to answer.
+   * @experimental
+   */
+  ref = async (): Promise<string> => {
+    if (this._ref) {
+      return this._ref
+    }
+
+    const ctx = this._ctx.select(
+      "ref",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Block until this message is answered, and return the answer: an explicit reply (a send whose replyTo names this message), or the final reply of the turn that consumed it, whichever comes first.
+   * 
+   * Idempotent: cancel and request the response again freely; concurrent waiters share the result.
+   * 
+   * Fails if the agent stops before the message resolves. On a failed agent it projects the failure — but the message stays pending, so after a resume consumes it, requesting the response again returns the real reply.
+   * 
+   * Refused when called from inside an agent turn whose wait would deadlock: turns should not block on other agents — send without awaiting, and the reply arrives as a message.
+   * @experimental
+   */
+  response = async (): Promise<string> => {
+    if (this._response) {
+      return this._response
+    }
+
+    const ctx = this._ctx.select(
+      "response",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+
+
+
+
+/**
+ * One workspace value with a complete path and all required dimension keys. Reading metadata does not evaluate the value. Different addresses remain distinct even if they return the same object.
+ */
+export class Artifact extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _description?: string = undefined
+  private readonly _loadError?: string = undefined
+  private readonly _uri?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _description?: string,
+     _loadError?: string,
+     _uri?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._description = _description
+     this._loadError = _loadError
+     this._uri = _uri
+   }
+
+  /**
+   * A unique identifier for this Artifact.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The arguments accepted by the artifact field.
+   */
+  arguments_ = async (): Promise<FunctionArg[]> => {
+    type arguments = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "arguments",
+    ).select("id")
+
+    const response: Awaited<arguments[]> = await ctx.execute()
+
+    
+    return response.map((r) => new FunctionArg(ctx.copy().selectNode(r.id, "FunctionArg")))
+  }
+
+  /**
+   * The description of the field that supplies this artifact.
+   */
+  description = async (): Promise<string> => {
+    if (this._description) {
+      return this._description
+    }
+
+    const ctx = this._ctx.select(
+      "description",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The selected keys for each dimension. Empty for static artifacts.
+   */
+  dimensionKeys = async (): Promise<ArtifactDimensionKey[]> => {
+    type dimensionKeys = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "dimensionKeys",
+    ).select("id")
+
+    const response: Awaited<dimensionKeys[]> = await ctx.execute()
+
+    
+    return response.map((r) => new ArtifactDimensionKey(ctx.copy().selectNode(r.id, "ArtifactDimensionKey")))
+  }
+
+  /**
+   * The directives carried by this artifact.
+   */
+  directives = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "directives",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * A module load failure, or an empty string if discovery succeeded.
+   */
+  loadError = async (): Promise<string> => {
+    if (this._loadError) {
+      return this._loadError
+    }
+
+    const ctx = this._ctx.select(
+      "loadError",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Ordered, literal fields to follow. Entrypoint targets use their shorthand.
+   */
+  path = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "path",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The artifact's DAG address, such as dag://engine-dev/playground.
+   * @param opts.absolute Prefix the workspace's Git address and commit: dag://<workspace>@<commit>:<path>. Fails if the workspace has no Git address.
+   * @param opts.dimensionKeys Include the dimension keys as a query. Without them, the address is a path selector.
+   * @param opts.typeAssertion Include the artifact type in the scheme: dag+container://.
+   */
+  uri = async (
+    opts?: ArtifactUriOpts): Promise<string> => {
+    if (this._uri) {
+      return this._uri
+    }
+
+    const ctx = this._ctx.select(
+      "uri",
+      { ...opts},
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Evaluate the target in the workspace that supplied this artifact.
+   * @param opts.arguments Field arguments as a JSON object.
+   */
+  value = (opts?: ArtifactValueOpts): Node => {
+
+    const ctx = this._ctx.select(
+      "value",
+      { ...opts },
+    )
+    return new _NodeClient(ctx)
+  }
+}
+
+
+export class ArtifactDimension extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _collectionType?: string = undefined
+  private readonly _identifier?: string = undefined
+  private readonly _itemType?: string = undefined
+  private readonly _keyDescription?: string = undefined
+  private readonly _keyName?: string = undefined
+  private readonly _name?: string = undefined
+  private readonly _qualifiedName?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _collectionType?: string,
+     _identifier?: string,
+     _itemType?: string,
+     _keyDescription?: string,
+     _keyName?: string,
+     _name?: string,
+     _qualifiedName?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._collectionType = _collectionType
+     this._identifier = _identifier
+     this._itemType = _itemType
+     this._keyDescription = _keyDescription
+     this._keyName = _keyName
+     this._name = _name
+     this._qualifiedName = _qualifiedName
+   }
+
+  /**
+   * A unique identifier for this ArtifactDimension.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The schema type name of the collection that supplies this dimension.
+   */
+  collectionType = async (): Promise<string> => {
+    if (this._collectionType) {
+      return this._collectionType
+    }
+
+    const ctx = this._ctx.select(
+      "collectionType",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Exact GraphQL ParentType.field identifier.
+   */
+  identifier = async (): Promise<string> => {
+    if (this._identifier) {
+      return this._identifier
+    }
+
+    const ctx = this._ctx.select(
+      "identifier",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The author item type name.
+   */
+  itemType = async (): Promise<string> => {
+    if (this._itemType) {
+      return this._itemType
+    }
+
+    const ctx = this._ctx.select(
+      "itemType",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The description of the author get function's key argument.
+   */
+  keyDescription = async (): Promise<string> => {
+    if (this._keyDescription) {
+      return this._keyDescription
+    }
+
+    const ctx = this._ctx.select(
+      "keyDescription",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The name of the author get function's key argument.
+   */
+  keyName = async (): Promise<string> => {
+    if (this._keyName) {
+      return this._keyName
+    }
+
+    const ctx = this._ctx.select(
+      "keyName",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Short name derived from the author item type.
+   */
+  name = async (): Promise<string> => {
+    if (this._name) {
+      return this._name
+    }
+
+    const ctx = this._ctx.select(
+      "name",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Author parent type and field name, in CLI case.
+   */
+  qualifiedName = async (): Promise<string> => {
+    if (this._qualifiedName) {
+      return this._qualifiedName
+    }
+
+    const ctx = this._ctx.select(
+      "qualifiedName",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+
+export class ArtifactDimensionKey extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _dimension?: string = undefined
+  private readonly _key?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _dimension?: string,
+     _key?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._dimension = _dimension
+     this._key = _key
+   }
+
+  /**
+   * A unique identifier for this ArtifactDimensionKey.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The dimension identifier, fixed across the workspace schema.
+   */
+  dimension = async (): Promise<string> => {
+    if (this._dimension) {
+      return this._dimension
+    }
+
+    const ctx = this._ctx.select(
+      "dimension",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The dimension item's key.
+   */
+  key = async (): Promise<string> => {
+    if (this._key) {
+      return this._key
+    }
+
+    const ctx = this._ctx.select(
+      "key",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+/**
+ * A schema path and its dimensions. The path can exist even when its collections have no runtime items.
+ */
+export class ArtifactPath extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _description?: string = undefined
+  private readonly _uri?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _description?: string,
+     _uri?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._description = _description
+     this._uri = _uri
+   }
+
+  /**
+   * A unique identifier for this ArtifactPath.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The description of the field at this path.
+   */
+  description = async (): Promise<string> => {
+    if (this._description) {
+      return this._description
+    }
+
+    const ctx = this._ctx.select(
+      "description",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The dimension identifiers required by this path.
+   */
+  dimensions = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "dimensions",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The DAG address of this path, without dimension keys.
+   */
+  uri = async (): Promise<string> => {
+    if (this._uri) {
+      return this._uri
+    }
+
+    const ctx = this._ctx.select(
+      "uri",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+
+export class ArtifactResult extends BaseClient {
+  private readonly _id?: ID = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+   ) {
+     super(ctx)
+
+     this._id = _id
+   }
+
+  /**
+   * A unique identifier for this ArtifactResult.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The artifact that was evaluated.
+   */
+  artifact = (): Artifact => {
+
+    const ctx = this._ctx.select(
+      "artifact",
+    )
+    return new Artifact(ctx)
+  }
+
+  /**
+   * The evaluation failure, if any.
+   */
+  error = async (): Promise<Error | null> => {
+    const ctx = this._ctx.select(
+      "error",
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new Error(ctx.copy().selectNode(response, "Error"))
+  }
+
+  /**
+   * The evaluated value, or null when evaluation failed.
+   */
+  value = async (): Promise<Node | null> => {
+    const ctx = this._ctx.select(
+      "value",
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new _NodeClient(ctx.copy().selectNode(response, "Node"))
+  }
+}
+
+/**
+ * An immutable selection of workspace artifacts. Listed types, dimensions, and keys use OR; chained filters use AND. Empty alternatives and unknown names match nothing. Filters never change addresses or dimension identifiers.
+ */
+export class Artifacts extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _uri?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _uri?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._uri = _uri
+   }
+
+  /**
+   * A unique identifier for this Artifacts.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * List dimensions on the selected schema paths, including empty collections. Does not read runtime values.
+   */
+  dimensionDefinitions = async (): Promise<ArtifactDimension[]> => {
+    type dimensionDefinitions = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "dimensionDefinitions",
+    ).select("id")
+
+    const response: Awaited<dimensionDefinitions[]> = await ctx.execute()
+
+    
+    return response.map((r) => new ArtifactDimension(ctx.copy().selectNode(r.id, "ArtifactDimension")))
+  }
+
+  /**
+   * List keys represented in this selection for the given dimension, sorted with no duplicates.
+   */
+  dimensionKeys = async (dimension: string): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "dimensionKeys",
+      { dimension},
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * List dimension identifiers represented in this selection, sorted with no duplicates.
+   */
+  dimensions = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "dimensions",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Select LLM artifacts marked agent.
+   */
+  filterAgentCommand = (): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterAgentCommand",
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Select Check artifacts for dagger check, using each workspace's check and generator settings. Include stale checks only for Changesets marked generate.
+   * @param opts.generated Include generated-file checks. Defaults to the workspace check-generated setting, or true when unset.
+   */
+  filterCheckCommand = (opts?: ArtifactsFilterCheckCommandOpts): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterCheckCommand",
+      { ...opts },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Keep artifacts with any listed key in this dimension.
+   */
+  filterDimensionKeys = (dimension: string, keys: string[]): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterDimensionKeys",
+      { dimension, keys },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Keep artifacts selected through any listed dimension.
+   */
+  filterDimensions = (dimensions: string[]): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterDimensions",
+      { dimensions },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Keep artifacts with any listed directive. Does not filter by type or workspace settings.
+   * @param opts.exclude Remove the matching artifacts instead.
+   */
+  filterDirectives = (directives: string[], opts?: ArtifactsFilterDirectivesOpts): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterDirectives",
+      { directives, ...opts },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Select Changeset artifacts marked generate, using each workspace's generator settings.
+   */
+  filterGenerateCommand = (): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterGenerateCommand",
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Keep artifacts whose immediate parent has any listed directive. Artifacts without a parent do not match.
+   * @param opts.exclude Remove the matching artifacts instead.
+   */
+  filterParentDirectives = (directives: string[], opts?: ArtifactsFilterParentDirectivesOpts): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterParentDirectives",
+      { directives, ...opts },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Keep artifacts whose immediate parent has any listed object type. Artifacts without a typed parent do not match.
+   * @param opts.exclude Remove the matching artifacts instead.
+   */
+  filterParentTypes = (types: string[], opts?: ArtifactsFilterParentTypesOpts): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterParentTypes",
+      { types, ...opts },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Match one complete, ordered field sequence exactly.
+   */
+  filterPath = (path: string[]): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterPath",
+      { path },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Keep artifacts of any listed concrete GraphQL type.
+   * @param opts.exclude Remove the matching artifacts instead.
+   */
+  filterTypes = (types: string[], opts?: ArtifactsFilterTypesOpts): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterTypes",
+      { types, ...opts },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Select Service artifacts marked up, using each workspace's service settings.
+   */
+  filterUpCommand = (): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterUpCommand",
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Apply a DAG address as one filter: the chain of path, type, and dimension-key filters it encodes.
+   * 
+   * The scheme is optional. The path may be a pattern; an empty path selects all artifacts.
+   * @param uri A DAG address: [dag[+<type>]://][<path>][?<dimension>=<key>&...]
+   */
+  filterUri = (uri: string): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterUri",
+      { uri },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Enumerate complete artifacts without evaluating their values.
+   */
+  items = async (): Promise<Artifact[]> => {
+    type items = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "items",
+    ).select("id")
+
+    const response: Awaited<items[]> = await ctx.execute()
+
+    
+    return response.map((r) => new Artifact(ctx.copy().selectNode(r.id, "Artifact")))
+  }
+
+  /**
+   * Require exactly one artifact; fail if there are zero or multiple matches. Several matches are listed, one address per line.
+   */
+  one = (): Artifact => {
+
+    const ctx = this._ctx.select(
+      "one",
+    )
+    return new Artifact(ctx)
+  }
+
+  /**
+   * List selected schema paths, including empty collections. Does not read runtime values or resolve dimension-key filters.
+   * @param opts.absolute Prefix each address with the workspace's Git address and commit.
+   */
+  pathDefinitions = async (
+    opts?: ArtifactsPathDefinitionsOpts): Promise<ArtifactPath[]> => {
+    type pathDefinitions = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "pathDefinitions",
+      { ...opts},
+    ).select("id")
+
+    const response: Awaited<pathDefinitions[]> = await ctx.execute()
+
+    
+    return response.map((r) => new ArtifactPath(ctx.copy().selectNode(r.id, "ArtifactPath")))
+  }
+
+  /**
+   * List concrete type definitions represented in this selection, sorted by name with no duplicates.
+   */
+  types = async (): Promise<TypeDef[]> => {
+    type types = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "types",
+    ).select("id")
+
+    const response: Awaited<types[]> = await ctx.execute()
+
+    
+    return response.map((r) => new TypeDef(ctx.copy().selectNode(r.id, "TypeDef")))
+  }
+
+  /**
+   * The DAG address that selects this whole selection: filterUri(uri) selects the same set.
+   */
+  uri = async (): Promise<string> => {
+    if (this._uri) {
+      return this._uri
+    }
+
+    const ctx = this._ctx.select(
+      "uri",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Evaluate the selection in parallel, retaining each result and error.
+   * @param opts.failFast Cancel remaining work after the first failure.
+   * @param opts.arguments Field arguments applied to each artifact, as a JSON object.
+   */
+  values = async (
+    opts?: ArtifactsValuesOpts): Promise<ArtifactResult[]> => {
+    type values = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "values",
+      { ...opts},
+    ).select("id")
+
+    const response: Awaited<values[]> = await ctx.execute()
+
+    
+    return response.map((r) => new ArtifactResult(ctx.copy().selectNode(r.id, "ArtifactResult")))
+  }
+
+  /**
+   * Combine two selections, keeping each workspace address once. Different addresses remain distinct even if they return the same object.
+   */
+  withArtifacts = (artifacts: Artifacts): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "withArtifacts",
+      { artifacts },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Remove artifacts selected by a DAG address.
+   */
+  withoutUri = (uri: string): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "withoutUri",
+      { uri },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
+   * Call the provided function with current Artifacts.
+   *
+   * This is useful for reusability and readability by not breaking the calling chain.
+   */
+  with = (arg: (param: Artifacts) => Artifacts) => {
+    return arg(this)
+  }
 }
 
 
@@ -2988,14 +5838,14 @@ export class Address extends BaseClient {
  * A directory whose contents persist across runs.
  */
 export class CacheVolume extends BaseClient {
-  private readonly _id?: CacheVolumeID = undefined
+  private readonly _id?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: CacheVolumeID,
+     _id?: ID,
    ) {
      super(ctx)
 
@@ -3005,7 +5855,7 @@ export class CacheVolume extends BaseClient {
   /**
    * A unique identifier for this CacheVolume.
    */
-  id = async (): Promise<CacheVolumeID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -3014,33 +5864,31 @@ export class CacheVolume extends BaseClient {
       "id",
     )
 
-    const response: Awaited<CacheVolumeID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 }
 
-
-
 /**
  * A comparison between two directories representing changes that can be applied.
  */
 export class Changeset extends BaseClient {
-  private readonly _id?: ChangesetID = undefined
+  private readonly _id?: ID = undefined
   private readonly _export?: string = undefined
   private readonly _isEmpty?: boolean = undefined
-  private readonly _sync?: ChangesetID = undefined
+  private readonly _sync?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: ChangesetID,
+     _id?: ID,
      _export?: string,
      _isEmpty?: boolean,
-     _sync?: ChangesetID,
+     _sync?: ID,
    ) {
      super(ctx)
 
@@ -3053,7 +5901,7 @@ export class Changeset extends BaseClient {
   /**
    * A unique identifier for this Changeset.
    */
-  id = async (): Promise<ChangesetID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -3062,7 +5910,7 @@ export class Changeset extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ChangesetID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -3120,7 +5968,7 @@ export class Changeset extends BaseClient {
    */
   diffStats = async (): Promise<DiffStat[]> => {
     type diffStats = {
-      id: DiffStatID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -3151,6 +5999,22 @@ export class Changeset extends BaseClient {
 
     
     return response
+  }
+
+  /**
+   * Select changes matching the supplied glob patterns, preserving their original baseline.
+   * 
+   * Includes additions, modifications, and deletions. Selecting only one side of a rename yields an addition or deletion.
+   * @param opts.include Only include changes at paths matching these patterns. Empty includes all paths.
+   * @param opts.exclude Exclude changes at paths matching these patterns.
+   */
+  filter = (opts?: ChangesetFilterOpts): Changeset => {
+
+    const ctx = this._ctx.select(
+      "filter",
+      { ...opts },
+    )
+    return new Changeset(ctx)
   }
 
   /**
@@ -3211,6 +6075,17 @@ export class Changeset extends BaseClient {
   }
 
   /**
+   * A check that passes when the changeset is empty.
+   */
+  stale = (): Check => {
+
+    const ctx = this._ctx.select(
+      "stale",
+    )
+    return new Check(ctx)
+  }
+
+  /**
    * Force evaluation in the engine.
    */
   sync = async (): Promise<Changeset> => {
@@ -3218,7 +6093,7 @@ export class Changeset extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<ChangesetID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new Changeset(ctx.copy().selectNode(response, "Changeset"))
@@ -3280,43 +6155,34 @@ export class Changeset extends BaseClient {
 
 
 
-
-
-
+/**
+ * One deferred check. Reading pass, error, or sync runs it.
+ */
 export class Check extends BaseClient {
-  private readonly _id?: CheckID = undefined
-  private readonly _completed?: boolean = undefined
-  private readonly _description?: string = undefined
-  private readonly _name?: string = undefined
-  private readonly _passed?: boolean = undefined
-  private readonly _resultEmoji?: string = undefined
+  private readonly _id?: ID = undefined
+  private readonly _assertion?: string = undefined
+  private readonly _pass?: boolean = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: CheckID,
-     _completed?: boolean,
-     _description?: string,
-     _name?: string,
-     _passed?: boolean,
-     _resultEmoji?: string,
+     _id?: ID,
+     _assertion?: string,
+     _pass?: boolean,
    ) {
      super(ctx)
 
      this._id = _id
-     this._completed = _completed
-     this._description = _description
-     this._name = _name
-     this._passed = _passed
-     this._resultEmoji = _resultEmoji
+     this._assertion = _assertion
+     this._pass = _pass
    }
 
   /**
    * A unique identifier for this Check.
    */
-  id = async (): Promise<CheckID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -3325,40 +6191,22 @@ export class Check extends BaseClient {
       "id",
     )
 
-    const response: Awaited<CheckID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * Whether the check completed
+   * The assertion that is false when this check fails.
    */
-  completed = async (): Promise<boolean> => {
-    if (this._completed) {
-      return this._completed
+  assertion = async (): Promise<string> => {
+    if (this._assertion) {
+      return this._assertion
     }
 
     const ctx = this._ctx.select(
-      "completed",
-    )
-
-    const response: Awaited<boolean> = await ctx.execute()
-
-    
-    return response
-  }
-
-  /**
-   * The description of the check
-   */
-  description = async (): Promise<string> => {
-    if (this._description) {
-      return this._description
-    }
-
-    const ctx = this._ctx.select(
-      "description",
+      "assertion",
     )
 
     const response: Awaited<string> = await ctx.execute()
@@ -3368,55 +6216,31 @@ export class Check extends BaseClient {
   }
 
   /**
-   * If the check failed, this is the error
+   * Run the check and return its failure, if any.
    */
-  error = (): Error => {
-
+  error = async (): Promise<Error | null> => {
     const ctx = this._ctx.select(
       "error",
-    )
-    return new Error(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new Error(ctx.copy().selectNode(response, "Error"))
   }
 
   /**
-   * Return the command name of the check. Entrypoint targets omit the module prefix.
+   * Run the check and return whether it passes.
    */
-  name = async (): Promise<string> => {
-    if (this._name) {
-      return this._name
+  pass = async (): Promise<boolean> => {
+    if (this._pass) {
+      return this._pass
     }
 
     const ctx = this._ctx.select(
-      "name",
-    )
-
-    const response: Awaited<string> = await ctx.execute()
-
-    
-    return response
-  }
-
-  /**
-   * The original module in which the check has been defined
-   */
-  originalModule = (): Module_ => {
-
-    const ctx = this._ctx.select(
-      "originalModule",
-    )
-    return new Module_(ctx)
-  }
-
-  /**
-   * Whether the check passed
-   */
-  passed = async (): Promise<boolean> => {
-    if (this._passed) {
-      return this._passed
-    }
-
-    const ctx = this._ctx.select(
-      "passed",
+      "pass",
     )
 
     const response: Awaited<boolean> = await ctx.execute()
@@ -3426,44 +6250,28 @@ export class Check extends BaseClient {
   }
 
   /**
-   * The path of the check within its module
+   * An optional report produced by the check.
    */
-  path = async (): Promise<string[]> => {
+  report = async (): Promise<Directory | null> => {
     const ctx = this._ctx.select(
-      "path",
-    )
+      "report",
+    ).select("id")
 
-    const response: Awaited<string[]> = await ctx.execute()
+    const response: Awaited<string | null> = await ctx.execute()
 
-    
-    return response
-  }
-
-  /**
-   * An emoji representing the result of the check
-   */
-  resultEmoji = async (): Promise<string> => {
-    if (this._resultEmoji) {
-      return this._resultEmoji
+    if (response === null) {
+      return null
     }
-
-    const ctx = this._ctx.select(
-      "resultEmoji",
-    )
-
-    const response: Awaited<string> = await ctx.execute()
-
-    
-    return response
+    return new Directory(ctx.copy().selectNode(response, "Directory"))
   }
 
   /**
-   * Execute the check
+   * Run the check and retain its result.
    */
-  run = (): Check => {
+  sync = (): Check => {
 
     const ctx = this._ctx.select(
-      "run",
+      "sync",
     )
     return new Check(ctx)
   }
@@ -3478,16 +6286,18 @@ export class Check extends BaseClient {
   }
 }
 
-
-export class CheckGroup extends BaseClient {
-  private readonly _id?: CheckGroupID = undefined
+/**
+ * An internal persistent filesync mirror.
+ */
+export class ClientFilesyncMirror extends BaseClient {
+  private readonly _id?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: CheckGroupID,
+     _id?: ID,
    ) {
      super(ctx)
 
@@ -3495,9 +6305,9 @@ export class CheckGroup extends BaseClient {
    }
 
   /**
-   * A unique identifier for this CheckGroup.
+   * A unique identifier for this ClientFilesyncMirror.
    */
-  id = async (): Promise<CheckGroupID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -3506,73 +6316,18 @@ export class CheckGroup extends BaseClient {
       "id",
     )
 
-    const response: Awaited<CheckGroupID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
-
-  /**
-   * Return a list of individual checks and their details
-   */
-  list = async (): Promise<Check[]> => {
-    type list = {
-      id: CheckID
-    }
-
-    const ctx = this._ctx.select(
-      "list",
-    ).select("id")
-
-    const response: Awaited<list[]> = await ctx.execute()
-
-    
-    return response.map((r) => new Check(ctx.copy().selectNode(r.id, "Check")))
-  }
-
-  /**
-   * Generate a markdown report
-   */
-  report = (): File => {
-
-    const ctx = this._ctx.select(
-      "report",
-    )
-    return new File(ctx)
-  }
-
-  /**
-   * Execute all selected checks
-   * @param opts.failFast If true, stop running checks as soon as any check fails.
-   */
-  run = (opts?: CheckGroupRunOpts): CheckGroup => {
-
-    const ctx = this._ctx.select(
-      "run",
-      { ...opts },
-    )
-    return new CheckGroup(ctx)
-  }
-
-  /**
-   * Call the provided function with current CheckGroup.
-   *
-   * This is useful for reusability and readability by not breaking the calling chain.
-   */
-  with = (arg: (param: CheckGroup) => CheckGroup) => {
-    return arg(this)
-  }
 }
-
-
-
-
 
 /**
  * Dagger Cloud configuration and state
  */
 export class Cloud extends BaseClient {
-  private readonly _id?: CloudID = undefined
+  private readonly _id?: ID = undefined
   private readonly _traceURL?: string = undefined
 
   /**
@@ -3580,7 +6335,7 @@ export class Cloud extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: CloudID,
+     _id?: ID,
      _traceURL?: string,
    ) {
      super(ctx)
@@ -3592,7 +6347,7 @@ export class Cloud extends BaseClient {
   /**
    * A unique identifier for this Cloud.
    */
-  id = async (): Promise<CloudID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -3601,7 +6356,7 @@ export class Cloud extends BaseClient {
       "id",
     )
 
-    const response: Awaited<CloudID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -3627,12 +6382,146 @@ export class Cloud extends BaseClient {
 }
 
 
+export class CollectionDelta extends BaseClient {
+  private readonly _id?: ID = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+   ) {
+     super(ctx)
+
+     this._id = _id
+   }
+
+  /**
+   * A unique identifier for this CollectionDelta.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Current keys absent from the original collection, in current order.
+   */
+  addedKeys = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "addedKeys",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Original keys absent from the current collection, in original order.
+   */
+  removedKeys = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "removedKeys",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+
+export class CollectionTypeDef extends BaseClient {
+  private readonly _id?: ID = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+   ) {
+     super(ctx)
+
+     this._id = _id
+   }
+
+  /**
+   * A unique identifier for this CollectionTypeDef.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The type of batch operations, or null when there are none.
+   */
+  batchType = async (): Promise<TypeDef | null> => {
+    const ctx = this._ctx.select(
+      "batchType",
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new TypeDef(ctx.copy().selectNode(response, "TypeDef"))
+  }
+
+  /**
+   * The type of collection keys.
+   */
+  keyType = (): TypeDef => {
+
+    const ctx = this._ctx.select(
+      "keyType",
+    )
+    return new TypeDef(ctx)
+  }
+
+  /**
+   * The object type returned by get.
+   */
+  valueType = (): TypeDef => {
+
+    const ctx = this._ctx.select(
+      "valueType",
+    )
+    return new TypeDef(ctx)
+  }
+}
 
 /**
  * An OCI-compatible container, also known as a Docker container.
  */
 export class Container extends BaseClient {
-  private readonly _id?: ContainerID = undefined
+  private readonly _id?: ID = undefined
   private readonly _combinedOutput?: string = undefined
   private readonly _envVariable?: string = undefined
   private readonly _exists?: boolean = undefined
@@ -3645,7 +6534,7 @@ export class Container extends BaseClient {
   private readonly _publish?: string = undefined
   private readonly _stderr?: string = undefined
   private readonly _stdout?: string = undefined
-  private readonly _sync?: ContainerID = undefined
+  private readonly _sync?: ID = undefined
   private readonly _up?: Void = undefined
   private readonly _user?: string = undefined
   private readonly _workdir?: string = undefined
@@ -3655,7 +6544,7 @@ export class Container extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ContainerID,
+     _id?: ID,
      _combinedOutput?: string,
      _envVariable?: string,
      _exists?: boolean,
@@ -3668,7 +6557,7 @@ export class Container extends BaseClient {
      _publish?: string,
      _stderr?: string,
      _stdout?: string,
-     _sync?: ContainerID,
+     _sync?: ID,
      _up?: Void,
      _user?: string,
      _workdir?: string,
@@ -3697,7 +6586,7 @@ export class Container extends BaseClient {
   /**
    * A unique identifier for this Container.
    */
-  id = async (): Promise<ContainerID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -3706,7 +6595,7 @@ export class Container extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ContainerID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -3763,31 +6652,6 @@ export class Container extends BaseClient {
   }
 
   /**
-   * Initializes this container from a Dockerfile build.
-   * @param context Directory context used by the Dockerfile.
-   * @param opts.dockerfile Path to the Dockerfile to use.
-   * @param opts.target Target build stage to build.
-   * @param opts.buildArgs Additional build arguments.
-   * @param opts.secrets Secrets to pass to the build.
-   * 
-   * They will be mounted at /run/secrets/[secret-name] in the build container
-   * 
-   * They can be accessed in the Dockerfile using the "secret" mount type and mount path /run/secrets/[secret-name], e.g. RUN --mount=type=secret,id=my-secret curl [http://example.com?token=$(cat /run/secrets/my-secret)](http://example.com?token=$(cat /run/secrets/my-secret))
-   * @param opts.noInit If set, skip the automatic init process injected into containers created by RUN statements.
-   * 
-   * This should only be used if the user requires that their exec processes be the pid 1 process in the container. Otherwise it may result in unexpected behavior.
-   * @deprecated Use `Directory.build` instead
-   */
-  build = (context: Directory, opts?: ContainerBuildOpts): Container => {
-
-    const ctx = this._ctx.select(
-      "build",
-      { context, ...opts },
-    )
-    return new Container(ctx)
-  }
-
-  /**
    * The combined buffered standard output and standard error stream of the last executed command
    * 
    * Returns an error if no command was executed
@@ -3840,12 +6704,17 @@ export class Container extends BaseClient {
   /**
    * Retrieves this container's configured docker healthcheck.
    */
-  dockerHealthcheck = (): HealthcheckConfig => {
-
+  dockerHealthcheck = async (): Promise<HealthcheckConfig | null> => {
     const ctx = this._ctx.select(
       "dockerHealthcheck",
-    )
-    return new HealthcheckConfig(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new HealthcheckConfig(ctx.copy().selectNode(response, "HealthcheckConfig"))
   }
 
   /**
@@ -3887,7 +6756,7 @@ export class Container extends BaseClient {
    */
   envVariables = async (): Promise<EnvVariable[]> => {
     type envVariables = {
-      id: EnvVariableID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -3905,6 +6774,7 @@ export class Container extends BaseClient {
    * @param path Path to check (e.g., "/file.txt").
    * @param opts.expectedType If specified, also validate the type of file (e.g. "REGULAR_TYPE", "DIRECTORY_TYPE", or "SYMLINK_TYPE").
    * @param opts.doNotFollowSymlinks If specified, do not follow symlinks.
+   * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    */
   exists = async (path: string, 
     opts?: ContainerExistsOpts): Promise<boolean> => {
@@ -4060,7 +6930,7 @@ export class Container extends BaseClient {
    */
   exposedPorts = async (): Promise<Port[]> => {
     type exposedPorts = {
-      id: PortID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -4094,12 +6964,24 @@ export class Container extends BaseClient {
    * @param address Address of the container image to download, in standard OCI ref format. Example: "registry.dagger.io/engine:latest".
    * 
    * An address without a tag or digest selects the greatest stable release tag, falling back to the literal "latest" tag when no eligible release exists.
+   * @param opts.version Version query used to select an image tag. The address must not contain a tag or digest.
+   * @param opts.registryService Service to use as the registry endpoint for the image address.
+   * 
+   * The service will be started only for this pull.
+   * @param opts.protocol Protocol to use for registry communication.
+   * 
+   * Defaults to "HTTPS". Use "HTTP" only for plain HTTP registries.
+   * @param opts.insecureSkipTLSVerify Allow HTTPS registry communication without verifying the server certificate.
    */
-  from = (address: string): Container => {
+  from = (address: string, opts?: ContainerFromOpts): Container => {
+	const metadata = {
+	    protocol: { is_enum: true, value_to_name: RegistryProtocolValueToName },
+	}
+
 
     const ctx = this._ctx.select(
       "from",
-      { address },
+      { address, ...opts, __metadata: metadata },
     )
     return new Container(ctx)
   }
@@ -4161,7 +7043,7 @@ export class Container extends BaseClient {
    */
   labels = async (): Promise<Label[]> => {
     type labels = {
-      id: LabelID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -4172,6 +7054,49 @@ export class Container extends BaseClient {
 
     
     return response.map((r) => new Label(ctx.copy().selectNode(r.id, "Label")))
+  }
+
+  /**
+   * Returns the image layer or configuration blob with the given digest as a File.
+   * @param id Digest of the layer or configuration blob (e.g. "sha256:abc123...").
+   * @param opts.forcedCompression Force each layer of the image to use the specified compression algorithm.
+   * 
+   * If this is unset, then if a layer already has a compressed blob in the engine's cache, that will be used (this can result in a mix of compression algorithms for different layers). If this is unset and a layer has no compressed blob in the engine's cache, then it will be compressed using Gzip.
+   * @param opts.mediaTypes Media types to use for image layers. Defaults to OCI.
+   */
+  layer = (id: string, opts?: ContainerLayerOpts): File => {
+	const metadata = {
+	    forcedCompression: { is_enum: true, value_to_name: ImageLayerCompressionValueToName },
+	    mediaTypes: { is_enum: true, value_to_name: ImageMediaTypesValueToName },
+	}
+
+
+    const ctx = this._ctx.select(
+      "layer",
+      { id, ...opts, __metadata: metadata },
+    )
+    return new File(ctx)
+  }
+
+  /**
+   * Computes and returns the manifest for this container as a File.
+   * @param opts.forcedCompression Force each layer of the image to use the specified compression algorithm.
+   * 
+   * If this is unset, then if a layer already has a compressed blob in the engine's cache, that will be used (this can result in a mix of compression algorithms for different layers). If this is unset and a layer has no compressed blob in the engine's cache, then it will be compressed using Gzip.
+   * @param opts.mediaTypes Media types to use for image layers. Defaults to OCI.
+   */
+  manifest = (opts?: ContainerManifestOpts): File => {
+	const metadata = {
+	    forcedCompression: { is_enum: true, value_to_name: ImageLayerCompressionValueToName },
+	    mediaTypes: { is_enum: true, value_to_name: ImageMediaTypesValueToName },
+	}
+
+
+    const ctx = this._ctx.select(
+      "manifest",
+      { ...opts, __metadata: metadata },
+    )
+    return new File(ctx)
   }
 
   /**
@@ -4222,6 +7147,13 @@ export class Container extends BaseClient {
    * @param opts.mediaTypes Use the specified media types for the published image's layers.
    * 
    * Defaults to "OCI", which is compatible with most recent registries, but "Docker" may be needed for older registries without OCI support.
+   * @param opts.registryService Service to use as the registry endpoint for the image address.
+   * 
+   * The service will be started only for this push.
+   * @param opts.protocol Protocol to use for registry communication.
+   * 
+   * Defaults to "HTTPS". Use "HTTP" only for plain HTTP registries.
+   * @param opts.insecureSkipTLSVerify Allow HTTPS registry communication without verifying the server certificate.
    */
   publish = async (address: string, 
     opts?: ContainerPublishOpts): Promise<string> => {
@@ -4232,6 +7164,7 @@ export class Container extends BaseClient {
 	const metadata = {
 	    forcedCompression: { is_enum: true, value_to_name: ImageLayerCompressionValueToName },
 	    mediaTypes: { is_enum: true, value_to_name: ImageMediaTypesValueToName },
+	    protocol: { is_enum: true, value_to_name: RegistryProtocolValueToName },
 	}
 
     const ctx = this._ctx.select(
@@ -4261,13 +7194,19 @@ export class Container extends BaseClient {
    * @param path Path to check (e.g., "/file.txt").
    * @param opts.doNotFollowSymlinks If specified, do not follow symlinks.
    */
-  stat = (path: string, opts?: ContainerStatOpts): Stat => {
-
+  stat = async (path: string, 
+    opts?: ContainerStatOpts): Promise<Stat | null> => {
     const ctx = this._ctx.select(
       "stat",
-      { path, ...opts },
-    )
-    return new Stat(ctx)
+      { path, ...opts},
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new Stat(ctx.copy().selectNode(response, "Stat"))
   }
 
   /**
@@ -4320,7 +7259,7 @@ export class Container extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<ContainerID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new Container(ctx.copy().selectNode(response, "Container"))
@@ -4439,7 +7378,7 @@ export class Container extends BaseClient {
   /**
    * Return a new container snapshot, with a directory added to its filesystem
    * @param path Location of the written directory (e.g., "/tmp/directory").
-   * @param directory Identifier of the directory to write
+   * @param source Identifier of the directory to write
    * @param opts.exclude Patterns to exclude in the written directory (e.g. ["node_modules/**", ".gitignore", ".git/"]).
    * @param opts.include Patterns to include in the written directory (e.g. ["*.go", "go.mod", "go.sum"]).
    * @param opts.gitignore Apply .gitignore rules when writing the directory.
@@ -4448,13 +7387,14 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    */
-  withDirectory = (path: string, directory: Directory, opts?: ContainerWithDirectoryOpts): Container => {
+  withDirectory = (path: string, source: Directory, opts?: ContainerWithDirectoryOpts): Container => {
 
     const ctx = this._ctx.select(
       "withDirectory",
-      { path, directory, ...opts },
+      { path, source, ...opts },
     )
     return new Container(ctx)
   }
@@ -4604,6 +7544,7 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
    */
   withFile = (path: string, source: File, opts?: ContainerWithFileOpts): Container => {
@@ -4625,6 +7566,7 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
    */
   withFiles = (path: string, sources: File[], opts?: ContainerWithFilesOpts): Container => {
@@ -4663,6 +7605,7 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    */
   withMountedCache = (path: string, cache: CacheVolume, opts?: ContainerWithMountedCacheOpts): Container => {
@@ -4687,6 +7630,8 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
+   * @param opts.readOnly Mount the directory read-only.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    */
   withMountedDirectory = (path: string, source: Directory, opts?: ContainerWithMountedDirectoryOpts): Container => {
@@ -4707,6 +7652,7 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
    */
   withMountedFile = (path: string, source: File, opts?: ContainerWithMountedFileOpts): Container => {
@@ -4727,6 +7673,7 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
    * @param opts.mode Permission given to the mounted secret (e.g., 0600).
    * 
    * This option requires an owner to be set to be active.
@@ -4757,6 +7704,22 @@ export class Container extends BaseClient {
   }
 
   /**
+   * Retrieves this container plus a volume mounted at the given path.
+   * @param path Location of the volume mount (e.g., "/mnt/volume").
+   * @param volume Identifier of the volume to mount.
+   * @param opts.readOnly Mount the volume read-only.
+   * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+   */
+  withMountedVolume = (path: string, volume: Volume, opts?: ContainerWithMountedVolumeOpts): Container => {
+
+    const ctx = this._ctx.select(
+      "withMountedVolume",
+      { path, volume, ...opts },
+    )
+    return new Container(ctx)
+  }
+
+  /**
    * Return a new container snapshot, with a file added to its filesystem with text content
    * @param path Path of the new file. May be relative or absolute. Example: "README.md" or "/etc/profile"
    * @param contents Contents of the new file. Example: "Hello world!"
@@ -4766,6 +7729,7 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
    */
   withNewFile = (path: string, contents: string, opts?: ContainerWithNewFileOpts): Container => {
@@ -4863,6 +7827,7 @@ export class Container extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.inheritOwner Set the owner to the container's current user.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    */
   withUnixSocket = (path: string, source: Socket, opts?: ContainerWithUnixSocketOpts): Container => {
@@ -4883,6 +7848,22 @@ export class Container extends BaseClient {
     const ctx = this._ctx.select(
       "withUser",
       { name },
+    )
+    return new Container(ctx)
+  }
+
+  /**
+   * Set a new non-secret environment variable for future execs without invalidating exec cache when only its value changes.
+   * 
+   * This is an expert-only escape hatch. If a volatile value affects observable exec results, stale cached results may be reused.
+   * @param name Name of the volatile variable (e.g., "CI_RUN_ID").
+   * @param value Value of the volatile variable.
+   */
+  withVolatileVariable = (name: string, value: string): Container => {
+
+    const ctx = this._ctx.select(
+      "withVolatileVariable",
+      { name, value },
     )
     return new Container(ctx)
   }
@@ -5105,6 +8086,19 @@ export class Container extends BaseClient {
   }
 
   /**
+   * Retrieves this container minus the given volatile environment variable.
+   * @param name The name of the volatile environment variable (e.g., "CI_RUN_ID").
+   */
+  withoutVolatileVariable = (name: string): Container => {
+
+    const ctx = this._ctx.select(
+      "withoutVolatileVariable",
+      { name },
+    )
+    return new Container(ctx)
+  }
+
+  /**
    * Unset the container's working directory.
    * 
    * Should default to "/".
@@ -5145,13 +8139,11 @@ export class Container extends BaseClient {
   }
 }
 
-
-
 /**
  * Reflective module API provided to functions at runtime.
  */
 export class CurrentModule extends BaseClient {
-  private readonly _id?: CurrentModuleID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
 
   /**
@@ -5159,7 +8151,7 @@ export class CurrentModule extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: CurrentModuleID,
+     _id?: ID,
      _name?: string,
    ) {
      super(ctx)
@@ -5171,7 +8163,7 @@ export class CurrentModule extends BaseClient {
   /**
    * A unique identifier for this CurrentModule.
    */
-  id = async (): Promise<CurrentModuleID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -5180,7 +8172,7 @@ export class CurrentModule extends BaseClient {
       "id",
     )
 
-    const response: Awaited<CurrentModuleID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -5191,7 +8183,7 @@ export class CurrentModule extends BaseClient {
    */
   dependencies = async (): Promise<Module_[]> => {
     type dependencies = {
-      id: ModuleID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -5213,20 +8205,6 @@ export class CurrentModule extends BaseClient {
       "generatedContextDirectory",
     )
     return new Directory(ctx)
-  }
-
-  /**
-   * Return all generators defined by the module
-   * @param opts.include Only include generators matching the specified patterns
-   * @experimental
-   */
-  generators = (opts?: CurrentModuleGeneratorsOpts): GeneratorGroup => {
-
-    const ctx = this._ctx.select(
-      "generators",
-      { ...opts },
-    )
-    return new GeneratorGroup(ctx)
   }
 
   /**
@@ -5289,10 +8267,8 @@ export class CurrentModule extends BaseClient {
 }
 
 
-
-
 export class DiffStat extends BaseClient {
-  private readonly _id?: DiffStatID = undefined
+  private readonly _id?: ID = undefined
   private readonly _addedLines?: number = undefined
   private readonly _kind?: DiffStatKind = undefined
   private readonly _oldPath?: string = undefined
@@ -5304,7 +8280,7 @@ export class DiffStat extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: DiffStatID,
+     _id?: ID,
      _addedLines?: number,
      _kind?: DiffStatKind,
      _oldPath?: string,
@@ -5324,7 +8300,7 @@ export class DiffStat extends BaseClient {
   /**
    * A unique identifier for this DiffStat.
    */
-  id = async (): Promise<DiffStatID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -5333,7 +8309,7 @@ export class DiffStat extends BaseClient {
       "id",
     )
 
-    const response: Awaited<DiffStatID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -5431,32 +8407,30 @@ export class DiffStat extends BaseClient {
 
 
 
-
-
 /**
  * A directory.
  */
 export class Directory extends BaseClient {
-  private readonly _id?: DirectoryID = undefined
+  private readonly _id?: ID = undefined
   private readonly _digest?: string = undefined
   private readonly _exists?: boolean = undefined
   private readonly _export?: string = undefined
   private readonly _findUp?: string = undefined
   private readonly _name?: string = undefined
-  private readonly _sync?: DirectoryID = undefined
+  private readonly _sync?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: DirectoryID,
+     _id?: ID,
      _digest?: string,
      _exists?: boolean,
      _export?: string,
      _findUp?: string,
      _name?: string,
-     _sync?: DirectoryID,
+     _sync?: ID,
    ) {
      super(ctx)
 
@@ -5472,7 +8446,7 @@ export class Directory extends BaseClient {
   /**
    * A unique identifier for this Directory.
    */
-  id = async (): Promise<DirectoryID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -5481,7 +8455,7 @@ export class Directory extends BaseClient {
       "id",
     )
 
-    const response: Awaited<DirectoryID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -5526,6 +8500,19 @@ export class Directory extends BaseClient {
       { ...opts },
     )
     return new ModuleSource(ctx)
+  }
+
+  /**
+   * Creates a synthetic workspace from this directory.
+   * @param opts.cwd Current working directory inside the workspace root. Defaults to the workspace root.
+   */
+  asWorkspace = (opts?: DirectoryAsWorkspaceOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "asWorkspace",
+      { ...opts },
+    )
+    return new Workspace(ctx)
   }
 
   /**
@@ -5800,7 +8787,7 @@ export class Directory extends BaseClient {
   search = async (
     opts?: DirectorySearchOpts): Promise<SearchResult[]> => {
     type search = {
-      id: SearchResultID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -5819,13 +8806,19 @@ export class Directory extends BaseClient {
    * @param path Path to stat (e.g., "/file.txt").
    * @param opts.doNotFollowSymlinks If specified, do not follow symlinks.
    */
-  stat = (path: string, opts?: DirectoryStatOpts): Stat => {
-
+  stat = async (path: string, 
+    opts?: DirectoryStatOpts): Promise<Stat | null> => {
     const ctx = this._ctx.select(
       "stat",
-      { path, ...opts },
-    )
-    return new Stat(ctx)
+      { path, ...opts},
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new Stat(ctx.copy().selectNode(response, "Stat"))
   }
 
   /**
@@ -5836,7 +8829,7 @@ export class Directory extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<DirectoryID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new Directory(ctx.copy().selectNode(response, "Directory"))
@@ -5874,7 +8867,7 @@ export class Directory extends BaseClient {
   /**
    * Return a snapshot with a directory added
    * @param path Location of the written directory (e.g., "/src/").
-   * @param directory Identifier of the directory to copy.
+   * @param source Identifier of the directory to copy.
    * @param opts.exclude Exclude artifacts that match the given pattern (e.g., ["node_modules/", ".git*"]).
    * @param opts.include Include only artifacts that match the given pattern (e.g., ["app/", "package.*"]).
    * @param opts.gitignore Apply .gitignore filter rules inside the directory
@@ -5883,12 +8876,13 @@ export class Directory extends BaseClient {
    * The user and group can either be an ID (1000:1000) or a name (foo:bar).
    * 
    * If the group is omitted, it defaults to the same as the user.
+   * @param opts.permissions Permission given to the copied directory and contents (e.g., 0755).
    */
-  withDirectory = (path: string, directory: Directory, opts?: DirectoryWithDirectoryOpts): Directory => {
+  withDirectory = (path: string, source: Directory, opts?: DirectoryWithDirectoryOpts): Directory => {
 
     const ctx = this._ctx.select(
       "withDirectory",
-      { path, directory, ...opts },
+      { path, source, ...opts },
     )
     return new Directory(ctx)
   }
@@ -5973,13 +8967,18 @@ export class Directory extends BaseClient {
   /**
    * Retrieves this directory with the given Git-compatible patch applied.
    * @param patch Patch to apply (e.g., "diff --git a/file.txt b/file.txt\nindex 1234567..abcdef8 100644\n--- a/file.txt\n+++ b/file.txt\n@@ -1,1 +1,1 @@\n-Hello\n+World\n").
+   * @param opts.onConflict How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
    * @experimental
    */
-  withPatch = (patch: string): Directory => {
+  withPatch = (patch: string, opts?: DirectoryWithPatchOpts): Directory => {
+	const metadata = {
+	    onConflict: { is_enum: true, value_to_name: PatchConflictValueToName },
+	}
+
 
     const ctx = this._ctx.select(
       "withPatch",
-      { patch },
+      { patch, ...opts, __metadata: metadata },
     )
     return new Directory(ctx)
   }
@@ -5987,13 +8986,18 @@ export class Directory extends BaseClient {
   /**
    * Retrieves this directory with the given Git-compatible patch file applied.
    * @param patch File containing the patch to apply
+   * @param opts.onConflict How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
    * @experimental
    */
-  withPatchFile = (patch: File): Directory => {
+  withPatchFile = (patch: File, opts?: DirectoryWithPatchFileOpts): Directory => {
+	const metadata = {
+	    onConflict: { is_enum: true, value_to_name: PatchConflictValueToName },
+	}
+
 
     const ctx = this._ctx.select(
       "withPatchFile",
-      { patch },
+      { patch, ...opts, __metadata: metadata },
     )
     return new Directory(ctx)
   }
@@ -6076,13 +9080,11 @@ export class Directory extends BaseClient {
   }
 }
 
-
-
 /**
  * The Dagger engine configuration and state
  */
 export class Engine extends BaseClient {
-  private readonly _id?: EngineID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
 
   /**
@@ -6090,7 +9092,7 @@ export class Engine extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: EngineID,
+     _id?: ID,
      _name?: string,
    ) {
      super(ctx)
@@ -6102,7 +9104,7 @@ export class Engine extends BaseClient {
   /**
    * A unique identifier for this Engine.
    */
-  id = async (): Promise<EngineID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -6111,7 +9113,7 @@ export class Engine extends BaseClient {
       "id",
     )
 
-    const response: Awaited<EngineID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -6165,7 +9167,7 @@ export class Engine extends BaseClient {
  * A cache storage for the Dagger engine
  */
 export class EngineCache extends BaseClient {
-  private readonly _id?: EngineCacheID = undefined
+  private readonly _id?: ID = undefined
   private readonly _maxUsedSpace?: number = undefined
   private readonly _minFreeSpace?: number = undefined
   private readonly _prune?: Void = undefined
@@ -6177,7 +9179,7 @@ export class EngineCache extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: EngineCacheID,
+     _id?: ID,
      _maxUsedSpace?: number,
      _minFreeSpace?: number,
      _prune?: Void,
@@ -6197,7 +9199,7 @@ export class EngineCache extends BaseClient {
   /**
    * A unique identifier for this EngineCache.
    */
-  id = async (): Promise<EngineCacheID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -6206,7 +9208,7 @@ export class EngineCache extends BaseClient {
       "id",
     )
 
-    const response: Awaited<EngineCacheID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -6262,11 +9264,13 @@ export class EngineCache extends BaseClient {
 
   /**
    * Prune the cache of releaseable entries
-   * @param opts.useDefaultPolicy Use the engine-wide default pruning policy if true, otherwise prune the whole cache of any releasable entries.
+   * @param opts.useDefaultPolicy Use enabled engine-wide default disk and structural policies. If no default disk policy is enabled, the disk stage falls back to pruning all releasable disk-cache entries. If false, explicit options select stages; with no options, all releasable disk-cache entries are pruned.
    * @param opts.maxUsedSpace Override the maximum disk space to keep before pruning (e.g. "200GB" or "80%").
    * @param opts.reservedSpace Override the minimum disk space to retain during pruning (e.g. "500GB" or "10%").
    * @param opts.minFreeSpace Override the minimum free disk space target during pruning (e.g. "20GB" or "20%").
    * @param opts.targetSpace Override the target disk space to keep after pruning (e.g. "200GB" or "50%").
+   * @param opts.maxEstimatedBytes Override the maximum structural metadata estimate in absolute bytes. Explicit values must be positive; the configured/default value is used when omitted.
+   * @param opts.targetEstimatedBytes Override the structural metadata estimate to target in absolute bytes. Explicit values must be positive and lower than the resolved maximum; the configured/default value is used when omitted.
    */
   prune = async (
     opts?: EngineCachePruneOpts): Promise<void> => {
@@ -6325,7 +9329,7 @@ export class EngineCache extends BaseClient {
  * An individual cache entry in a cache entry set
  */
 export class EngineCacheEntry extends BaseClient {
-  private readonly _id?: EngineCacheEntryID = undefined
+  private readonly _id?: ID = undefined
   private readonly _activelyUsed?: boolean = undefined
   private readonly _createdTimeUnixNano?: number = undefined
   private readonly _dagqlCall?: string = undefined
@@ -6339,7 +9343,7 @@ export class EngineCacheEntry extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: EngineCacheEntryID,
+     _id?: ID,
      _activelyUsed?: boolean,
      _createdTimeUnixNano?: number,
      _dagqlCall?: string,
@@ -6363,7 +9367,7 @@ export class EngineCacheEntry extends BaseClient {
   /**
    * A unique identifier for this EngineCacheEntry.
    */
-  id = async (): Promise<EngineCacheEntryID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -6372,7 +9376,7 @@ export class EngineCacheEntry extends BaseClient {
       "id",
     )
 
-    const response: Awaited<EngineCacheEntryID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -6519,13 +9523,11 @@ export class EngineCacheEntry extends BaseClient {
   }
 }
 
-
-
 /**
  * A set of cache entries returned by a query to a cache
  */
 export class EngineCacheEntrySet extends BaseClient {
-  private readonly _id?: EngineCacheEntrySetID = undefined
+  private readonly _id?: ID = undefined
   private readonly _diskSpaceBytes?: number = undefined
   private readonly _entryCount?: number = undefined
 
@@ -6534,7 +9536,7 @@ export class EngineCacheEntrySet extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: EngineCacheEntrySetID,
+     _id?: ID,
      _diskSpaceBytes?: number,
      _entryCount?: number,
    ) {
@@ -6548,7 +9550,7 @@ export class EngineCacheEntrySet extends BaseClient {
   /**
    * A unique identifier for this EngineCacheEntrySet.
    */
-  id = async (): Promise<EngineCacheEntrySetID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -6557,7 +9559,7 @@ export class EngineCacheEntrySet extends BaseClient {
       "id",
     )
 
-    const response: Awaited<EngineCacheEntrySetID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -6586,7 +9588,7 @@ export class EngineCacheEntrySet extends BaseClient {
    */
   entries = async (): Promise<EngineCacheEntry[]> => {
     type entries = {
-      id: EngineCacheEntryID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -6618,17 +9620,11 @@ export class EngineCacheEntrySet extends BaseClient {
   }
 }
 
-
-
-
-
-
-
 /**
  * A definition of a custom enum defined in a Module.
  */
 export class EnumTypeDef extends BaseClient {
-  private readonly _id?: EnumTypeDefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _description?: string = undefined
   private readonly _name?: string = undefined
   private readonly _sourceModuleName?: string = undefined
@@ -6638,7 +9634,7 @@ export class EnumTypeDef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: EnumTypeDefID,
+     _id?: ID,
      _description?: string,
      _name?: string,
      _sourceModuleName?: string,
@@ -6654,7 +9650,7 @@ export class EnumTypeDef extends BaseClient {
   /**
    * A unique identifier for this EnumTypeDef.
    */
-  id = async (): Promise<EnumTypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -6663,7 +9659,7 @@ export class EnumTypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<EnumTypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -6692,7 +9688,7 @@ export class EnumTypeDef extends BaseClient {
    */
   members = async (): Promise<EnumValueTypeDef[]> => {
     type members = {
-      id: EnumValueTypeDefID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -6726,12 +9722,17 @@ export class EnumTypeDef extends BaseClient {
   /**
    * The location of this enum declaration.
    */
-  sourceMap = (): SourceMap => {
-
+  sourceMap = async (): Promise<SourceMap | null> => {
     const ctx = this._ctx.select(
       "sourceMap",
-    )
-    return new SourceMap(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SourceMap(ctx.copy().selectNode(response, "SourceMap"))
   }
 
   /**
@@ -6758,7 +9759,7 @@ export class EnumTypeDef extends BaseClient {
    */
   values = async (): Promise<EnumValueTypeDef[]> => {
     type values = {
-      id: EnumValueTypeDefID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -6772,13 +9773,11 @@ export class EnumTypeDef extends BaseClient {
   }
 }
 
-
-
 /**
  * A definition of a value in a custom enum defined in a Module.
  */
 export class EnumValueTypeDef extends BaseClient {
-  private readonly _id?: EnumValueTypeDefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _deprecated?: string = undefined
   private readonly _description?: string = undefined
   private readonly _name?: string = undefined
@@ -6789,7 +9788,7 @@ export class EnumValueTypeDef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: EnumValueTypeDefID,
+     _id?: ID,
      _deprecated?: string,
      _description?: string,
      _name?: string,
@@ -6807,7 +9806,7 @@ export class EnumValueTypeDef extends BaseClient {
   /**
    * A unique identifier for this EnumValueTypeDef.
    */
-  id = async (): Promise<EnumValueTypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -6816,7 +9815,7 @@ export class EnumValueTypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<EnumValueTypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -6879,12 +9878,17 @@ export class EnumValueTypeDef extends BaseClient {
   /**
    * The location of this enum member declaration.
    */
-  sourceMap = (): SourceMap => {
-
+  sourceMap = async (): Promise<SourceMap | null> => {
     const ctx = this._ctx.select(
       "sourceMap",
-    )
-    return new SourceMap(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SourceMap(ctx.copy().selectNode(response, "SourceMap"))
   }
 
   /**
@@ -6906,13 +9910,11 @@ export class EnumValueTypeDef extends BaseClient {
   }
 }
 
-
-
 /**
  * A collection of environment variables.
  */
 export class EnvFile extends BaseClient {
-  private readonly _id?: EnvFileID = undefined
+  private readonly _id?: ID = undefined
   private readonly _exists?: boolean = undefined
   private readonly _get?: string = undefined
 
@@ -6921,7 +9923,7 @@ export class EnvFile extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: EnvFileID,
+     _id?: ID,
      _exists?: boolean,
      _get?: string,
    ) {
@@ -6935,7 +9937,7 @@ export class EnvFile extends BaseClient {
   /**
    * A unique identifier for this EnvFile.
    */
-  id = async (): Promise<EnvFileID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -6944,7 +9946,7 @@ export class EnvFile extends BaseClient {
       "id",
     )
 
-    const response: Awaited<EnvFileID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -7023,7 +10025,7 @@ export class EnvFile extends BaseClient {
   variables = async (
     opts?: EnvFileVariablesOpts): Promise<EnvVariable[]> => {
     type variables = {
-      id: EnvVariableID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -7074,13 +10076,11 @@ export class EnvFile extends BaseClient {
   }
 }
 
-
-
 /**
  * An environment variable name and value.
  */
 export class EnvVariable extends BaseClient {
-  private readonly _id?: EnvVariableID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
   private readonly _value?: string = undefined
 
@@ -7089,7 +10089,7 @@ export class EnvVariable extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: EnvVariableID,
+     _id?: ID,
      _name?: string,
      _value?: string,
    ) {
@@ -7103,7 +10103,7 @@ export class EnvVariable extends BaseClient {
   /**
    * A unique identifier for this EnvVariable.
    */
-  id = async (): Promise<EnvVariableID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -7112,7 +10112,7 @@ export class EnvVariable extends BaseClient {
       "id",
     )
 
-    const response: Awaited<EnvVariableID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -7156,10 +10156,8 @@ export class EnvVariable extends BaseClient {
 }
 
 
-
-
 export class Error extends BaseClient {
-  private readonly _id?: ErrorID = undefined
+  private readonly _id?: ID = undefined
   private readonly _message?: string = undefined
 
   /**
@@ -7167,7 +10165,7 @@ export class Error extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ErrorID,
+     _id?: ID,
      _message?: string,
    ) {
      super(ctx)
@@ -7179,7 +10177,7 @@ export class Error extends BaseClient {
   /**
    * A unique identifier for this Error.
    */
-  id = async (): Promise<ErrorID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -7188,7 +10186,7 @@ export class Error extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ErrorID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -7217,7 +10215,7 @@ export class Error extends BaseClient {
    */
   values = async (): Promise<ErrorValue[]> => {
     type values = {
-      id: ErrorValueID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -7255,10 +10253,8 @@ export class Error extends BaseClient {
 }
 
 
-
-
 export class ErrorValue extends BaseClient {
-  private readonly _id?: ErrorValueID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
   private readonly _value?: JSON = undefined
 
@@ -7267,7 +10263,7 @@ export class ErrorValue extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ErrorValueID,
+     _id?: ID,
      _name?: string,
      _value?: JSON,
    ) {
@@ -7281,7 +10277,7 @@ export class ErrorValue extends BaseClient {
   /**
    * A unique identifier for this ErrorValue.
    */
-  id = async (): Promise<ErrorValueID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -7290,7 +10286,7 @@ export class ErrorValue extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ErrorValueID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -7335,20 +10331,18 @@ export class ErrorValue extends BaseClient {
 
 
 
-
-
 /**
  * An object that can be exported to the host.
  * 
  * Calling export writes the object to a path on the host filesystem and returns the path that was written.
  */
 export interface Exportable {
-  id(): Promise<ExportableID>
+  id(): Promise<ID>
   export(path: string): Promise<string>
 }
 
 export class _ExportableClient extends BaseClient {
-  private readonly _id?: ExportableID = undefined
+  private readonly _id?: ID = undefined
   private readonly _export?: string = undefined
 
   /**
@@ -7356,7 +10350,7 @@ export class _ExportableClient extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ExportableID,
+     _id?: ID,
      _export?: string,
    ) {
      super(ctx)
@@ -7364,7 +10358,7 @@ export class _ExportableClient extends BaseClient {
      this._id = _id
      this._export = _export
    }
-  id = async (): Promise<ExportableID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -7373,7 +10367,7 @@ export class _ExportableClient extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ExportableID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -7395,15 +10389,13 @@ export class _ExportableClient extends BaseClient {
   }
 }
 
-
-
 /**
  * A definition of a field on a custom object defined in a Module.
  * 
  * A field on an object has a static value, as opposed to a function on an object whose value is computed by invoking code (and can accept arguments).
  */
 export class FieldTypeDef extends BaseClient {
-  private readonly _id?: FieldTypeDefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _deprecated?: string = undefined
   private readonly _description?: string = undefined
   private readonly _name?: string = undefined
@@ -7413,7 +10405,7 @@ export class FieldTypeDef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: FieldTypeDefID,
+     _id?: ID,
      _deprecated?: string,
      _description?: string,
      _name?: string,
@@ -7429,7 +10421,7 @@ export class FieldTypeDef extends BaseClient {
   /**
    * A unique identifier for this FieldTypeDef.
    */
-  id = async (): Promise<FieldTypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -7438,7 +10430,7 @@ export class FieldTypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<FieldTypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -7501,12 +10493,17 @@ export class FieldTypeDef extends BaseClient {
   /**
    * The location of this field declaration.
    */
-  sourceMap = (): SourceMap => {
-
+  sourceMap = async (): Promise<SourceMap | null> => {
     const ctx = this._ctx.select(
       "sourceMap",
-    )
-    return new SourceMap(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SourceMap(ctx.copy().selectNode(response, "SourceMap"))
   }
 
   /**
@@ -7521,32 +10518,30 @@ export class FieldTypeDef extends BaseClient {
   }
 }
 
-
-
 /**
  * A file.
  */
 export class File extends BaseClient {
-  private readonly _id?: FileID = undefined
+  private readonly _id?: ID = undefined
   private readonly _contents?: string = undefined
   private readonly _digest?: string = undefined
   private readonly _export?: string = undefined
   private readonly _name?: string = undefined
   private readonly _size?: number = undefined
-  private readonly _sync?: FileID = undefined
+  private readonly _sync?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: FileID,
+     _id?: ID,
      _contents?: string,
      _digest?: string,
      _export?: string,
      _name?: string,
      _size?: number,
-     _sync?: FileID,
+     _sync?: ID,
    ) {
      super(ctx)
 
@@ -7562,7 +10557,7 @@ export class File extends BaseClient {
   /**
    * A unique identifier for this File.
    */
-  id = async (): Promise<FileID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -7571,7 +10566,7 @@ export class File extends BaseClient {
       "id",
     )
 
-    const response: Awaited<FileID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -7588,6 +10583,17 @@ export class File extends BaseClient {
       { ...opts },
     )
     return new EnvFile(ctx)
+  }
+
+  /**
+   * Interpret this file as a Git bundle by lazily parsing its header.
+   */
+  asGitBundle = (): GitBundle => {
+
+    const ctx = this._ctx.select(
+      "asGitBundle",
+    )
+    return new GitBundle(ctx)
   }
 
   /**
@@ -7718,7 +10724,7 @@ export class File extends BaseClient {
   search = async (pattern: string, 
     opts?: FileSearchOpts): Promise<SearchResult[]> => {
     type search = {
-      id: SearchResultID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -7753,12 +10759,17 @@ export class File extends BaseClient {
   /**
    * Return file status
    */
-  stat = (): Stat => {
-
+  stat = async (): Promise<Stat | null> => {
     const ctx = this._ctx.select(
       "stat",
-    )
-    return new Stat(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new Stat(ctx.copy().selectNode(response, "Stat"))
   }
 
   /**
@@ -7769,7 +10780,7 @@ export class File extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<FileID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new File(ctx.copy().selectNode(response, "File"))
@@ -7841,17 +10852,13 @@ export class File extends BaseClient {
 
 
 
-
-
-
-
 /**
  * Function represents a resolver provided by a Module.
  * 
  * A function always evaluates against a parent object and is given a set of named arguments.
  */
 export class Function_ extends BaseClient {
-  private readonly _id?: FunctionID = undefined
+  private readonly _id?: ID = undefined
   private readonly _deprecated?: string = undefined
   private readonly _description?: string = undefined
   private readonly _name?: string = undefined
@@ -7862,7 +10869,7 @@ export class Function_ extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: FunctionID,
+     _id?: ID,
      _deprecated?: string,
      _description?: string,
      _name?: string,
@@ -7880,7 +10887,7 @@ export class Function_ extends BaseClient {
   /**
    * A unique identifier for this Function.
    */
-  id = async (): Promise<FunctionID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -7889,7 +10896,7 @@ export class Function_ extends BaseClient {
       "id",
     )
 
-    const response: Awaited<FunctionID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -7900,7 +10907,7 @@ export class Function_ extends BaseClient {
    */
   args = async (): Promise<FunctionArg[]> => {
     type args = {
-      id: FunctionArgID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -7981,12 +10988,17 @@ export class Function_ extends BaseClient {
   /**
    * The location of this function declaration.
    */
-  sourceMap = (): SourceMap => {
-
+  sourceMap = async (): Promise<SourceMap | null> => {
     const ctx = this._ctx.select(
       "sourceMap",
-    )
-    return new SourceMap(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SourceMap(ctx.copy().selectNode(response, "SourceMap"))
   }
 
   /**
@@ -8005,6 +11017,18 @@ export class Function_ extends BaseClient {
 
     
     return response
+  }
+
+  /**
+   * Returns the function with a flag indicating it is an agent middleware.
+   * @experimental
+   */
+  withAgent = (): Function_ => {
+
+    const ctx = this._ctx.select(
+      "withAgent",
+    )
+    return new Function_(ctx)
   }
 
   /**
@@ -8133,7 +11157,7 @@ export class Function_ extends BaseClient {
  * This is a specification for an argument at function definition time, not an argument passed at function call time.
  */
 export class FunctionArg extends BaseClient {
-  private readonly _id?: FunctionArgID = undefined
+  private readonly _id?: ID = undefined
   private readonly _defaultAddress?: string = undefined
   private readonly _defaultPath?: string = undefined
   private readonly _defaultValue?: JSON = undefined
@@ -8146,7 +11170,7 @@ export class FunctionArg extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: FunctionArgID,
+     _id?: ID,
      _defaultAddress?: string,
      _defaultPath?: string,
      _defaultValue?: JSON,
@@ -8168,7 +11192,7 @@ export class FunctionArg extends BaseClient {
   /**
    * A unique identifier for this FunctionArg.
    */
-  id = async (): Promise<FunctionArgID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -8177,7 +11201,7 @@ export class FunctionArg extends BaseClient {
       "id",
     )
 
-    const response: Awaited<FunctionArgID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -8308,12 +11332,17 @@ export class FunctionArg extends BaseClient {
   /**
    * The location of this arg declaration.
    */
-  sourceMap = (): SourceMap => {
-
+  sourceMap = async (): Promise<SourceMap | null> => {
     const ctx = this._ctx.select(
       "sourceMap",
-    )
-    return new SourceMap(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SourceMap(ctx.copy().selectNode(response, "SourceMap"))
   }
 
   /**
@@ -8330,13 +11359,11 @@ export class FunctionArg extends BaseClient {
 
 
 
-
-
 /**
  * An active function call.
  */
 export class FunctionCall extends BaseClient {
-  private readonly _id?: FunctionCallID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
   private readonly _parent?: JSON = undefined
   private readonly _parentName?: string = undefined
@@ -8348,7 +11375,7 @@ export class FunctionCall extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: FunctionCallID,
+     _id?: ID,
      _name?: string,
      _parent?: JSON,
      _parentName?: string,
@@ -8368,7 +11395,7 @@ export class FunctionCall extends BaseClient {
   /**
    * A unique identifier for this FunctionCall.
    */
-  id = async (): Promise<FunctionCallID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -8377,7 +11404,7 @@ export class FunctionCall extends BaseClient {
       "id",
     )
 
-    const response: Awaited<FunctionCallID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -8388,7 +11415,7 @@ export class FunctionCall extends BaseClient {
    */
   inputArgs = async (): Promise<FunctionCallArgValue[]> => {
     type inputArgs = {
-      id: FunctionCallArgValueID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -8498,7 +11525,7 @@ export class FunctionCall extends BaseClient {
  * A value passed as a named argument to a function call.
  */
 export class FunctionCallArgValue extends BaseClient {
-  private readonly _id?: FunctionCallArgValueID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
   private readonly _value?: JSON = undefined
 
@@ -8507,7 +11534,7 @@ export class FunctionCallArgValue extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: FunctionCallArgValueID,
+     _id?: ID,
      _name?: string,
      _value?: JSON,
    ) {
@@ -8521,7 +11548,7 @@ export class FunctionCallArgValue extends BaseClient {
   /**
    * A unique identifier for this FunctionCallArgValue.
    */
-  id = async (): Promise<FunctionCallArgValueID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -8530,7 +11557,7 @@ export class FunctionCallArgValue extends BaseClient {
       "id",
     )
 
-    const response: Awaited<FunctionCallArgValueID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -8573,24 +11600,18 @@ export class FunctionCallArgValue extends BaseClient {
   }
 }
 
-
-
-
-
-
-
 /**
  * The result of running an SDK's codegen.
  */
 export class GeneratedCode extends BaseClient {
-  private readonly _id?: GeneratedCodeID = undefined
+  private readonly _id?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: GeneratedCodeID,
+     _id?: ID,
    ) {
      super(ctx)
 
@@ -8600,7 +11621,7 @@ export class GeneratedCode extends BaseClient {
   /**
    * A unique identifier for this GeneratedCode.
    */
-  id = async (): Promise<GeneratedCodeID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -8609,7 +11630,7 @@ export class GeneratedCode extends BaseClient {
       "id",
     )
 
-    const response: Awaited<GeneratedCodeID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -8688,40 +11709,34 @@ export class GeneratedCode extends BaseClient {
   }
 }
 
-
-
-
-export class Generator extends BaseClient {
-  private readonly _id?: GeneratorID = undefined
-  private readonly _completed?: boolean = undefined
-  private readonly _description?: string = undefined
-  private readonly _isEmpty?: boolean = undefined
-  private readonly _name?: string = undefined
+/**
+ * A Git bundle: a self-describing container of refs and the objects needed to reconstruct them, optionally rooted at prerequisite commits.
+ */
+export class GitBundle extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _objectFormat?: string = undefined
+  private readonly _version?: number = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: GeneratorID,
-     _completed?: boolean,
-     _description?: string,
-     _isEmpty?: boolean,
-     _name?: string,
+     _id?: ID,
+     _objectFormat?: string,
+     _version?: number,
    ) {
      super(ctx)
 
      this._id = _id
-     this._completed = _completed
-     this._description = _description
-     this._isEmpty = _isEmpty
-     this._name = _name
+     this._objectFormat = _objectFormat
+     this._version = _version
    }
 
   /**
-   * A unique identifier for this Generator.
+   * A unique identifier for this GitBundle.
    */
-  id = async (): Promise<GeneratorID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -8730,51 +11745,33 @@ export class Generator extends BaseClient {
       "id",
     )
 
-    const response: Awaited<GeneratorID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * The generated changeset from the last run
+   * Return the bundle bytes as a File.
    */
-  changes = (): Changeset => {
+  asFile = (): File => {
 
     const ctx = this._ctx.select(
-      "changes",
+      "asFile",
     )
-    return new Changeset(ctx)
+    return new File(ctx)
   }
 
   /**
-   * Whether the generator complete
+   * Object format capability: sha1 or sha256.
    */
-  completed = async (): Promise<boolean> => {
-    if (this._completed) {
-      return this._completed
+  objectFormat = async (): Promise<string> => {
+    if (this._objectFormat) {
+      return this._objectFormat
     }
 
     const ctx = this._ctx.select(
-      "completed",
-    )
-
-    const response: Awaited<boolean> = await ctx.execute()
-
-    
-    return response
-  }
-
-  /**
-   * Return the description of the generator
-   */
-  description = async (): Promise<string> => {
-    if (this._description) {
-      return this._description
-    }
-
-    const ctx = this._ctx.select(
-      "description",
+      "objectFormat",
     )
 
     const response: Awaited<string> = await ctx.execute()
@@ -8784,25 +11781,120 @@ export class Generator extends BaseClient {
   }
 
   /**
-   * Whether changeset from the last generator run is empty or not
+   * Commits that must already exist wherever this bundle is applied.
    */
-  isEmpty = async (): Promise<boolean> => {
-    if (this._isEmpty) {
-      return this._isEmpty
-    }
-
+  prerequisiteSHAs = async (): Promise<string[]> => {
     const ctx = this._ctx.select(
-      "isEmpty",
+      "prerequisiteSHAs",
     )
 
-    const response: Awaited<boolean> = await ctx.execute()
+    const response: Awaited<string[]> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * Return the command name of the generator. Entrypoint targets omit the module prefix.
+   * Refs advertised by the bundle and the object IDs they resolve to.
+   */
+  refs = async (): Promise<GitBundleRef[]> => {
+    type refs = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "refs",
+    ).select("id")
+
+    const response: Awaited<refs[]> = await ctx.execute()
+
+    
+    return response.map((r) => new GitBundleRef(ctx.copy().selectNode(r.id, "GitBundleRef")))
+  }
+
+  /**
+   * Perform full structural verification of the bundle and error if it is malformed.
+   */
+  validate = (): GitBundle => {
+
+    const ctx = this._ctx.select(
+      "validate",
+    )
+    return new GitBundle(ctx)
+  }
+
+  /**
+   * Bundle format version (2 or 3).
+   */
+  version = async (): Promise<number> => {
+    if (this._version) {
+      return this._version
+    }
+
+    const ctx = this._ctx.select(
+      "version",
+    )
+
+    const response: Awaited<number> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Call the provided function with current GitBundle.
+   *
+   * This is useful for reusability and readability by not breaking the calling chain.
+   */
+  with = (arg: (param: GitBundle) => GitBundle) => {
+    return arg(this)
+  }
+}
+
+/**
+ * A ref advertised by a Git bundle.
+ */
+export class GitBundleRef extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _name?: string = undefined
+  private readonly _sha?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _name?: string,
+     _sha?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._name = _name
+     this._sha = _sha
+   }
+
+  /**
+   * A unique identifier for this GitBundleRef.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The advertised ref name.
    */
   name = async (): Promise<string> => {
     if (this._name) {
@@ -8820,22 +11912,295 @@ export class Generator extends BaseClient {
   }
 
   /**
-   * The module that defined the generator, or null for an engine-defined generator
+   * The object ID the advertised ref resolves to.
    */
-  originalModule = (): Module_ => {
+  sha = async (): Promise<string> => {
+    if (this._sha) {
+      return this._sha
+    }
 
     const ctx = this._ctx.select(
-      "originalModule",
+      "sha",
     )
-    return new Module_(ctx)
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+/**
+ * An immutable git commit.
+ */
+export class GitCommit extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _authorEmail?: string = undefined
+  private readonly _authorName?: string = undefined
+  private readonly _authoredDate?: string = undefined
+  private readonly _committedDate?: string = undefined
+  private readonly _committerEmail?: string = undefined
+  private readonly _committerName?: string = undefined
+  private readonly _message?: string = undefined
+  private readonly _messageBody?: string = undefined
+  private readonly _messageHeadline?: string = undefined
+  private readonly _sha?: string = undefined
+  private readonly _shortSha?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _authorEmail?: string,
+     _authorName?: string,
+     _authoredDate?: string,
+     _committedDate?: string,
+     _committerEmail?: string,
+     _committerName?: string,
+     _message?: string,
+     _messageBody?: string,
+     _messageHeadline?: string,
+     _sha?: string,
+     _shortSha?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._authorEmail = _authorEmail
+     this._authorName = _authorName
+     this._authoredDate = _authoredDate
+     this._committedDate = _committedDate
+     this._committerEmail = _committerEmail
+     this._committerName = _committerName
+     this._message = _message
+     this._messageBody = _messageBody
+     this._messageHeadline = _messageHeadline
+     this._sha = _sha
+     this._shortSha = _shortSha
+   }
+
+  /**
+   * A unique identifier for this GitCommit.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
   }
 
   /**
-   * The path of the generator within its module
+   * The latest semver release tag reachable from this commit.
+   * @param opts.includePreRelease Include pre-release tags when choosing the latest tag.
    */
-  path = async (): Promise<string[]> => {
+  ancestorReleaseTag = async (
+    opts?: GitCommitAncestorReleaseTagOpts): Promise<GitRef | null> => {
     const ctx = this._ctx.select(
-      "path",
+      "ancestorReleaseTag",
+      { ...opts},
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new GitRef(ctx.copy().selectNode(response, "GitRef"))
+  }
+
+  /**
+   * Git author email.
+   */
+  authorEmail = async (): Promise<string> => {
+    if (this._authorEmail) {
+      return this._authorEmail
+    }
+
+    const ctx = this._ctx.select(
+      "authorEmail",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Git author name.
+   */
+  authorName = async (): Promise<string> => {
+    if (this._authorName) {
+      return this._authorName
+    }
+
+    const ctx = this._ctx.select(
+      "authorName",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Git author date, in RFC3339 format.
+   */
+  authoredDate = async (): Promise<string> => {
+    if (this._authoredDate) {
+      return this._authoredDate
+    }
+
+    const ctx = this._ctx.select(
+      "authoredDate",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Returns the changes from the first parent to this commit, excluding Git metadata.
+   * 
+   * Root commits are compared with an empty tree. Merge commits are compared with their first parent, not a merge base.
+   * @param opts.against Use this commit as the comparison base instead of the first parent. The comparison commit may belong to an unrelated history or repository.
+   */
+  changes = (opts?: GitCommitChangesOpts): Changeset => {
+
+    const ctx = this._ctx.select(
+      "changes",
+      { ...opts },
+    )
+    return new Changeset(ctx)
+  }
+
+  /**
+   * Git committer date, in RFC3339 format.
+   */
+  committedDate = async (): Promise<string> => {
+    if (this._committedDate) {
+      return this._committedDate
+    }
+
+    const ctx = this._ctx.select(
+      "committedDate",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Git committer email.
+   */
+  committerEmail = async (): Promise<string> => {
+    if (this._committerEmail) {
+      return this._committerEmail
+    }
+
+    const ctx = this._ctx.select(
+      "committerEmail",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Git committer name.
+   */
+  committerName = async (): Promise<string> => {
+    if (this._committerName) {
+      return this._committerName
+    }
+
+    const ctx = this._ctx.select(
+      "committerName",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Full commit message.
+   */
+  message = async (): Promise<string> => {
+    if (this._message) {
+      return this._message
+    }
+
+    const ctx = this._ctx.select(
+      "message",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Commit message body, excluding the headline.
+   */
+  messageBody = async (): Promise<string> => {
+    if (this._messageBody) {
+      return this._messageBody
+    }
+
+    const ctx = this._ctx.select(
+      "messageBody",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * First line of the commit message.
+   */
+  messageHeadline = async (): Promise<string> => {
+    if (this._messageHeadline) {
+      return this._messageHeadline
+    }
+
+    const ctx = this._ctx.select(
+      "messageHeadline",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Parent commit SHAs.
+   */
+  parentShas = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "parentShas",
     )
 
     const response: Awaited<string[]> = await ctx.execute()
@@ -8845,49 +12210,112 @@ export class Generator extends BaseClient {
   }
 
   /**
-   * Execute the generator
+   * The latest semver release tag that points directly at this commit.
+   * @param opts.includePreRelease Include pre-release tags when choosing the latest tag.
    */
-  run = (): Generator => {
-
+  releaseTag = async (
+    opts?: GitCommitReleaseTagOpts): Promise<GitRef | null> => {
     const ctx = this._ctx.select(
-      "run",
-    )
-    return new Generator(ctx)
+      "releaseTag",
+      { ...opts},
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new GitRef(ctx.copy().selectNode(response, "GitRef"))
   }
 
   /**
-   * Call the provided function with current Generator.
-   *
-   * This is useful for reusability and readability by not breaking the calling chain.
+   * The full commit SHA.
    */
-  with = (arg: (param: Generator) => Generator) => {
-    return arg(this)
+  sha = async (): Promise<string> => {
+    if (this._sha) {
+      return this._sha
+    }
+
+    const ctx = this._ctx.select(
+      "sha",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The abbreviated commit SHA.
+   */
+  shortSha = async (): Promise<string> => {
+    if (this._shortSha) {
+      return this._shortSha
+    }
+
+    const ctx = this._ctx.select(
+      "shortSha",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The filesystem tree at this commit.
+   * @param opts.discardGitDir Set to true to discard .git directory.
+   * @param opts.depth The depth of the tree to fetch.
+   * @param opts.includeTags Set to true to populate tag refs in the local checkout .git.
+   */
+  tree = (opts?: GitCommitTreeOpts): Directory => {
+
+    const ctx = this._ctx.select(
+      "tree",
+      { ...opts },
+    )
+    return new Directory(ctx)
   }
 }
 
 
-export class GeneratorGroup extends BaseClient {
-  private readonly _id?: GeneratorGroupID = undefined
-  private readonly _isEmpty?: boolean = undefined
+
+/**
+ * A receipt for a completed Git push. Reading or replaying the receipt does not push again.
+ */
+export class GitPushResult extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _disposition?: GitPushDisposition = undefined
+  private readonly _previousSHA?: string = undefined
+  private readonly _ref?: string = undefined
+  private readonly _sha?: string = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: GeneratorGroupID,
-     _isEmpty?: boolean,
+     _id?: ID,
+     _disposition?: GitPushDisposition,
+     _previousSHA?: string,
+     _ref?: string,
+     _sha?: string,
    ) {
      super(ctx)
 
      this._id = _id
-     this._isEmpty = _isEmpty
+     this._disposition = _disposition
+     this._previousSHA = _previousSHA
+     this._ref = _ref
+     this._sha = _sha
    }
 
   /**
-   * A unique identifier for this GeneratorGroup.
+   * A unique identifier for this GitPushResult.
    */
-  id = async (): Promise<GeneratorGroupID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -8896,100 +12324,92 @@ export class GeneratorGroup extends BaseClient {
       "id",
     )
 
-    const response: Awaited<GeneratorGroupID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * The combined changes from the last run of the generators
-   * 
-   * If any conflict occurs, for instance if the same file is modified by multiple generators, or if a file is both modified and deleted, an error is raised and the merge of the changesets will failed.
-   * 
-   * Set 'continueOnConflicts' flag to force to merge the changes in a 'last write wins' strategy.
-   * @param opts.onConflict Strategy to apply on conflicts between generators
+   * How the remote ref was updated.
    */
-  changes = (opts?: GeneratorGroupChangesOpts): Changeset => {
-	const metadata = {
-	    onConflict: { is_enum: true, value_to_name: ChangesetsMergeConflictValueToName },
-	}
-
-
-    const ctx = this._ctx.select(
-      "changes",
-      { ...opts, __metadata: metadata },
-    )
-    return new Changeset(ctx)
-  }
-
-  /**
-   * Whether the generated changeset from the last run is empty or not
-   */
-  isEmpty = async (): Promise<boolean> => {
-    if (this._isEmpty) {
-      return this._isEmpty
+  disposition = async (): Promise<GitPushDisposition> => {
+    if (this._disposition) {
+      return this._disposition
     }
 
     const ctx = this._ctx.select(
-      "isEmpty",
+      "disposition",
     )
 
-    const response: Awaited<boolean> = await ctx.execute()
+    const response: Awaited<GitPushDisposition> = await ctx.execute()
+
+    return GitPushDispositionNameToValue(response)
+  }
+
+  /**
+   * The previous remote object ID; empty when the ref was created.
+   */
+  previousSHA = async (): Promise<string> => {
+    if (this._previousSHA) {
+      return this._previousSHA
+    }
+
+    const ctx = this._ctx.select(
+      "previousSHA",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * Return a list of individual generators and their details
+   * The fully qualified remote ref.
    */
-  list = async (): Promise<Generator[]> => {
-    type list = {
-      id: GeneratorID
+  ref = async (): Promise<string> => {
+    if (this._ref) {
+      return this._ref
     }
 
     const ctx = this._ctx.select(
-      "list",
-    ).select("id")
+      "ref",
+    )
 
-    const response: Awaited<list[]> = await ctx.execute()
+    const response: Awaited<string> = await ctx.execute()
 
     
-    return response.map((r) => new Generator(ctx.copy().selectNode(r.id, "Generator")))
+    return response
   }
 
   /**
-   * Execute all selected generators
+   * The object ID pushed to the remote.
    */
-  run = (): GeneratorGroup => {
+  sha = async (): Promise<string> => {
+    if (this._sha) {
+      return this._sha
+    }
 
     const ctx = this._ctx.select(
-      "run",
+      "sha",
     )
-    return new GeneratorGroup(ctx)
-  }
 
-  /**
-   * Call the provided function with current GeneratorGroup.
-   *
-   * This is useful for reusability and readability by not breaking the calling chain.
-   */
-  with = (arg: (param: GeneratorGroup) => GeneratorGroup) => {
-    return arg(this)
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
   }
 }
-
-
-
-
 
 /**
  * A git ref (tag, branch, or commit).
  */
 export class GitRef extends BaseClient {
-  private readonly _id?: GitRefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _commit?: string = undefined
+  private readonly _commitSHA?: string = undefined
+  private readonly _name?: string = undefined
   private readonly _ref?: string = undefined
 
   /**
@@ -8997,21 +12417,25 @@ export class GitRef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: GitRefID,
+     _id?: ID,
      _commit?: string,
+     _commitSHA?: string,
+     _name?: string,
      _ref?: string,
    ) {
      super(ctx)
 
      this._id = _id
      this._commit = _commit
+     this._commitSHA = _commitSHA
+     this._name = _name
      this._ref = _ref
    }
 
   /**
    * A unique identifier for this GitRef.
    */
-  id = async (): Promise<GitRefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -9020,14 +12444,41 @@ export class GitRef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<GitRefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 
   /**
+   * Return this ref's repository with HEAD pinned to the selected commit.
+   * 
+   * Preserves the original repository backend, connection information, and other refs. Does not modify a branch or checkout, or prune history.
+   */
+  asRepository = (): GitRepository => {
+
+    const ctx = this._ctx.select(
+      "asRepository",
+    )
+    return new GitRepository(ctx)
+  }
+
+  /**
+   * Creates a synthetic workspace from this git ref.
+   * @param opts.cwd Current working directory inside the workspace root. Defaults to the workspace root.
+   */
+  asWorkspace = (opts?: GitRefAsWorkspaceOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "asWorkspace",
+      { ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
    * The resolved commit id at this ref.
+   * @deprecated Use "commitSHA" instead.
    */
   commit = async (): Promise<string> => {
     if (this._commit) {
@@ -9036,6 +12487,24 @@ export class GitRef extends BaseClient {
 
     const ctx = this._ctx.select(
       "commit",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The resolved commit SHA at this ref.
+   */
+  commitSHA = async (): Promise<string> => {
+    if (this._commitSHA) {
+      return this._commitSHA
+    }
+
+    const ctx = this._ctx.select(
+      "commitSHA",
     )
 
     const response: Awaited<string> = await ctx.execute()
@@ -9058,7 +12527,69 @@ export class GitRef extends BaseClient {
   }
 
   /**
+   * Commits reachable from this ref, newest first, starting with the commit this ref resolves to.
+   * @param opts.limit Maximum number of commits to return.
+   * @param opts.paths Only include commits touching these paths, relative to the root of the repository.
+   * @param opts.base Exclude commits reachable from this ref, i.e. only list commits added on top of it.
+   */
+  log = async (
+    opts?: GitRefLogOpts): Promise<GitCommit[]> => {
+    type log = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "log",
+      { ...opts},
+    ).select("id")
+
+    const response: Awaited<log[]> = await ctx.execute()
+
+    
+    return response.map((r) => new GitCommit(ctx.copy().selectNode(r.id, "GitCommit")))
+  }
+
+  /**
+   * The resolved name of this ref.
+   */
+  name = async (): Promise<string> => {
+    if (this._name) {
+      return this._name
+    }
+
+    const ctx = this._ctx.select(
+      "name",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Push this ref's commit and history to a remote repository using the destination's credentials.
+   * 
+   * The source can come from a remote repository or an engine-side Git repository. To publish a workspace's commits, use Workspace.git.head.push. Pushing does not modify the calling client's checkout, and checkout hooks do not run.
+   * 
+   * A missing remote ref is created. Without a lease, Git's normal non-force rules apply. Each invocation performs a push; loading the returned receipt does not push again.
+   * @param opts.to Destination remote repository. Defaults to the origin remote's push routing, or the source's repository URL when none is registered. Required when the source has no remote URL.
+   * @param opts.remote Name of a registered remote to push to (see GitRepository.withRemote). Defaults to origin. The remote's push URLs, or its URL, become the destination; more than one push URL requires an explicit to instead.
+   * @param opts.branch Destination branch; a refs/ prefix is used verbatim. Defaults to this ref's branch name. Required for detached and non-branch refs.
+   * @param opts.expectedRemoteSHA Optional lease: a full lowercase object ID allows replacement only if the remote ref still has that value. Checked even for up-to-date pushes. Empty or omitted uses normal non-force rules, creating the ref if it does not exist.
+   */
+  push = (opts?: GitRefPushOpts): GitPushResult => {
+
+    const ctx = this._ctx.select(
+      "push",
+      { ...opts },
+    )
+    return new GitPushResult(ctx)
+  }
+
+  /**
    * The resolved ref name at this ref.
+   * @deprecated Use "name" instead.
    */
   ref = async (): Promise<string> => {
     if (this._ref) {
@@ -9073,6 +12604,17 @@ export class GitRef extends BaseClient {
 
     
     return response
+  }
+
+  /**
+   * The commit this ref resolves to.
+   */
+  targetCommit = (): GitCommit => {
+
+    const ctx = this._ctx.select(
+      "targetCommit",
+    )
+    return new GitCommit(ctx)
   }
 
   /**
@@ -9091,6 +12633,32 @@ export class GitRef extends BaseClient {
   }
 
   /**
+   * Create a single-parent commit on this ref by applying a changeset's edits.
+   * 
+   * Three-way merges the changeset against this ref's tree, using its before snapshot as the base. Preserves compatible parent edits and fails on conflicts. Does not modify the input repository or host checkout.
+   * 
+   * Identity and dates are explicit; neither client Git configuration nor the current clock is consulted.
+   * @param changes Changes to apply. Use Changeset.filter to select paths before committing.
+   * @param message Commit message.
+   * @param date RFC3339 author date; also the default committer date.
+   * @param authorName Author name.
+   * @param authorEmail Author email.
+   * @param opts.committerName Committer name. Defaults to authorName.
+   * @param opts.committerEmail Committer email. Defaults to authorEmail.
+   * @param opts.committerDate RFC3339 committer date. Defaults to date.
+   * @param opts.allowEmpty Allow a commit whose tree matches its parent, including when the supplied edits are already present. Defaults to false.
+   * @param opts.signoff Add a Signed-off-by trailer using the commit author's name and email.
+   */
+  withCommit = (changes: Changeset, message: string, date: string, authorName: string, authorEmail: string, opts?: GitRefWithCommitOpts): GitRef => {
+
+    const ctx = this._ctx.select(
+      "withCommit",
+      { changes, message, date, authorName, authorEmail, ...opts },
+    )
+    return new GitRef(ctx)
+  }
+
+  /**
    * Call the provided function with current GitRef.
    *
    * This is useful for reusability and readability by not breaking the calling chain.
@@ -9100,13 +12668,11 @@ export class GitRef extends BaseClient {
   }
 }
 
-
-
 /**
  * A git repository.
  */
 export class GitRepository extends BaseClient {
-  private readonly _id?: GitRepositoryID = undefined
+  private readonly _id?: ID = undefined
   private readonly _url?: string = undefined
 
   /**
@@ -9114,7 +12680,7 @@ export class GitRepository extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: GitRepositoryID,
+     _id?: ID,
      _url?: string,
    ) {
      super(ctx)
@@ -9126,7 +12692,7 @@ export class GitRepository extends BaseClient {
   /**
    * A unique identifier for this GitRepository.
    */
-  id = async (): Promise<GitRepositoryID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -9135,10 +12701,25 @@ export class GitRepository extends BaseClient {
       "id",
     )
 
-    const response: Awaited<GitRepositoryID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
+  }
+
+  /**
+   * Creates a synthetic workspace from this repository's HEAD and uncommitted file changes.
+   * 
+   * Pending changes are applied at the repository root. The staging split is not preserved. The source repository is not modified.
+   * @param opts.cwd Current working directory inside the workspace root. Defaults to the workspace root.
+   */
+  asWorkspace = (opts?: GitRepositoryAsWorkspaceOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "asWorkspace",
+      { ...opts },
+    )
+    return new Workspace(ctx)
   }
 
   /**
@@ -9172,16 +12753,32 @@ export class GitRepository extends BaseClient {
   }
 
   /**
+   * Pack the given refs and the objects needed to reconstruct them into a Git bundle.
+   * @param refs Refs to advertise in the bundle. At least one named ref is required.
+   * @param opts.base A Git ref whose reachable objects are omitted and recorded as a prerequisite.
+   */
+  bundle = (refs: string[], opts?: GitRepositoryBundleOpts): GitBundle => {
+
+    const ctx = this._ctx.select(
+      "bundle",
+      { refs, ...opts },
+    )
+    return new GitBundle(ctx)
+  }
+
+  /**
    * Returns details of a commit.
    * @param id Identifier of the commit (e.g., "b6315d8f2810962c601af73f86831f6866ea798b").
+   * 
+   * May be abbreviated to an unambiguous hex prefix (4-40 characters), which is expanded against locally available objects. Remote repositories (resolved via ls-remote) can only expand prefixes of already-fetched commits; use the full SHA otherwise.
    */
-  commit = (id: string): GitRef => {
+  commit = (id: string): GitCommit => {
 
     const ctx = this._ctx.select(
       "commit",
       { id },
     )
-    return new GitRef(ctx)
+    return new GitCommit(ctx)
   }
 
   /**
@@ -9191,6 +12788,21 @@ export class GitRepository extends BaseClient {
 
     const ctx = this._ctx.select(
       "head",
+    )
+    return new GitRef(ctx)
+  }
+
+  /**
+   * Return the latest stable release tag, falling back to HEAD when no release exists.
+   * 
+   * Release selection accepts an optional "v" prefix, incomplete versions, and zero-padded numeric components. This operation is pinned.
+   * @param opts.version Version query used to select the greatest matching release ref.
+   */
+  latest = (opts?: GitRepositoryLatestOpts): GitRef => {
+
+    const ctx = this._ctx.select(
+      "latest",
+      { ...opts },
     )
     return new GitRef(ctx)
   }
@@ -9270,29 +12882,51 @@ export class GitRepository extends BaseClient {
   }
 
   /**
-   * Header to authenticate the remote with.
-   * @param header Secret used to populate the Authorization HTTP header
-   * @deprecated Use "httpAuthHeader" in the constructor instead.
+   * Import a Git bundle after fetching and verifying all of its prerequisites.
+   * @param bundle The Git bundle to import.
+   * @param opts.prerequisiteRef An optional remote ref hint for fetching a prerequisite when the remote does not allow fetches by object ID.
    */
-  withAuthHeader = (header: Secret): GitRepository => {
+  withBundle = (bundle: GitBundle, opts?: GitRepositoryWithBundleOpts): GitRepository => {
 
     const ctx = this._ctx.select(
-      "withAuthHeader",
-      { header },
+      "withBundle",
+      { bundle, ...opts },
     )
     return new GitRepository(ctx)
   }
 
   /**
-   * Token to authenticate the remote with.
-   * @param token Secret used to populate the password during basic HTTP Authorization
-   * @deprecated Use "httpAuthToken" in the constructor instead.
+   * Replace this repository's storage with the supplied self-contained Git repository, retaining its logical URL and push destinations.
+   * 
+   * Accepts a whole checkout (including .git and pending file edits), .git contents, or a bare repository. Does not initialize a repository, merge histories, or modify either input.
+   * 
+   * The receiver's logical routing wins over the supplied Git configuration; that configuration is not rewritten. Use Directory.asGit to open the supplied repository without retaining the receiver's routing.
+   * @param directory Existing Git storage to open. Git metadata and object dependencies must be contained in this directory.
    */
-  withAuthToken = (token: Secret): GitRepository => {
+  withContents = (directory: Directory): GitRepository => {
 
     const ctx = this._ctx.select(
-      "withAuthToken",
-      { token },
+      "withContents",
+      { directory },
+    )
+    return new GitRepository(ctx)
+  }
+
+  /**
+   * Register a named remote on this repository, replacing any registered remote of the same name.
+   * 
+   * Registered remotes are recorded in checkouts materialized from this repository (GitRef.tree, Workspace.git.directory), so remote-aware tooling like gh can resolve and fetch from them. The origin remote also routes push when no explicit destination is passed: its push URL, or its URL, becomes the default destination.
+   * 
+   * Routing metadata only, never a credential grant: pushes still authenticate with the caller's own credentials and require approval as usual.
+   * @param name The remote's name, e.g. "origin" or "upstream".
+   * @param url The remote's fetch URL.
+   * @param opts.pushUrl Push destination, when pushes go somewhere other than url. Empty uses url.
+   */
+  withRemote = (name: string, url: string, opts?: GitRepositoryWithRemoteOpts): GitRepository => {
+
+    const ctx = this._ctx.select(
+      "withRemote",
+      { name, url, ...opts },
     )
     return new GitRepository(ctx)
   }
@@ -9307,13 +12941,48 @@ export class GitRepository extends BaseClient {
   }
 }
 
+/**
+ * An internal persistent HTTP state.
+ */
+export class HTTPState extends BaseClient {
+  private readonly _id?: ID = undefined
 
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+   ) {
+     super(ctx)
+
+     this._id = _id
+   }
+
+  /**
+   * A unique identifier for this HTTPState.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+}
 
 /**
  * Image healthcheck configuration.
  */
 export class HealthcheckConfig extends BaseClient {
-  private readonly _id?: HealthcheckConfigID = undefined
+  private readonly _id?: ID = undefined
   private readonly _interval?: string = undefined
   private readonly _retries?: number = undefined
   private readonly _shell?: boolean = undefined
@@ -9326,7 +12995,7 @@ export class HealthcheckConfig extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: HealthcheckConfigID,
+     _id?: ID,
      _interval?: string,
      _retries?: number,
      _shell?: boolean,
@@ -9348,7 +13017,7 @@ export class HealthcheckConfig extends BaseClient {
   /**
    * A unique identifier for this HealthcheckConfig.
    */
-  id = async (): Promise<HealthcheckConfigID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -9357,7 +13026,7 @@ export class HealthcheckConfig extends BaseClient {
       "id",
     )
 
-    const response: Awaited<HealthcheckConfigID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -9486,13 +13155,11 @@ export class HealthcheckConfig extends BaseClient {
   }
 }
 
-
-
 /**
  * Information about the host environment.
  */
 export class Host extends BaseClient {
-  private readonly _id?: HostID = undefined
+  private readonly _id?: ID = undefined
   private readonly _findUp?: string = undefined
 
   /**
@@ -9500,7 +13167,7 @@ export class Host extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: HostID,
+     _id?: ID,
      _findUp?: string,
    ) {
      super(ctx)
@@ -9512,7 +13179,7 @@ export class Host extends BaseClient {
   /**
    * A unique identifier for this Host.
    */
-  id = async (): Promise<HostID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -9521,7 +13188,7 @@ export class Host extends BaseClient {
       "id",
     )
 
-    const response: Awaited<HostID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -9653,8 +13320,6 @@ export class Host extends BaseClient {
 
 
 
-
-
 /**
  * A graphql input type, which is essentially just a group of named args.
  * This is currently only used to represent pre-existing usage of graphql input types
@@ -9662,7 +13327,7 @@ export class Host extends BaseClient {
  * module accept input objects via their id rather than graphql input types.
  */
 export class InputTypeDef extends BaseClient {
-  private readonly _id?: InputTypeDefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
 
   /**
@@ -9670,7 +13335,7 @@ export class InputTypeDef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: InputTypeDefID,
+     _id?: ID,
      _name?: string,
    ) {
      super(ctx)
@@ -9682,7 +13347,7 @@ export class InputTypeDef extends BaseClient {
   /**
    * A unique identifier for this InputTypeDef.
    */
-  id = async (): Promise<InputTypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -9691,7 +13356,7 @@ export class InputTypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<InputTypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -9702,7 +13367,7 @@ export class InputTypeDef extends BaseClient {
    */
   fields = async (): Promise<FieldTypeDef[]> => {
     type fields = {
-      id: FieldTypeDefID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -9736,13 +13401,11 @@ export class InputTypeDef extends BaseClient {
 
 
 
-
-
 /**
  * A definition of a custom interface defined in a Module.
  */
 export class InterfaceTypeDef extends BaseClient {
-  private readonly _id?: InterfaceTypeDefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _description?: string = undefined
   private readonly _name?: string = undefined
   private readonly _sourceModuleName?: string = undefined
@@ -9752,7 +13415,7 @@ export class InterfaceTypeDef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: InterfaceTypeDefID,
+     _id?: ID,
      _description?: string,
      _name?: string,
      _sourceModuleName?: string,
@@ -9768,7 +13431,7 @@ export class InterfaceTypeDef extends BaseClient {
   /**
    * A unique identifier for this InterfaceTypeDef.
    */
-  id = async (): Promise<InterfaceTypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -9777,7 +13440,7 @@ export class InterfaceTypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<InterfaceTypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -9806,7 +13469,7 @@ export class InterfaceTypeDef extends BaseClient {
    */
   functions = async (): Promise<Function_[]> => {
     type functions = {
-      id: FunctionID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -9840,12 +13503,17 @@ export class InterfaceTypeDef extends BaseClient {
   /**
    * The location of this interface declaration.
    */
-  sourceMap = (): SourceMap => {
-
+  sourceMap = async (): Promise<SourceMap | null> => {
     const ctx = this._ctx.select(
       "sourceMap",
-    )
-    return new SourceMap(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SourceMap(ctx.copy().selectNode(response, "SourceMap"))
   }
 
   /**
@@ -9870,10 +13538,8 @@ export class InterfaceTypeDef extends BaseClient {
 
 
 
-
-
 export class JSONValue extends BaseClient {
-  private readonly _id?: JSONValueID = undefined
+  private readonly _id?: ID = undefined
   private readonly _asBoolean?: boolean = undefined
   private readonly _asInteger?: number = undefined
   private readonly _asString?: string = undefined
@@ -9884,7 +13550,7 @@ export class JSONValue extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: JSONValueID,
+     _id?: ID,
      _asBoolean?: boolean,
      _asInteger?: number,
      _asString?: string,
@@ -9902,7 +13568,7 @@ export class JSONValue extends BaseClient {
   /**
    * A unique identifier for this JSONValue.
    */
-  id = async (): Promise<JSONValueID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -9911,7 +13577,7 @@ export class JSONValue extends BaseClient {
       "id",
     )
 
-    const response: Awaited<JSONValueID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -9922,7 +13588,7 @@ export class JSONValue extends BaseClient {
    */
   asArray = async (): Promise<JSONValue[]> => {
     type asArray = {
-      id: JSONValueID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -10114,45 +13780,67 @@ export class JSONValue extends BaseClient {
   }
 }
 
-
-
 /**
  * A conversation with a large language model (LLM): queue prompts, expose tools, and step the model until it completes its turn.
  */
 export class LLM extends BaseClient {
-  private readonly _id?: LLMID = undefined
+  private readonly _id?: ID = undefined
+  private readonly _contextTokens?: number = undefined
+  private readonly _contextWindow?: number = undefined
+  private readonly _emitHistory?: ID = undefined
+  private readonly _hasPending?: boolean = undefined
   private readonly _lastReply?: string = undefined
   private readonly _model?: string = undefined
+  private readonly _portableID?: ID = undefined
   private readonly _provider?: string = undefined
-  private readonly _sync?: LLMID = undefined
+  private readonly _reasoningEffort?: string = undefined
+  private readonly _spawn?: ID = undefined
+  private readonly _sync?: ID = undefined
   private readonly _tools?: string = undefined
+  private readonly _transcript?: string = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: LLMID,
+     _id?: ID,
+     _contextTokens?: number,
+     _contextWindow?: number,
+     _emitHistory?: ID,
+     _hasPending?: boolean,
      _lastReply?: string,
      _model?: string,
+     _portableID?: ID,
      _provider?: string,
-     _sync?: LLMID,
+     _reasoningEffort?: string,
+     _spawn?: ID,
+     _sync?: ID,
      _tools?: string,
+     _transcript?: string,
    ) {
      super(ctx)
 
      this._id = _id
+     this._contextTokens = _contextTokens
+     this._contextWindow = _contextWindow
+     this._emitHistory = _emitHistory
+     this._hasPending = _hasPending
      this._lastReply = _lastReply
      this._model = _model
+     this._portableID = _portableID
      this._provider = _provider
+     this._reasoningEffort = _reasoningEffort
+     this._spawn = _spawn
      this._sync = _sync
      this._tools = _tools
+     this._transcript = _transcript
    }
 
   /**
    * A unique identifier for this LLM.
    */
-  id = async (): Promise<LLMID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -10161,23 +13849,108 @@ export class LLM extends BaseClient {
       "id",
     )
 
-    const response: Awaited<LLMID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * create a branch in the LLM's history
+   * Reconstruct a spawned agent from its runtime handle.
+   * 
+   * This is the lookup spawn pins its result's identity through: the returned handle's ID is an honest, replayable chain denoting the one instance the spawn minted. It never creates an instance itself.
+   * @param handle The opaque runtime handle minted by the spawn that created the agent.
+   * @param name The agent's display name, as recorded by the spawn.
+   * @experimental
    */
-  attempt = (number_: number): LLM => {
+  agent = (handle: string, name: string): Agent => {
 
     const ctx = this._ctx.select(
-      "attempt",
-      { 
-	        number:number_ },
+      "agent",
+      { handle, name },
+    )
+    return new Agent(ctx)
+  }
+
+  /**
+   * estimated number of tokens currently occupying the context window; unlike tokenUsage this is not cumulative over the session
+   */
+  contextTokens = async (): Promise<number> => {
+    if (this._contextTokens) {
+      return this._contextTokens
+    }
+
+    const ctx = this._ctx.select(
+      "contextTokens",
+    )
+
+    const response: Awaited<number> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The model's total context window in tokens, or null if unknown (e.g. a local or uncatalogued model).
+   */
+  contextWindow = async (): Promise<number> => {
+    if (this._contextWindow) {
+      return this._contextWindow
+    }
+
+    const ctx = this._ctx.select(
+      "contextWindow",
+    )
+
+    const response: Awaited<number> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Re-emit telemetry spans for the full message history, so a loaded conversation displays in the TUI.
+   */
+  emitHistory = async (): Promise<LLM> => {
+    const ctx = this._ctx.select(
+      "emitHistory",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return new LLM(ctx.copy().selectNode(response, "LLM"))
+  }
+
+  /**
+   * Fork the conversation, so that otherwise-identical follow-ups evaluate independently instead of deduplicating to a single cached result.
+   * @param label A label distinguishing this fork from its siblings, e.g. "attempt-2" when retrying a flaky evaluation.
+   */
+  fork = (label: string): LLM => {
+
+    const ctx = this._ctx.select(
+      "fork",
+      { label },
     )
     return new LLM(ctx)
+  }
+
+  /**
+   * Report whether anything is queued to send to the model: an unsent prompt or unevaluated tool results. When true, another step will do work; when false, the turn is complete.
+   */
+  hasPending = async (): Promise<boolean> => {
+    if (this._hasPending) {
+      return this._hasPending
+    }
+
+    const ctx = this._ctx.select(
+      "hasPending",
+    )
+
+    const response: Awaited<boolean> = await ctx.execute()
+
+    
+    return response
   }
 
   /**
@@ -10200,13 +13973,34 @@ export class LLM extends BaseClient {
 
   /**
    * Send the queued prompt and step the model against the available tools, until it ends its turn: a reply with no tool calls and nothing left queued.
+   * @param opts.maxSteps Cap the number of steps. The loop fails if the cap is reached before the model ends its turn.
+   * @param opts.maxTokens Cap the model's output tokens on each step. Defaults to the model's maximum.
    */
-  loop = (): LLM => {
+  loop = (opts?: LLMLoopOpts): LLM => {
 
     const ctx = this._ctx.select(
       "loop",
+      { ...opts },
     )
     return new LLM(ctx)
+  }
+
+  /**
+   * The full message history, as structured messages.
+   */
+  messages = async (): Promise<LLMMessage[]> => {
+    type messages = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "messages",
+    ).select("id")
+
+    const response: Awaited<messages[]> = await ctx.execute()
+
+    
+    return response.map((r) => new LLMMessage(ctx.copy().selectNode(r.id, "LLMMessage")))
   }
 
   /**
@@ -10222,6 +14016,24 @@ export class LLM extends BaseClient {
     )
 
     const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * A portable, self-contained ID for the conversation that node() can resolve in any session. Unlike id, which may return an engine-local runtime handle valid only within the current session, this returns the recipe form suitable for persisting and later restoring the conversation. The recipe is flattened: bindings superseded during the session (workspace overlays recorded by each mutating tool call, and re-bound toolsets) are dropped, while the current workspace binding — including any pending, un-exported edits — is preserved.
+   */
+  portableID = async (): Promise<ID> => {
+    if (this._portableID) {
+      return this._portableID
+    }
+
+    const ctx = this._ctx.select(
+      "portableID",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -10246,12 +14058,87 @@ export class LLM extends BaseClient {
   }
 
   /**
-   * Advance the conversation by a single step: send the queued prompt or tool results to the model, evaluate any tool calls it makes, and queue their results. Use loop to step until the model ends its turn.
+   * The reasoning effort in use, e.g. "low", "medium", or "high". Empty or "none" when reasoning is disabled.
    */
-  step = (): LLM => {
+  reasoningEffort = async (): Promise<string> => {
+    if (this._reasoningEffort) {
+      return this._reasoningEffort
+    }
+
+    const ctx = this._ctx.select(
+      "reasoningEffort",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The skills visible to the model, exactly as the ListSkills tool serves them: engine-embedded skills, skills installed with withSkills, and skills discovered in the workspace.
+   */
+  skills = async (): Promise<LLMSkill[]> => {
+    type skills = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "skills",
+    ).select("id")
+
+    const response: Awaited<skills[]> = await ctx.execute()
+
+    
+    return response.map((r) => new LLMSkill(ctx.copy().selectNode(r.id, "LLMSkill")))
+  }
+
+  /**
+   * Spawn the conversation as an agent: a startable, addressable evaluation loop seeded with this conversation's state, tools, and workspace.
+   * 
+   * Every spawn mints a unique agent instance — two spawns of an identical conversation are two distinct agents, like two calls to a process spawn. The result is pinned to the instance (via the agent lookup field), so re-loading its ID re-addresses the same agent from any request in the session.
+   * 
+   * The loop is not started: the agent spends nothing until it is prompted or resumed, and any input pending on the conversation is stepped then.
+   * 
+   * With a handle, spawn restores an instance instead of minting one: this conversation becomes the committed history of the agent that handle names, so prompting it continues where it left off — rebuild a conversation's ID from a trace, load it, and spawn it under the handle it belonged to. Fails if that instance already has a runtime entry in this session: a restore must happen before anything else addresses the instance, since by then it may have stepped.
+   * @param opts.name Display label for the agent — telemetry and error messages; carries no identity. Defaults to a short name derived from the conversation.
+   * @param opts.handle The runtime handle to restore the instance under, as published on its loop span as dagger.io/agent.id. Omit to mint a fresh instance.
+   * @param opts.state The lifecycle state to create the agent in, as facts on the entry: IDLE is ready to be prompted, PAUSED parks it, FAILED holds an error a resume retries past, STOPPED preserves a dormant snapshot that send or resume can relaunch.
+   * 
+   * RUNNING and WAITING_INPUT are refused: they describe a loop, and a restored loop died with the session that published it — restore such an agent as IDLE, its interrupted turn's input still pending on the conversation.
+   * @param opts.error The loop error to create the agent with, for state FAILED. Refused with any other state.
+   * @experimental
+   */
+  spawn = async (
+    opts?: LLMSpawnOpts): Promise<ID> => {
+    if (this._spawn) {
+      return this._spawn
+    }
+
+	const metadata = {
+	    state: { is_enum: true, value_to_name: AgentStateValueToName },
+	}
+
+    const ctx = this._ctx.select(
+      "spawn",
+      { ...opts, __metadata: metadata},
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Advance the conversation by a single step: send the queued prompt or tool results to the model, evaluate any tool calls it makes, and queue their results. Use loop to step until the model ends its turn.
+   * @param opts.maxTokens Cap the model's output tokens for this step. Defaults to the model's maximum.
+   */
+  step = (opts?: LLMStepOpts): LLM => {
 
     const ctx = this._ctx.select(
       "step",
+      { ...opts },
     )
     return new LLM(ctx)
   }
@@ -10264,7 +14151,7 @@ export class LLM extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<LLMID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new LLM(ctx.copy().selectNode(response, "LLM"))
@@ -10300,6 +14187,52 @@ export class LLM extends BaseClient {
   }
 
   /**
+   * The message history rendered as a plain-text transcript, suitable for feeding back to an LLM (e.g. for summarization).
+   */
+  transcript = async (): Promise<string> => {
+    if (this._transcript) {
+      return this._transcript
+    }
+
+    const ctx = this._ctx.select(
+      "transcript",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Queue one user message containing ordered text and media blocks.
+   * @param content The ordered message content.
+   * @param opts.origin The message's recorded provenance.
+   */
+  withContent = (content: LLMContentBlockInput[], opts?: LLMWithContentOpts): LLM => {
+
+    const ctx = this._ctx.select(
+      "withContent",
+      { content, ...opts },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
+   * Queue an image, audio, or PDF file as one user message. Media bytes are stored in the conversation.
+   * @param file The media file.
+   * @param opts.mimeType The media MIME type; inferred from the file's contents when omitted.
+   */
+  withContentFile = (file: File, opts?: LLMWithContentFileOpts): LLM => {
+
+    const ctx = this._ctx.select(
+      "withContentFile",
+      { file, ...opts },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
    * Add an external MCP server to the LLM
    * @param name The name of the MCP server
    * @param service The MCP service to run and communicate with over stdio
@@ -10316,12 +14249,13 @@ export class LLM extends BaseClient {
   /**
    * Change the model for the rest of the conversation. The message history is preserved; the new model takes effect on the next step.
    * @param model The model to use, e.g. "claude-sonnet-4-5" or "gpt-5.4".
+   * @param opts.provider The provider serving the model, e.g. "openai". Overrides the provider otherwise inferred from the model name — useful when the name matches no known pattern (e.g. a fine-tune), or matches the wrong one.
    */
-  withModel = (model: string): LLM => {
+  withModel = (model: string, opts?: LLMWithModelOpts): LLM => {
 
     const ctx = this._ctx.select(
       "withModel",
-      { model },
+      { model, ...opts },
     )
     return new LLM(ctx)
   }
@@ -10329,12 +14263,13 @@ export class LLM extends BaseClient {
   /**
    * Queue a user prompt, to be sent to the model on the next step or loop.
    * @param prompt The prompt to send
+   * @param opts.origin The message's recorded provenance, when it arrived through an agent mailbox rather than from the user. Rendered to the model as an attribution header at request-build time.
    */
-  withPrompt = (prompt: string): LLM => {
+  withPrompt = (prompt: string, opts?: LLMWithPromptOpts): LLM => {
 
     const ctx = this._ctx.select(
       "withPrompt",
-      { prompt },
+      { prompt, ...opts },
     )
     return new LLM(ctx)
   }
@@ -10353,6 +14288,61 @@ export class LLM extends BaseClient {
   }
 
   /**
+   * Change the reasoning effort for the rest of the conversation, overriding any configured default. The message history is preserved; the new effort takes effect on the next step.
+   * @param effort The reasoning effort, e.g. "low", "medium", or "high"; "none" disables reasoning. Supported levels are model-specific — some models also accept e.g. "minimal", "xhigh", or "max".
+   */
+  withReasoningEffort = (effort: string): LLM => {
+
+    const ctx = this._ctx.select(
+      "withReasoningEffort",
+      { effort },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
+   * Append an assistant response to the message history without calling the model, e.g. to reconstruct a conversation from another source.
+   * @param content The response content
+   * @param opts.inputTokens Uncached input tokens sent
+   * @param opts.outputTokens Tokens received from the model, including text and tool calls
+   * @param opts.cachedTokenReads Cached input tokens read
+   * @param opts.cachedTokenWrites Cached input tokens written
+   * @param opts.totalTokens Total tokens consumed by this response
+   */
+  withResponse = (content: LLMContentBlockInput[], opts?: LLMWithResponseOpts): LLM => {
+
+    const ctx = this._ctx.select(
+      "withResponse",
+      { content, ...opts },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
+   * Install skills from a directory, adding them to the skills the model discovers with ListSkills and reads with ReadSkill. Each skill is a directory containing a SKILL.md with name and description frontmatter, discovered anywhere in the tree. Installed skills take precedence over skills discovered in the workspace, but cannot shadow the engine's built-in skills.
+   * @param directory A directory containing skills, each a subdirectory holding a SKILL.md.
+   */
+  withSkills = (directory: Directory): LLM => {
+
+    const ctx = this._ctx.select(
+      "withSkills",
+      { directory },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
+   * Switch to the configured small model for the current provider, or that provider's recommended default. The message history is preserved; unknown providers without a small-model configuration keep their current model.
+   */
+  withSmallModel = (): LLM => {
+
+    const ctx = this._ctx.select(
+      "withSmallModel",
+    )
+    return new LLM(ctx)
+  }
+
+  /**
    * Add a system prompt, instructing the model across the whole conversation.
    * @param prompt The system prompt to send
    */
@@ -10361,6 +14351,49 @@ export class LLM extends BaseClient {
     const ctx = this._ctx.select(
       "withSystemPrompt",
       { prompt },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
+   * Append the result of a tool call to the message history.
+   * @param callId The ID of the tool call this result responds to
+   * @param content Text returned by the tool, placed before blocks
+   * @param errored Whether the tool call resulted in an error
+   * @param opts.blocks Ordered text and media returned by the tool
+   */
+  withToolResult = (callId: string, content: string, errored: boolean, opts?: LLMWithToolResultOpts): LLM => {
+
+    const ctx = this._ctx.select(
+      "withToolResult",
+      { callId, content, errored, ...opts },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
+   * Expose an object's methods as tools. Every eligible method of the bound object becomes a tool; a tool that returns this object's own type replaces it as the new state. Repeatable to bind several objects.
+   * @param object The object whose methods become tools.
+   * @param opts.except Method names to exclude from the toolset (e.g. constructors, entrypoints).
+   */
+  withTools = (object: Node, opts?: LLMWithToolsOpts): LLM => {
+
+    const ctx = this._ctx.select(
+      "withTools",
+      { object, ...opts },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
+   * Bind the LLM to a workspace, exposing its modules as tools exactly as the Dagger CLI would serve them for that workspace.
+   * @param workspace The workspace to work in.
+   */
+  withWorkspace = (workspace: Workspace): LLM => {
+
+    const ctx = this._ctx.select(
+      "withWorkspace",
+      { workspace },
     )
     return new LLM(ctx)
   }
@@ -10399,6 +14432,17 @@ export class LLM extends BaseClient {
   }
 
   /**
+   * Return the workspace the LLM is bound to.
+   */
+  workspace = (): Workspace => {
+
+    const ctx = this._ctx.select(
+      "workspace",
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
    * Call the provided function with current LLM.
    *
    * This is useful for reusability and readability by not breaking the calling chain.
@@ -10408,13 +14452,574 @@ export class LLM extends BaseClient {
   }
 }
 
+/**
+ * A single piece of content within an LLM message.
+ */
+export class LLMContentBlock extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _arguments?: JSON = undefined
+  private readonly _callId?: string = undefined
+  private readonly _data?: string = undefined
+  private readonly _errored?: boolean = undefined
+  private readonly _kind?: LLMContentBlockKind = undefined
+  private readonly _mimeType?: string = undefined
+  private readonly _signature?: string = undefined
+  private readonly _text?: string = undefined
+  private readonly _toolName?: string = undefined
 
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _arguments?: JSON,
+     _callId?: string,
+     _data?: string,
+     _errored?: boolean,
+     _kind?: LLMContentBlockKind,
+     _mimeType?: string,
+     _signature?: string,
+     _text?: string,
+     _toolName?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._arguments = _arguments
+     this._callId = _callId
+     this._data = _data
+     this._errored = _errored
+     this._kind = _kind
+     this._mimeType = _mimeType
+     this._signature = _signature
+     this._text = _text
+     this._toolName = _toolName
+   }
+
+  /**
+   * A unique identifier for this LLMContentBlock.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The arguments passed to the tool, JSON-encoded (for TOOL_CALL kind).
+   */
+  arguments_ = async (): Promise<JSON> => {
+    if (this._arguments) {
+      return this._arguments
+    }
+
+    const ctx = this._ctx.select(
+      "arguments",
+    )
+
+    const response: Awaited<JSON> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The unique ID of a tool call (for TOOL_CALL or TOOL_RESULT kinds).
+   */
+  callId = async (): Promise<string> => {
+    if (this._callId) {
+      return this._callId
+    }
+
+    const ctx = this._ctx.select(
+      "callId",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Ordered content returned by a tool, following any text (for TOOL_RESULT kind).
+   */
+  content = async (): Promise<LLMContentBlock[]> => {
+    type content = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "content",
+    ).select("id")
+
+    const response: Awaited<content[]> = await ctx.execute()
+
+    
+    return response.map((r) => new LLMContentBlock(ctx.copy().selectNode(r.id, "LLMContentBlock")))
+  }
+
+  /**
+   * Base64-encoded media bytes (for IMAGE, AUDIO, or DOCUMENT kinds).
+   */
+  data = async (): Promise<string> => {
+    if (this._data) {
+      return this._data
+    }
+
+    const ctx = this._ctx.select(
+      "data",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Whether the tool call resulted in an error (for TOOL_RESULT kind).
+   */
+  errored = async (): Promise<boolean> => {
+    if (this._errored) {
+      return this._errored
+    }
+
+    const ctx = this._ctx.select(
+      "errored",
+    )
+
+    const response: Awaited<boolean> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The kind of content block, which determines the other populated fields.
+   */
+  kind = async (): Promise<LLMContentBlockKind> => {
+    if (this._kind) {
+      return this._kind
+    }
+
+    const ctx = this._ctx.select(
+      "kind",
+    )
+
+    const response: Awaited<LLMContentBlockKind> = await ctx.execute()
+
+    return LLMContentBlockKindNameToValue(response)
+  }
+
+  /**
+   * The media MIME type (for IMAGE, AUDIO, or DOCUMENT kinds).
+   */
+  mimeType = async (): Promise<string> => {
+    if (this._mimeType) {
+      return this._mimeType
+    }
+
+    const ctx = this._ctx.select(
+      "mimeType",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Provider-specific opaque data (e.g. Anthropic thinking signature). Preserve it when reconstructing a conversation.
+   */
+  signature = async (): Promise<string> => {
+    if (this._signature) {
+      return this._signature
+    }
+
+    const ctx = this._ctx.select(
+      "signature",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Text content (for TEXT, THINKING, or TOOL_RESULT kinds).
+   */
+  text = async (): Promise<string> => {
+    if (this._text) {
+      return this._text
+    }
+
+    const ctx = this._ctx.select(
+      "text",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The name of the tool called (for TOOL_CALL kind).
+   */
+  toolName = async (): Promise<string> => {
+    if (this._toolName) {
+      return this._toolName
+    }
+
+    const ctx = this._ctx.select(
+      "toolName",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+
+
+
+
+/**
+ * A single message in an LLM conversation.
+ */
+export class LLMMessage extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _role?: LLMMessageRole = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _role?: LLMMessageRole,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._role = _role
+   }
+
+  /**
+   * A unique identifier for this LLMMessage.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The message's content blocks, in the order the model produced them.
+   */
+  content = async (): Promise<LLMContentBlock[]> => {
+    type content = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "content",
+    ).select("id")
+
+    const response: Awaited<content[]> = await ctx.execute()
+
+    
+    return response.map((r) => new LLMContentBlock(ctx.copy().selectNode(r.id, "LLMContentBlock")))
+  }
+
+  /**
+   * Who put this message on the record, when it arrived through an agent mailbox.
+   * 
+   * Null for the user's own prompts and for everything the model or tools produced.
+   * @experimental
+   */
+  origin = async (): Promise<LLMMessageOrigin | null> => {
+    const ctx = this._ctx.select(
+      "origin",
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new LLMMessageOrigin(ctx.copy().selectNode(response, "LLMMessageOrigin"))
+  }
+
+  /**
+   * The role that produced this message.
+   */
+  role = async (): Promise<LLMMessageRole> => {
+    if (this._role) {
+      return this._role
+    }
+
+    const ctx = this._ctx.select(
+      "role",
+    )
+
+    const response: Awaited<LLMMessageRole> = await ctx.execute()
+
+    return LLMMessageRoleNameToValue(response)
+  }
+
+  /**
+   * Token usage reported by the provider for the API call that produced this message; all zeros except on assistant responses.
+   */
+  tokenUsage = (): LLMTokenUsage => {
+
+    const ctx = this._ctx.select(
+      "tokenUsage",
+    )
+    return new LLMTokenUsage(ctx)
+  }
+}
+
+/**
+ * EXPERIMENTAL: Agent APIs are likely to change.
+ * 
+ * The recorded provenance of a message that arrived through an agent mailbox.
+ */
+export class LLMMessageOrigin extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _agentName?: string = undefined
+  private readonly _kind?: LLMMessageOriginKind = undefined
+  private readonly _ref?: string = undefined
+  private readonly _replyTo?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _agentName?: string,
+     _kind?: LLMMessageOriginKind,
+     _ref?: string,
+     _replyTo?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._agentName = _agentName
+     this._kind = _kind
+     this._ref = _ref
+     this._replyTo = _replyTo
+   }
+
+  /**
+   * A unique identifier for this LLMMessageOrigin.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The display name of the sending agent (for AGENT origins) or the observed agent (for EVENT origins).
+   * @experimental
+   */
+  agentName = async (): Promise<string> => {
+    if (this._agentName) {
+      return this._agentName
+    }
+
+    const ctx = this._ctx.select(
+      "agentName",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Who put this message on the record.
+   * @experimental
+   */
+  kind = async (): Promise<LLMMessageOriginKind> => {
+    if (this._kind) {
+      return this._kind
+    }
+
+    const ctx = this._ctx.select(
+      "kind",
+    )
+
+    const response: Awaited<LLMMessageOriginKind> = await ctx.execute()
+
+    return LLMMessageOriginKindNameToValue(response)
+  }
+
+  /**
+   * The message's short ref within the receiving agent's runtime, e.g. "#3": the deterministic token replies name (send's replyTo) and the message lookup takes.
+   * @experimental
+   */
+  ref = async (): Promise<string> => {
+    if (this._ref) {
+      return this._ref
+    }
+
+    const ctx = this._ctx.select(
+      "ref",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The ref of the message this one answers, in the sender's own runtime, if any.
+   * @experimental
+   */
+  replyTo = async (): Promise<string> => {
+    if (this._replyTo) {
+      return this._replyTo
+    }
+
+    const ctx = this._ctx.select(
+      "replyTo",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+
+
+
+
+
+
+/**
+ * A skill available to a model: task-specific guidance discovered with ListSkills and read with ReadSkill.
+ */
+export class LLMSkill extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _description?: string = undefined
+  private readonly _name?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _description?: string,
+     _name?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._description = _description
+     this._name = _name
+   }
+
+  /**
+   * A unique identifier for this LLMSkill.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The one-line description from the SKILL.md frontmatter.
+   */
+  description = async (): Promise<string> => {
+    if (this._description) {
+      return this._description
+    }
+
+    const ctx = this._ctx.select(
+      "description",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The skill name, as passed to ReadSkill.
+   */
+  name = async (): Promise<string> => {
+    if (this._name) {
+      return this._name
+    }
+
+    const ctx = this._ctx.select(
+      "name",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
 
 /**
  * A count of tokens consumed by LLM API calls.
  */
 export class LLMTokenUsage extends BaseClient {
-  private readonly _id?: LLMTokenUsageID = undefined
+  private readonly _id?: ID = undefined
   private readonly _cachedTokenReads?: number = undefined
   private readonly _cachedTokenWrites?: number = undefined
   private readonly _inputTokens?: number = undefined
@@ -10426,7 +15031,7 @@ export class LLMTokenUsage extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: LLMTokenUsageID,
+     _id?: ID,
      _cachedTokenReads?: number,
      _cachedTokenWrites?: number,
      _inputTokens?: number,
@@ -10446,7 +15051,7 @@ export class LLMTokenUsage extends BaseClient {
   /**
    * A unique identifier for this LLMTokenUsage.
    */
-  id = async (): Promise<LLMTokenUsageID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -10455,7 +15060,7 @@ export class LLMTokenUsage extends BaseClient {
       "id",
     )
 
-    const response: Awaited<LLMTokenUsageID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -10552,13 +15157,11 @@ export class LLMTokenUsage extends BaseClient {
   }
 }
 
-
-
 /**
  * A simple key value object that represents a label.
  */
 export class Label extends BaseClient {
-  private readonly _id?: LabelID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
   private readonly _value?: string = undefined
 
@@ -10567,7 +15170,7 @@ export class Label extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: LabelID,
+     _id?: ID,
      _name?: string,
      _value?: string,
    ) {
@@ -10581,7 +15184,7 @@ export class Label extends BaseClient {
   /**
    * A unique identifier for this Label.
    */
-  id = async (): Promise<LabelID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -10590,7 +15193,7 @@ export class Label extends BaseClient {
       "id",
     )
 
-    const response: Awaited<LabelID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -10633,20 +15236,18 @@ export class Label extends BaseClient {
   }
 }
 
-
-
 /**
  * A definition of a list type in a Module.
  */
 export class ListTypeDef extends BaseClient {
-  private readonly _id?: ListTypeDefID = undefined
+  private readonly _id?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: ListTypeDefID,
+     _id?: ID,
    ) {
      super(ctx)
 
@@ -10656,7 +15257,7 @@ export class ListTypeDef extends BaseClient {
   /**
    * A unique identifier for this ListTypeDef.
    */
-  id = async (): Promise<ListTypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -10665,7 +15266,7 @@ export class ListTypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ListTypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -10683,28 +15284,26 @@ export class ListTypeDef extends BaseClient {
   }
 }
 
-
-
 /**
  * A Dagger module.
  */
 export class Module_ extends BaseClient {
-  private readonly _id?: ModuleID = undefined
+  private readonly _id?: ID = undefined
   private readonly _description?: string = undefined
   private readonly _name?: string = undefined
   private readonly _serve?: Void = undefined
-  private readonly _sync?: ModuleID = undefined
+  private readonly _sync?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: ModuleID,
+     _id?: ID,
      _description?: string,
      _name?: string,
      _serve?: Void,
-     _sync?: ModuleID,
+     _sync?: ID,
    ) {
      super(ctx)
 
@@ -10718,7 +15317,7 @@ export class Module_ extends BaseClient {
   /**
    * A unique identifier for this Module.
    */
-  id = async (): Promise<ModuleID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -10727,38 +15326,10 @@ export class Module_ extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ModuleID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
-  }
-
-  /**
-   * Return the check defined by the module with the given name. Must match to exactly one check.
-   * @param name The name of the check to retrieve
-   * @experimental
-   */
-  check = (name: string): Check => {
-
-    const ctx = this._ctx.select(
-      "check",
-      { name },
-    )
-    return new Check(ctx)
-  }
-
-  /**
-   * Return all checks defined by the module
-   * @param opts.include Only include checks matching the specified patterns
-   * @experimental
-   */
-  checks = (opts?: ModuleChecksOpts): CheckGroup => {
-
-    const ctx = this._ctx.select(
-      "checks",
-      { ...opts },
-    )
-    return new CheckGroup(ctx)
   }
 
   /**
@@ -10766,7 +15337,7 @@ export class Module_ extends BaseClient {
    */
   dependencies = async (): Promise<Module_[]> => {
     type dependencies = {
-      id: ModuleID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -10802,7 +15373,7 @@ export class Module_ extends BaseClient {
    */
   enums = async (): Promise<TypeDef[]> => {
     type enums = {
-      id: TypeDefID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -10827,39 +15398,11 @@ export class Module_ extends BaseClient {
   }
 
   /**
-   * Return the generator defined by the module with the given name. Must match to exactly one generator.
-   * @param name The name of the generator to retrieve
-   * @experimental
-   */
-  generator = (name: string): Generator => {
-
-    const ctx = this._ctx.select(
-      "generator",
-      { name },
-    )
-    return new Generator(ctx)
-  }
-
-  /**
-   * Return all generators defined by the module
-   * @param opts.include Only include generators matching the specified patterns
-   * @experimental
-   */
-  generators = (opts?: ModuleGeneratorsOpts): GeneratorGroup => {
-
-    const ctx = this._ctx.select(
-      "generators",
-      { ...opts },
-    )
-    return new GeneratorGroup(ctx)
-  }
-
-  /**
    * Interfaces served by this module.
    */
   interfaces = async (): Promise<TypeDef[]> => {
     type interfaces = {
-      id: TypeDefID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -10910,7 +15453,7 @@ export class Module_ extends BaseClient {
    */
   objects = async (): Promise<TypeDef[]> => {
     type objects = {
-      id: TypeDefID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -10926,23 +15469,33 @@ export class Module_ extends BaseClient {
   /**
    * The container that runs the module's entrypoint. It will fail to execute if the module doesn't compile.
    */
-  runtime = (): Container => {
-
+  runtime = async (): Promise<Container | null> => {
     const ctx = this._ctx.select(
       "runtime",
-    )
-    return new Container(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new Container(ctx.copy().selectNode(response, "Container"))
   }
 
   /**
    * The SDK config used by this module.
    */
-  sdk = (): SDKConfig => {
-
+  sdk = async (): Promise<SDKConfig | null> => {
     const ctx = this._ctx.select(
       "sdk",
-    )
-    return new SDKConfig(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SDKConfig(ctx.copy().selectNode(response, "SDKConfig"))
   }
 
   /**
@@ -10969,28 +15522,19 @@ export class Module_ extends BaseClient {
   }
 
   /**
-   * Return all services defined by the module
-   * @param opts.include Only include services matching the specified patterns
-   * @experimental
-   */
-  services = (opts?: ModuleServicesOpts): UpGroup => {
-
-    const ctx = this._ctx.select(
-      "services",
-      { ...opts },
-    )
-    return new UpGroup(ctx)
-  }
-
-  /**
    * The source for the module.
    */
-  source = (): ModuleSource => {
-
+  source = async (): Promise<ModuleSource | null> => {
     const ctx = this._ctx.select(
       "source",
-    )
-    return new ModuleSource(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new ModuleSource(ctx.copy().selectNode(response, "ModuleSource"))
   }
 
   /**
@@ -11001,7 +15545,7 @@ export class Module_ extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<ModuleID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new Module_(ctx.copy().selectNode(response, "Module"))
@@ -11082,7 +15626,7 @@ export class Module_ extends BaseClient {
  * The client generated for the module.
  */
 export class ModuleConfigClient extends BaseClient {
-  private readonly _id?: ModuleConfigClientID = undefined
+  private readonly _id?: ID = undefined
   private readonly _directory?: string = undefined
   private readonly _generator?: string = undefined
 
@@ -11091,7 +15635,7 @@ export class ModuleConfigClient extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ModuleConfigClientID,
+     _id?: ID,
      _directory?: string,
      _generator?: string,
    ) {
@@ -11105,7 +15649,7 @@ export class ModuleConfigClient extends BaseClient {
   /**
    * A unique identifier for this ModuleConfigClient.
    */
-  id = async (): Promise<ModuleConfigClientID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -11114,7 +15658,7 @@ export class ModuleConfigClient extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ModuleConfigClientID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -11157,15 +15701,11 @@ export class ModuleConfigClient extends BaseClient {
   }
 }
 
-
-
-
-
 /**
  * The source needed to load and run a module, along with any metadata about the source such as versions/urls/etc.
  */
 export class ModuleSource extends BaseClient {
-  private readonly _id?: ModuleSourceID = undefined
+  private readonly _id?: ID = undefined
   private readonly _asString?: string = undefined
   private readonly _cloneRef?: string = undefined
   private readonly _commit?: string = undefined
@@ -11183,7 +15723,7 @@ export class ModuleSource extends BaseClient {
   private readonly _repoRootPath?: string = undefined
   private readonly _sourceRootSubpath?: string = undefined
   private readonly _sourceSubpath?: string = undefined
-  private readonly _sync?: ModuleSourceID = undefined
+  private readonly _sync?: ID = undefined
   private readonly _version?: string = undefined
 
   /**
@@ -11191,7 +15731,7 @@ export class ModuleSource extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ModuleSourceID,
+     _id?: ID,
      _asString?: string,
      _cloneRef?: string,
      _commit?: string,
@@ -11209,7 +15749,7 @@ export class ModuleSource extends BaseClient {
      _repoRootPath?: string,
      _sourceRootSubpath?: string,
      _sourceSubpath?: string,
-     _sync?: ModuleSourceID,
+     _sync?: ID,
      _version?: string,
    ) {
      super(ctx)
@@ -11239,7 +15779,7 @@ export class ModuleSource extends BaseClient {
   /**
    * A unique identifier for this ModuleSource.
    */
-  id = async (): Promise<ModuleSourceID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -11248,7 +15788,7 @@ export class ModuleSource extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ModuleSourceID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -11296,6 +15836,19 @@ export class ModuleSource extends BaseClient {
   }
 
   /**
+   * The client-facing introspection schema JSON file for this module source.
+   * 
+   * This is the schema consumed by client codegen: unlike introspectionSchemaJSON (the module-facing schema), it hides no core types and installs this module (reached via dag.<moduleName>) so a generated client can bind it. The module's dependencies are excluded: a client is generated for a single module plus core, not its dependency graph.
+   */
+  clientSchemaIntrospectionJSON = (): File => {
+
+    const ctx = this._ctx.select(
+      "clientSchemaIntrospectionJSON",
+    )
+    return new File(ctx)
+  }
+
+  /**
    * The ref to clone the root of the git repo from. Only valid for git sources.
    */
   cloneRef = async (): Promise<string> => {
@@ -11336,7 +15889,7 @@ export class ModuleSource extends BaseClient {
    */
   configClients = async (): Promise<ModuleConfigClient[]> => {
     type configClients = {
-      id: ModuleConfigClientID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -11383,7 +15936,7 @@ export class ModuleSource extends BaseClient {
    */
   dependencies = async (): Promise<ModuleSource[]> => {
     type dependencies = {
-      id: ModuleSourceID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -11443,6 +15996,21 @@ export class ModuleSource extends BaseClient {
 
     
     return response
+  }
+
+  /**
+   * Return the supplied workspace with this module's generated context applied.
+   * 
+   * The workspace change baseline is preserved, so a later Workspace.changes call includes this generation together with any other edits made by the caller.
+   * @param workspace The workspace to apply generated files to.
+   */
+  generate = (workspace: Workspace): Workspace => {
+
+    const ctx = this._ctx.select(
+      "generate",
+      { workspace },
+    )
+    return new Workspace(ctx)
   }
 
   /**
@@ -11646,12 +16214,17 @@ export class ModuleSource extends BaseClient {
   /**
    * The SDK configuration of the module.
    */
-  sdk = (): SDKConfig => {
-
+  sdk = async (): Promise<SDKConfig | null> => {
     const ctx = this._ctx.select(
       "sdk",
-    )
-    return new SDKConfig(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SDKConfig(ctx.copy().selectNode(response, "SDKConfig"))
   }
 
   /**
@@ -11698,7 +16271,7 @@ export class ModuleSource extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<ModuleSourceID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new ModuleSource(ctx.copy().selectNode(response, "ModuleSource"))
@@ -11710,7 +16283,7 @@ export class ModuleSource extends BaseClient {
    */
   toolchains = async (): Promise<ModuleSource[]> => {
     type toolchains = {
-      id: ModuleSourceID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -11721,6 +16294,19 @@ export class ModuleSource extends BaseClient {
 
     
     return response.map((r) => new ModuleSource(ctx.copy().selectNode(r.id, "ModuleSource")))
+  }
+
+  /**
+   * The module's dagger.json with any in-memory edits from with* APIs applied, as a diff relative to the source's context directory.
+   * 
+   * Unlike generatedContextDirectory, this does not run codegen and does not validate the engine version against the running engine, so it can be used to declare an engine requirement newer than the running engine. Loading or serving such a module still fails at moduleSource.asModule.
+   */
+  updatedConfigDirectory = (): Directory => {
+
+    const ctx = this._ctx.select(
+      "updatedConfigDirectory",
+    )
+    return new Directory(ctx)
   }
 
   /**
@@ -12018,8 +16604,6 @@ export class ModuleSource extends BaseClient {
 
 
 
-
-
 /**
  * An object with a globally unique ID.
  */
@@ -12061,7 +16645,7 @@ export class _NodeClient extends BaseClient {
  * A definition of a custom object defined in a Module.
  */
 export class ObjectTypeDef extends BaseClient {
-  private readonly _id?: ObjectTypeDefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _deprecated?: string = undefined
   private readonly _description?: string = undefined
   private readonly _name?: string = undefined
@@ -12072,7 +16656,7 @@ export class ObjectTypeDef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ObjectTypeDefID,
+     _id?: ID,
      _deprecated?: string,
      _description?: string,
      _name?: string,
@@ -12090,7 +16674,7 @@ export class ObjectTypeDef extends BaseClient {
   /**
    * A unique identifier for this ObjectTypeDef.
    */
-  id = async (): Promise<ObjectTypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -12099,7 +16683,7 @@ export class ObjectTypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ObjectTypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -12108,12 +16692,17 @@ export class ObjectTypeDef extends BaseClient {
   /**
    * The function used to construct new instances of this object, if any.
    */
-  constructor_ = (): Function_ => {
-
+  constructor_ = async (): Promise<Function_ | null> => {
     const ctx = this._ctx.select(
       "constructor",
-    )
-    return new Function_(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new Function_(ctx.copy().selectNode(response, "Function"))
   }
 
   /**
@@ -12157,7 +16746,7 @@ export class ObjectTypeDef extends BaseClient {
    */
   fields = async (): Promise<FieldTypeDef[]> => {
     type fields = {
-      id: FieldTypeDefID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -12175,7 +16764,7 @@ export class ObjectTypeDef extends BaseClient {
    */
   functions = async (): Promise<Function_[]> => {
     type functions = {
-      id: FunctionID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -12209,12 +16798,17 @@ export class ObjectTypeDef extends BaseClient {
   /**
    * The location of this object declaration.
    */
-  sourceMap = (): SourceMap => {
-
+  sourceMap = async (): Promise<SourceMap | null> => {
     const ctx = this._ctx.select(
       "sourceMap",
-    )
-    return new SourceMap(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new SourceMap(ctx.copy().selectNode(response, "SourceMap"))
   }
 
   /**
@@ -12246,7 +16840,7 @@ export class ObjectTypeDef extends BaseClient {
  * A port exposed by a container.
  */
 export class Port extends BaseClient {
-  private readonly _id?: PortID = undefined
+  private readonly _id?: ID = undefined
   private readonly _description?: string = undefined
   private readonly _experimentalSkipHealthcheck?: boolean = undefined
   private readonly _port?: number = undefined
@@ -12257,7 +16851,7 @@ export class Port extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: PortID,
+     _id?: ID,
      _description?: string,
      _experimentalSkipHealthcheck?: boolean,
      _port?: number,
@@ -12275,7 +16869,7 @@ export class Port extends BaseClient {
   /**
    * A unique identifier for this Port.
    */
-  id = async (): Promise<PortID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -12284,7 +16878,7 @@ export class Port extends BaseClient {
       "id",
     )
 
-    const response: Awaited<PortID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -12364,14 +16958,14 @@ export class Port extends BaseClient {
 
 
 
-
-
 /**
  * The root of the DAG.
  */
 export class Client extends BaseClient {
-  private readonly _id?: QueryID = undefined
+  private readonly _id?: ID = undefined
+  private readonly _currentTimestamp?: string = undefined
   private readonly _defaultPlatform?: Platform = undefined
+  private readonly _serveModule?: Void = undefined
   private readonly _version?: string = undefined
 
   /**
@@ -12379,14 +16973,18 @@ export class Client extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: QueryID,
+     _id?: ID,
+     _currentTimestamp?: string,
      _defaultPlatform?: Platform,
+     _serveModule?: Void,
      _version?: string,
    ) {
      super(ctx)
 
      this._id = _id
+     this._currentTimestamp = _currentTimestamp
      this._defaultPlatform = _defaultPlatform
+     this._serveModule = _serveModule
      this._version = _version
    }
 
@@ -12400,19 +16998,19 @@ export class Client extends BaseClient {
   /**
    * A unique identifier for this Query.
    */
-  id = async (): Promise<QueryID> => {
+  id = async (): Promise<ID> => {
     const ctx = this._ctx.select(
       "id",
     )
 
-    const response: Awaited<QueryID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * initialize an address to load directories, containers, secrets or other object types.
+   * Resolve external references only.
    */
   address = (value: string): Address => {
 
@@ -12424,14 +17022,40 @@ export class Client extends BaseClient {
   }
 
   /**
+   * Creates a file from arbitrary binary contents.
+   * @param name Name of the new file. Example: "archive.tar"
+   * @param contents Binary contents of the new file, encoded as base64 at the GraphQL boundary.
+   * @param opts.permissions Permissions of the new file. Example: 0600
+   */
+  blob = (name: string, contents: Bytes, opts?: ClientBlobOpts): File => {
+
+    const ctx = this._ctx.select(
+      "blob",
+      { name, contents, ...opts },
+    )
+    return new File(ctx)
+  }
+
+  /**
    * Constructs a cache volume for a given cache key.
    * @param key A string identifier to target this cache volume (e.g., "modules-cache").
+   * @param opts.source Identifier of the directory to use as the cache volume's root.
+   * @param opts.sharing Sharing mode of the cache volume.
+   * @param opts.owner A user:group to set for the cache volume root.
+   * 
+   * The user and group can either be an ID (1000:1000) or a name (foo:bar).
+   * 
+   * If the group is omitted, it defaults to the same as the user.
    */
-  cacheVolume = (key: string): CacheVolume => {
+  cacheVolume = (key: string, opts?: ClientCacheVolumeOpts): CacheVolume => {
+	const metadata = {
+	    sharing: { is_enum: true, value_to_name: CacheSharingModeValueToName },
+	}
+
 
     const ctx = this._ctx.select(
       "cacheVolume",
-      { key },
+      { key, ...opts, __metadata: metadata },
     )
     return new CacheVolume(ctx)
   }
@@ -12498,7 +17122,33 @@ export class Client extends BaseClient {
   }
 
   /**
+   * The object that received the current module function call, as a Node. Errors when there is no current call, or the call is top-level (e.g. a module constructor).
+   */
+  currentNode = (): Node => {
+
+    const ctx = this._ctx.select(
+      "currentNode",
+    )
+    return new _NodeClient(ctx)
+  }
+
+  /**
+   * The current UTC time in RFC3339 format. Never cached.
+   */
+  currentTimestamp = async (): Promise<string> => {
+    const ctx = this._ctx.select(
+      "currentTimestamp",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
    * The TypeDef representations of the objects currently being served in the session.
+   * @param opts.returnAllTypes Return the full referenced typedef closure instead of only top-level served typedefs.
    * @param opts.hideCore Strip core API functions from the Query type, leaving only module-sourced functions (constructors, entrypoint proxies, etc.).
    * 
    * Core types (Container, Directory, etc.) are kept so return types and method chaining still work.
@@ -12506,7 +17156,7 @@ export class Client extends BaseClient {
   currentTypeDefs = async (
     opts?: ClientCurrentTypeDefsOpts): Promise<TypeDef[]> => {
     type currentTypeDefs = {
-      id: TypeDefID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -12566,6 +17216,20 @@ export class Client extends BaseClient {
       "engine",
     )
     return new Engine(ctx)
+  }
+
+  /**
+   * Constructs an engine-managed volume backed by operator-provided storage beneath the configured engine state root.
+   * @param name Canonical slash-separated volume name beneath the engine volume namespace.
+   * @param opts.subdir Optional existing subdirectory within the volume payload to mount.
+   */
+  engineVolume = (name: string, opts?: ClientEngineVolumeOpts): Volume => {
+
+    const ctx = this._ctx.select(
+      "engineVolume",
+      { name, ...opts },
+    )
+    return new Volume(ctx)
   }
 
   /**
@@ -12675,6 +17339,7 @@ export class Client extends BaseClient {
    * @param url HTTP url to get the content from (e.g., "https://docs.dagger.io").
    * @param opts.name File name to use for the file. Defaults to the last part of the URL.
    * @param opts.permissions Permissions to set on the file.
+   * @param opts.checksum Expected digest of the downloaded content (e.g., "sha256:...").
    * @param opts.authHeader Secret used to populate the Authorization HTTP header
    * @param opts.experimentalServiceHost A service which must be started before the URL is fetched.
    */
@@ -12701,7 +17366,7 @@ export class Client extends BaseClient {
   /**
    * Initialize a new LLM conversation.
    * @param opts.model The model to converse with, e.g. "claude-sonnet-4-5" or "gpt-5.4". Defaults to the configured default model.
-   * @param opts.maxAPICalls Cap the number of API calls for this LLM
+   * @param opts.provider The provider serving the model, e.g. "openai". Overrides the provider otherwise inferred from the model name — useful when the name matches no known pattern (e.g. a fine-tune), or matches the wrong one.
    * @experimental
    */
   llm = (opts?: ClientLLMOpts): LLM => {
@@ -12711,750 +17376,6 @@ export class Client extends BaseClient {
       { ...opts },
     )
     return new LLM(ctx)
-  }
-
-  /**
-   * Load a Address from its ID.
-   */
-  loadAddressFromID = (id: AddressID): Address => {
-
-    const ctx = this._ctx.select(
-      "loadAddressFromID",
-      { id },
-    )
-    return new Address(ctx)
-  }
-
-  /**
-   * Load a CacheVolume from its ID.
-   */
-  loadCacheVolumeFromID = (id: CacheVolumeID): CacheVolume => {
-
-    const ctx = this._ctx.select(
-      "loadCacheVolumeFromID",
-      { id },
-    )
-    return new CacheVolume(ctx)
-  }
-
-  /**
-   * Load a Changeset from its ID.
-   */
-  loadChangesetFromID = (id: ChangesetID): Changeset => {
-
-    const ctx = this._ctx.select(
-      "loadChangesetFromID",
-      { id },
-    )
-    return new Changeset(ctx)
-  }
-
-  /**
-   * Load a Check from its ID.
-   */
-  loadCheckFromID = (id: CheckID): Check => {
-
-    const ctx = this._ctx.select(
-      "loadCheckFromID",
-      { id },
-    )
-    return new Check(ctx)
-  }
-
-  /**
-   * Load a CheckGroup from its ID.
-   */
-  loadCheckGroupFromID = (id: CheckGroupID): CheckGroup => {
-
-    const ctx = this._ctx.select(
-      "loadCheckGroupFromID",
-      { id },
-    )
-    return new CheckGroup(ctx)
-  }
-
-  /**
-   * Load a Cloud from its ID.
-   */
-  loadCloudFromID = (id: CloudID): Cloud => {
-
-    const ctx = this._ctx.select(
-      "loadCloudFromID",
-      { id },
-    )
-    return new Cloud(ctx)
-  }
-
-  /**
-   * Load a Container from its ID.
-   */
-  loadContainerFromID = (id: ContainerID): Container => {
-
-    const ctx = this._ctx.select(
-      "loadContainerFromID",
-      { id },
-    )
-    return new Container(ctx)
-  }
-
-  /**
-   * Load a CurrentModule from its ID.
-   */
-  loadCurrentModuleFromID = (id: CurrentModuleID): CurrentModule => {
-
-    const ctx = this._ctx.select(
-      "loadCurrentModuleFromID",
-      { id },
-    )
-    return new CurrentModule(ctx)
-  }
-
-  /**
-   * Load a DiffStat from its ID.
-   */
-  loadDiffStatFromID = (id: DiffStatID): DiffStat => {
-
-    const ctx = this._ctx.select(
-      "loadDiffStatFromID",
-      { id },
-    )
-    return new DiffStat(ctx)
-  }
-
-  /**
-   * Load a Directory from its ID.
-   */
-  loadDirectoryFromID = (id: DirectoryID): Directory => {
-
-    const ctx = this._ctx.select(
-      "loadDirectoryFromID",
-      { id },
-    )
-    return new Directory(ctx)
-  }
-
-  /**
-   * Load a EngineCacheEntry from its ID.
-   */
-  loadEngineCacheEntryFromID = (id: EngineCacheEntryID): EngineCacheEntry => {
-
-    const ctx = this._ctx.select(
-      "loadEngineCacheEntryFromID",
-      { id },
-    )
-    return new EngineCacheEntry(ctx)
-  }
-
-  /**
-   * Load a EngineCacheEntrySet from its ID.
-   */
-  loadEngineCacheEntrySetFromID = (id: EngineCacheEntrySetID): EngineCacheEntrySet => {
-
-    const ctx = this._ctx.select(
-      "loadEngineCacheEntrySetFromID",
-      { id },
-    )
-    return new EngineCacheEntrySet(ctx)
-  }
-
-  /**
-   * Load a EngineCache from its ID.
-   */
-  loadEngineCacheFromID = (id: EngineCacheID): EngineCache => {
-
-    const ctx = this._ctx.select(
-      "loadEngineCacheFromID",
-      { id },
-    )
-    return new EngineCache(ctx)
-  }
-
-  /**
-   * Load a Engine from its ID.
-   */
-  loadEngineFromID = (id: EngineID): Engine => {
-
-    const ctx = this._ctx.select(
-      "loadEngineFromID",
-      { id },
-    )
-    return new Engine(ctx)
-  }
-
-  /**
-   * Load a EnumTypeDef from its ID.
-   */
-  loadEnumTypeDefFromID = (id: EnumTypeDefID): EnumTypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadEnumTypeDefFromID",
-      { id },
-    )
-    return new EnumTypeDef(ctx)
-  }
-
-  /**
-   * Load a EnumValueTypeDef from its ID.
-   */
-  loadEnumValueTypeDefFromID = (id: EnumValueTypeDefID): EnumValueTypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadEnumValueTypeDefFromID",
-      { id },
-    )
-    return new EnumValueTypeDef(ctx)
-  }
-
-  /**
-   * Load a EnvFile from its ID.
-   */
-  loadEnvFileFromID = (id: EnvFileID): EnvFile => {
-
-    const ctx = this._ctx.select(
-      "loadEnvFileFromID",
-      { id },
-    )
-    return new EnvFile(ctx)
-  }
-
-  /**
-   * Load a EnvVariable from its ID.
-   */
-  loadEnvVariableFromID = (id: EnvVariableID): EnvVariable => {
-
-    const ctx = this._ctx.select(
-      "loadEnvVariableFromID",
-      { id },
-    )
-    return new EnvVariable(ctx)
-  }
-
-  /**
-   * Load a Error from its ID.
-   */
-  loadErrorFromID = (id: ErrorID): Error => {
-
-    const ctx = this._ctx.select(
-      "loadErrorFromID",
-      { id },
-    )
-    return new Error(ctx)
-  }
-
-  /**
-   * Load a ErrorValue from its ID.
-   */
-  loadErrorValueFromID = (id: ErrorValueID): ErrorValue => {
-
-    const ctx = this._ctx.select(
-      "loadErrorValueFromID",
-      { id },
-    )
-    return new ErrorValue(ctx)
-  }
-
-  /**
-   * Load a Exportable from its ID.
-   */
-  loadExportableFromID = (id: ExportableID): Exportable => {
-
-    const ctx = this._ctx.select(
-      "loadExportableFromID",
-      { id },
-    )
-    return new _ExportableClient(ctx)
-  }
-
-  /**
-   * Load a FieldTypeDef from its ID.
-   */
-  loadFieldTypeDefFromID = (id: FieldTypeDefID): FieldTypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadFieldTypeDefFromID",
-      { id },
-    )
-    return new FieldTypeDef(ctx)
-  }
-
-  /**
-   * Load a File from its ID.
-   */
-  loadFileFromID = (id: FileID): File => {
-
-    const ctx = this._ctx.select(
-      "loadFileFromID",
-      { id },
-    )
-    return new File(ctx)
-  }
-
-  /**
-   * Load a Frontend from its ID.
-   */
-  loadFrontendFromID = (id: FrontendID): Frontend => {
-
-    const ctx = this._ctx.select(
-      "loadFrontendFromID",
-      { id },
-    )
-    return new Frontend(ctx)
-  }
-
-  /**
-   * Load a FunctionArg from its ID.
-   */
-  loadFunctionArgFromID = (id: FunctionArgID): FunctionArg => {
-
-    const ctx = this._ctx.select(
-      "loadFunctionArgFromID",
-      { id },
-    )
-    return new FunctionArg(ctx)
-  }
-
-  /**
-   * Load a FunctionCallArgValue from its ID.
-   */
-  loadFunctionCallArgValueFromID = (id: FunctionCallArgValueID): FunctionCallArgValue => {
-
-    const ctx = this._ctx.select(
-      "loadFunctionCallArgValueFromID",
-      { id },
-    )
-    return new FunctionCallArgValue(ctx)
-  }
-
-  /**
-   * Load a FunctionCall from its ID.
-   */
-  loadFunctionCallFromID = (id: FunctionCallID): FunctionCall => {
-
-    const ctx = this._ctx.select(
-      "loadFunctionCallFromID",
-      { id },
-    )
-    return new FunctionCall(ctx)
-  }
-
-  /**
-   * Load a Function from its ID.
-   */
-  loadFunctionFromID = (id: FunctionID): Function_ => {
-
-    const ctx = this._ctx.select(
-      "loadFunctionFromID",
-      { id },
-    )
-    return new Function_(ctx)
-  }
-
-  /**
-   * Load a GeneratedCode from its ID.
-   */
-  loadGeneratedCodeFromID = (id: GeneratedCodeID): GeneratedCode => {
-
-    const ctx = this._ctx.select(
-      "loadGeneratedCodeFromID",
-      { id },
-    )
-    return new GeneratedCode(ctx)
-  }
-
-  /**
-   * Load a Generator from its ID.
-   */
-  loadGeneratorFromID = (id: GeneratorID): Generator => {
-
-    const ctx = this._ctx.select(
-      "loadGeneratorFromID",
-      { id },
-    )
-    return new Generator(ctx)
-  }
-
-  /**
-   * Load a GeneratorGroup from its ID.
-   */
-  loadGeneratorGroupFromID = (id: GeneratorGroupID): GeneratorGroup => {
-
-    const ctx = this._ctx.select(
-      "loadGeneratorGroupFromID",
-      { id },
-    )
-    return new GeneratorGroup(ctx)
-  }
-
-  /**
-   * Load a GitRef from its ID.
-   */
-  loadGitRefFromID = (id: GitRefID): GitRef => {
-
-    const ctx = this._ctx.select(
-      "loadGitRefFromID",
-      { id },
-    )
-    return new GitRef(ctx)
-  }
-
-  /**
-   * Load a GitRepository from its ID.
-   */
-  loadGitRepositoryFromID = (id: GitRepositoryID): GitRepository => {
-
-    const ctx = this._ctx.select(
-      "loadGitRepositoryFromID",
-      { id },
-    )
-    return new GitRepository(ctx)
-  }
-
-  /**
-   * Load a HealthcheckConfig from its ID.
-   */
-  loadHealthcheckConfigFromID = (id: HealthcheckConfigID): HealthcheckConfig => {
-
-    const ctx = this._ctx.select(
-      "loadHealthcheckConfigFromID",
-      { id },
-    )
-    return new HealthcheckConfig(ctx)
-  }
-
-  /**
-   * Load a Host from its ID.
-   */
-  loadHostFromID = (id: HostID): Host => {
-
-    const ctx = this._ctx.select(
-      "loadHostFromID",
-      { id },
-    )
-    return new Host(ctx)
-  }
-
-  /**
-   * Load a InputTypeDef from its ID.
-   */
-  loadInputTypeDefFromID = (id: InputTypeDefID): InputTypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadInputTypeDefFromID",
-      { id },
-    )
-    return new InputTypeDef(ctx)
-  }
-
-  /**
-   * Load a InterfaceTypeDef from its ID.
-   */
-  loadInterfaceTypeDefFromID = (id: InterfaceTypeDefID): InterfaceTypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadInterfaceTypeDefFromID",
-      { id },
-    )
-    return new InterfaceTypeDef(ctx)
-  }
-
-  /**
-   * Load a JSONValue from its ID.
-   */
-  loadJSONValueFromID = (id: JSONValueID): JSONValue => {
-
-    const ctx = this._ctx.select(
-      "loadJSONValueFromID",
-      { id },
-    )
-    return new JSONValue(ctx)
-  }
-
-  /**
-   * Load a LLM from its ID.
-   */
-  loadLLMFromID = (id: LLMID): LLM => {
-
-    const ctx = this._ctx.select(
-      "loadLLMFromID",
-      { id },
-    )
-    return new LLM(ctx)
-  }
-
-  /**
-   * Load a LLMTokenUsage from its ID.
-   */
-  loadLLMTokenUsageFromID = (id: LLMTokenUsageID): LLMTokenUsage => {
-
-    const ctx = this._ctx.select(
-      "loadLLMTokenUsageFromID",
-      { id },
-    )
-    return new LLMTokenUsage(ctx)
-  }
-
-  /**
-   * Load a Label from its ID.
-   */
-  loadLabelFromID = (id: LabelID): Label => {
-
-    const ctx = this._ctx.select(
-      "loadLabelFromID",
-      { id },
-    )
-    return new Label(ctx)
-  }
-
-  /**
-   * Load a ListTypeDef from its ID.
-   */
-  loadListTypeDefFromID = (id: ListTypeDefID): ListTypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadListTypeDefFromID",
-      { id },
-    )
-    return new ListTypeDef(ctx)
-  }
-
-  /**
-   * Load a ModuleConfigClient from its ID.
-   */
-  loadModuleConfigClientFromID = (id: ModuleConfigClientID): ModuleConfigClient => {
-
-    const ctx = this._ctx.select(
-      "loadModuleConfigClientFromID",
-      { id },
-    )
-    return new ModuleConfigClient(ctx)
-  }
-
-  /**
-   * Load a Module from its ID.
-   */
-  loadModuleFromID = (id: ModuleID): Module_ => {
-
-    const ctx = this._ctx.select(
-      "loadModuleFromID",
-      { id },
-    )
-    return new Module_(ctx)
-  }
-
-  /**
-   * Load a ModuleSource from its ID.
-   */
-  loadModuleSourceFromID = (id: ModuleSourceID): ModuleSource => {
-
-    const ctx = this._ctx.select(
-      "loadModuleSourceFromID",
-      { id },
-    )
-    return new ModuleSource(ctx)
-  }
-
-  /**
-   * Load a ObjectTypeDef from its ID.
-   */
-  loadObjectTypeDefFromID = (id: ObjectTypeDefID): ObjectTypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadObjectTypeDefFromID",
-      { id },
-    )
-    return new ObjectTypeDef(ctx)
-  }
-
-  /**
-   * Load a Port from its ID.
-   */
-  loadPortFromID = (id: PortID): Port => {
-
-    const ctx = this._ctx.select(
-      "loadPortFromID",
-      { id },
-    )
-    return new Port(ctx)
-  }
-
-  /**
-   * Load a SDKConfig from its ID.
-   */
-  loadSDKConfigFromID = (id: SDKConfigID): SDKConfig => {
-
-    const ctx = this._ctx.select(
-      "loadSDKConfigFromID",
-      { id },
-    )
-    return new SDKConfig(ctx)
-  }
-
-  /**
-   * Load a ScalarTypeDef from its ID.
-   */
-  loadScalarTypeDefFromID = (id: ScalarTypeDefID): ScalarTypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadScalarTypeDefFromID",
-      { id },
-    )
-    return new ScalarTypeDef(ctx)
-  }
-
-  /**
-   * Load a SearchResult from its ID.
-   */
-  loadSearchResultFromID = (id: SearchResultID): SearchResult => {
-
-    const ctx = this._ctx.select(
-      "loadSearchResultFromID",
-      { id },
-    )
-    return new SearchResult(ctx)
-  }
-
-  /**
-   * Load a SearchSubmatch from its ID.
-   */
-  loadSearchSubmatchFromID = (id: SearchSubmatchID): SearchSubmatch => {
-
-    const ctx = this._ctx.select(
-      "loadSearchSubmatchFromID",
-      { id },
-    )
-    return new SearchSubmatch(ctx)
-  }
-
-  /**
-   * Load a Secret from its ID.
-   */
-  loadSecretFromID = (id: SecretID): Secret => {
-
-    const ctx = this._ctx.select(
-      "loadSecretFromID",
-      { id },
-    )
-    return new Secret(ctx)
-  }
-
-  /**
-   * Load a Service from its ID.
-   */
-  loadServiceFromID = (id: ServiceID): Service => {
-
-    const ctx = this._ctx.select(
-      "loadServiceFromID",
-      { id },
-    )
-    return new Service(ctx)
-  }
-
-  /**
-   * Load a Socket from its ID.
-   */
-  loadSocketFromID = (id: SocketID): Socket => {
-
-    const ctx = this._ctx.select(
-      "loadSocketFromID",
-      { id },
-    )
-    return new Socket(ctx)
-  }
-
-  /**
-   * Load a SourceMap from its ID.
-   */
-  loadSourceMapFromID = (id: SourceMapID): SourceMap => {
-
-    const ctx = this._ctx.select(
-      "loadSourceMapFromID",
-      { id },
-    )
-    return new SourceMap(ctx)
-  }
-
-  /**
-   * Load a Stat from its ID.
-   */
-  loadStatFromID = (id: StatID): Stat => {
-
-    const ctx = this._ctx.select(
-      "loadStatFromID",
-      { id },
-    )
-    return new Stat(ctx)
-  }
-
-  /**
-   * Load a Syncer from its ID.
-   */
-  loadSyncerFromID = (id: SyncerID): Syncer => {
-
-    const ctx = this._ctx.select(
-      "loadSyncerFromID",
-      { id },
-    )
-    return new _SyncerClient(ctx)
-  }
-
-  /**
-   * Load a Terminal from its ID.
-   */
-  loadTerminalFromID = (id: TerminalID): Terminal => {
-
-    const ctx = this._ctx.select(
-      "loadTerminalFromID",
-      { id },
-    )
-    return new Terminal(ctx)
-  }
-
-  /**
-   * Load a TypeDef from its ID.
-   */
-  loadTypeDefFromID = (id: TypeDefID): TypeDef => {
-
-    const ctx = this._ctx.select(
-      "loadTypeDefFromID",
-      { id },
-    )
-    return new TypeDef(ctx)
-  }
-
-  /**
-   * Load a Up from its ID.
-   */
-  loadUpFromID = (id: UpID): Up => {
-
-    const ctx = this._ctx.select(
-      "loadUpFromID",
-      { id },
-    )
-    return new Up(ctx)
-  }
-
-  /**
-   * Load a UpGroup from its ID.
-   */
-  loadUpGroupFromID = (id: UpGroupID): UpGroup => {
-
-    const ctx = this._ctx.select(
-      "loadUpGroupFromID",
-      { id },
-    )
-    return new UpGroup(ctx)
-  }
-
-  /**
-   * Load a Workspace from its ID.
-   */
-  loadWorkspaceFromID = (id: WorkspaceID): Workspace => {
-
-    const ctx = this._ctx.select(
-      "loadWorkspaceFromID",
-      { id },
-    )
-    return new Workspace(ctx)
   }
 
   /**
@@ -13471,6 +17392,7 @@ export class Client extends BaseClient {
   /**
    * Create a new module source instance from a source ref string
    * @param refString The string ref representation of the module source
+   * @param opts.version Version query for a Git module source.
    * @param opts.refPin The pinned version of the module source
    * @param opts.disableFindUp If true, do not attempt to find a module config file in a parent directory of the provided path. Only relevant for local module sources.
    * @param opts.allowNotExists If true, do not error out if the provided ref string is a local path and does not exist yet. Useful when initializing new modules in directories that don't exist yet.
@@ -13492,13 +17414,31 @@ export class Client extends BaseClient {
   /**
    * Load any object by its ID.
    */
-  node = (id: ID): Node => {
-
+  node = async (id: ID): Promise<Node | null> => {
     const ctx = this._ctx.select(
       "node",
-      { id },
+      { id},
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new _NodeClient(ctx.copy().selectNode(response, "Node"))
+  }
+
+  /**
+   * Load a GraphQL introspection schema for merging.
+   * @param json The introspection schema JSON to load.
+   */
+  schema = (json: JSON): Schema => {
+
+    const ctx = this._ctx.select(
+      "schema",
+      { json },
     )
-    return new _NodeClient(ctx)
+    return new Schema(ctx)
   }
 
   /**
@@ -13517,6 +17457,29 @@ export class Client extends BaseClient {
       { uri, ...opts },
     )
     return new Secret(ctx)
+  }
+
+  /**
+   * Load the module at the given address and serve its API in the current session.
+   * 
+   * A local address resolves against the caller's workspace, so a generated client can serve the module it is bound to without reaching for the workspace itself.
+   * @param address A module address, or an explicit path into the caller's workspace.
+   * 
+   * Absolute paths (e.g. "/.dagger/modules/hello") resolve from the workspace root, relative ones (e.g. "./hello") from the workspace cwd.
+   * 
+   * Installed module names are not accepted.
+   * @param opts.refPin The pinned version of a remote module address.
+   */
+  serveModule = async (address: string, 
+    opts?: ClientServeModuleOpts): Promise<void> => {
+    const ctx = this._ctx.select(
+      "serveModule",
+      { address, ...opts},
+    )
+
+    await ctx.execute()
+
+    
   }
 
   /**
@@ -13551,6 +17514,24 @@ export class Client extends BaseClient {
   }
 
   /**
+   * Constructs an SSHFS volume.
+   * @param endpoint SSHFS endpoint URL in the form sshfs://user@host[:port]/absolute/path.
+   * @param privateKey Private key secret used to authenticate to the remote host.
+   * @param opts.knownHosts known_hosts material used to verify the remote host key. Required unless insecureSkipHostKeyCheck is true.
+   * @param opts.cacheKey Optional cache equivalence key. If set, volumes with the same cacheKey may be considered equivalent for cache lookups, still subject to their resource dependencies.
+   * @param opts.insecureSkipHostKeyCheck Disable SSH host key verification. This is insecure and must be explicitly opted into.
+   * @param opts.experimentalServiceHost Service to use as the SSHFS network endpoint while verifying the original host key.
+   */
+  sshfsVolume = (endpoint: string, privateKey: Secret, opts?: ClientSshfsVolumeOpts): Volume => {
+
+    const ctx = this._ctx.select(
+      "sshfsVolume",
+      { endpoint, privateKey, ...opts },
+    )
+    return new Volume(ctx)
+  }
+
+  /**
    * Create a new TypeDef.
    */
   typeDef = (): TypeDef => {
@@ -13579,10 +17560,49 @@ export class Client extends BaseClient {
 
 
 /**
+ * An internal persistent bare git mirror.
+ */
+export class RemoteGitMirror extends BaseClient {
+  private readonly _id?: ID = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+   ) {
+     super(ctx)
+
+     this._id = _id
+   }
+
+  /**
+   * A unique identifier for this RemoteGitMirror.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+
+
+/**
  * The SDK config of the module.
  */
 export class SDKConfig extends BaseClient {
-  private readonly _id?: SDKConfigID = undefined
+  private readonly _id?: ID = undefined
   private readonly _debug?: boolean = undefined
   private readonly _source?: string = undefined
 
@@ -13591,7 +17611,7 @@ export class SDKConfig extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: SDKConfigID,
+     _id?: ID,
      _debug?: boolean,
      _source?: string,
    ) {
@@ -13605,7 +17625,7 @@ export class SDKConfig extends BaseClient {
   /**
    * A unique identifier for this SDKConfig.
    */
-  id = async (): Promise<SDKConfigID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -13614,7 +17634,7 @@ export class SDKConfig extends BaseClient {
       "id",
     )
 
-    const response: Awaited<SDKConfigID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -13657,13 +17677,11 @@ export class SDKConfig extends BaseClient {
   }
 }
 
-
-
 /**
  * A definition of a custom scalar defined in a Module.
  */
 export class ScalarTypeDef extends BaseClient {
-  private readonly _id?: ScalarTypeDefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _description?: string = undefined
   private readonly _name?: string = undefined
   private readonly _sourceModuleName?: string = undefined
@@ -13673,7 +17691,7 @@ export class ScalarTypeDef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ScalarTypeDefID,
+     _id?: ID,
      _description?: string,
      _name?: string,
      _sourceModuleName?: string,
@@ -13689,7 +17707,7 @@ export class ScalarTypeDef extends BaseClient {
   /**
    * A unique identifier for this ScalarTypeDef.
    */
-  id = async (): Promise<ScalarTypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -13698,7 +17716,7 @@ export class ScalarTypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ScalarTypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -13759,11 +17777,90 @@ export class ScalarTypeDef extends BaseClient {
   }
 }
 
+/**
+ * A GraphQL introspection schema that can be inspected and merged.
+ */
+export class Schema extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _contents?: JSON = undefined
 
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _contents?: JSON,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._contents = _contents
+   }
+
+  /**
+   * A unique identifier for this Schema.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Serialize the schema back to introspection JSON.
+   */
+  contents = async (): Promise<JSON> => {
+    if (this._contents) {
+      return this._contents
+    }
+
+    const ctx = this._ctx.select(
+      "contents",
+    )
+
+    const response: Awaited<JSON> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Merge a module's introspection-shaped type definitions into the schema, returning the combined schema.
+   * @param moduleTypes Introspection JSON describing the types the module defines. Object, interface and enum types are appended to the schema, and a constructor field for the module is added to the Query type.
+   * @param moduleName The name of the module whose types are being merged. Used to stamp the @sourceMap directive and to derive the module's constructor field.
+   */
+  merge = (moduleTypes: JSON, moduleName: string): Schema => {
+
+    const ctx = this._ctx.select(
+      "merge",
+      { moduleTypes, moduleName },
+    )
+    return new Schema(ctx)
+  }
+
+  /**
+   * Call the provided function with current Schema.
+   *
+   * This is useful for reusability and readability by not breaking the calling chain.
+   */
+  with = (arg: (param: Schema) => Schema) => {
+    return arg(this)
+  }
+}
 
 
 export class SearchResult extends BaseClient {
-  private readonly _id?: SearchResultID = undefined
+  private readonly _id?: ID = undefined
   private readonly _absoluteOffset?: number = undefined
   private readonly _filePath?: string = undefined
   private readonly _lineNumber?: number = undefined
@@ -13774,7 +17871,7 @@ export class SearchResult extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: SearchResultID,
+     _id?: ID,
      _absoluteOffset?: number,
      _filePath?: string,
      _lineNumber?: number,
@@ -13792,7 +17889,7 @@ export class SearchResult extends BaseClient {
   /**
    * A unique identifier for this SearchResult.
    */
-  id = async (): Promise<SearchResultID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -13801,7 +17898,7 @@ export class SearchResult extends BaseClient {
       "id",
     )
 
-    const response: Awaited<SearchResultID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -13884,7 +17981,7 @@ export class SearchResult extends BaseClient {
    */
   submatches = async (): Promise<SearchSubmatch[]> => {
     type submatches = {
-      id: SearchSubmatchID
+      id: ID
     }
 
     const ctx = this._ctx.select(
@@ -13899,10 +17996,8 @@ export class SearchResult extends BaseClient {
 }
 
 
-
-
 export class SearchSubmatch extends BaseClient {
-  private readonly _id?: SearchSubmatchID = undefined
+  private readonly _id?: ID = undefined
   private readonly _end?: number = undefined
   private readonly _start?: number = undefined
   private readonly _text?: string = undefined
@@ -13912,7 +18007,7 @@ export class SearchSubmatch extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: SearchSubmatchID,
+     _id?: ID,
      _end?: number,
      _start?: number,
      _text?: string,
@@ -13928,7 +18023,7 @@ export class SearchSubmatch extends BaseClient {
   /**
    * A unique identifier for this SearchSubmatch.
    */
-  id = async (): Promise<SearchSubmatchID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -13937,7 +18032,7 @@ export class SearchSubmatch extends BaseClient {
       "id",
     )
 
-    const response: Awaited<SearchSubmatchID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -13998,13 +18093,11 @@ export class SearchSubmatch extends BaseClient {
   }
 }
 
-
-
 /**
  * A reference to a secret value, which can be handled more safely than the value itself.
  */
 export class Secret extends BaseClient {
-  private readonly _id?: SecretID = undefined
+  private readonly _id?: ID = undefined
   private readonly _name?: string = undefined
   private readonly _plaintext?: string = undefined
   private readonly _uri?: string = undefined
@@ -14014,7 +18107,7 @@ export class Secret extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: SecretID,
+     _id?: ID,
      _name?: string,
      _plaintext?: string,
      _uri?: string,
@@ -14030,7 +18123,7 @@ export class Secret extends BaseClient {
   /**
    * A unique identifier for this Secret.
    */
-  id = async (): Promise<SecretID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -14039,7 +18132,7 @@ export class Secret extends BaseClient {
       "id",
     )
 
-    const response: Awaited<SecretID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -14100,18 +18193,16 @@ export class Secret extends BaseClient {
   }
 }
 
-
-
 /**
  * A content-addressed service providing TCP connectivity.
  */
 export class Service extends BaseClient {
-  private readonly _id?: ServiceID = undefined
+  private readonly _id?: ID = undefined
   private readonly _endpoint?: string = undefined
   private readonly _hostname?: string = undefined
-  private readonly _start?: ServiceID = undefined
-  private readonly _stop?: ServiceID = undefined
-  private readonly _sync?: ServiceID = undefined
+  private readonly _start?: ID = undefined
+  private readonly _stop?: ID = undefined
+  private readonly _sync?: ID = undefined
   private readonly _up?: Void = undefined
 
   /**
@@ -14119,12 +18210,12 @@ export class Service extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: ServiceID,
+     _id?: ID,
      _endpoint?: string,
      _hostname?: string,
-     _start?: ServiceID,
-     _stop?: ServiceID,
-     _sync?: ServiceID,
+     _start?: ID,
+     _stop?: ID,
+     _sync?: ID,
      _up?: Void,
    ) {
      super(ctx)
@@ -14141,7 +18232,7 @@ export class Service extends BaseClient {
   /**
    * A unique identifier for this Service.
    */
-  id = async (): Promise<ServiceID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -14150,7 +18241,7 @@ export class Service extends BaseClient {
       "id",
     )
 
-    const response: Awaited<ServiceID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -14202,14 +18293,17 @@ export class Service extends BaseClient {
 
   /**
    * Retrieves the list of ports provided by the service.
+   * @param opts.declared Return only container ports declared before startup. Other service types return an empty list.
    */
-  ports = async (): Promise<Port[]> => {
+  ports = async (
+    opts?: ServicePortsOpts): Promise<Port[]> => {
     type ports = {
-      id: PortID
+      id: ID
     }
 
     const ctx = this._ctx.select(
       "ports",
+      { ...opts},
     ).select("id")
 
     const response: Awaited<ports[]> = await ctx.execute()
@@ -14228,7 +18322,7 @@ export class Service extends BaseClient {
       "start",
     )
 
-    const response: Awaited<ServiceID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new Service(ctx.copy().selectNode(response, "Service"))
@@ -14245,7 +18339,7 @@ export class Service extends BaseClient {
       { ...opts},
     )
 
-    const response: Awaited<ServiceID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new Service(ctx.copy().selectNode(response, "Service"))
@@ -14259,7 +18353,7 @@ export class Service extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<ServiceID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new Service(ctx.copy().selectNode(response, "Service"))
@@ -14319,20 +18413,18 @@ export class Service extends BaseClient {
   }
 }
 
-
-
 /**
  * A Unix or TCP/IP socket that can be mounted into a container.
  */
 export class Socket extends BaseClient {
-  private readonly _id?: SocketID = undefined
+  private readonly _id?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: SocketID,
+     _id?: ID,
    ) {
      super(ctx)
 
@@ -14342,7 +18434,7 @@ export class Socket extends BaseClient {
   /**
    * A unique identifier for this Socket.
    */
-  id = async (): Promise<SocketID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -14351,20 +18443,18 @@ export class Socket extends BaseClient {
       "id",
     )
 
-    const response: Awaited<SocketID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 }
 
-
-
 /**
  * Source location information.
  */
 export class SourceMap extends BaseClient {
-  private readonly _id?: SourceMapID = undefined
+  private readonly _id?: ID = undefined
   private readonly _column?: number = undefined
   private readonly _filename?: string = undefined
   private readonly _line?: number = undefined
@@ -14376,7 +18466,7 @@ export class SourceMap extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: SourceMapID,
+     _id?: ID,
      _column?: number,
      _filename?: string,
      _line?: number,
@@ -14396,7 +18486,7 @@ export class SourceMap extends BaseClient {
   /**
    * A unique identifier for this SourceMap.
    */
-  id = async (): Promise<SourceMapID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -14405,7 +18495,7 @@ export class SourceMap extends BaseClient {
       "id",
     )
 
-    const response: Awaited<SourceMapID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -14502,13 +18592,11 @@ export class SourceMap extends BaseClient {
   }
 }
 
-
-
 /**
  * A file or directory status object.
  */
 export class Stat extends BaseClient {
-  private readonly _id?: StatID = undefined
+  private readonly _id?: ID = undefined
   private readonly _fileType?: FileType = undefined
   private readonly _name?: string = undefined
   private readonly _permissions?: number = undefined
@@ -14519,7 +18607,7 @@ export class Stat extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: StatID,
+     _id?: ID,
      _fileType?: FileType,
      _name?: string,
      _permissions?: number,
@@ -14537,7 +18625,7 @@ export class Stat extends BaseClient {
   /**
    * A unique identifier for this Stat.
    */
-  id = async (): Promise<StatID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -14546,7 +18634,7 @@ export class Stat extends BaseClient {
       "id",
     )
 
-    const response: Awaited<StatID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -14626,36 +18714,34 @@ export class Stat extends BaseClient {
 
 
 
-
-
 /**
  * An object that can be force-evaluated.
  * 
  * Calling sync ensures that the object's entire dependency DAG has been evaluated, returning the object's ID once complete.
  */
 export interface Syncer {
-  id(): Promise<SyncerID>
+  id(): Promise<ID>
   sync(): Promise<Syncer>
 }
 
 export class _SyncerClient extends BaseClient {
-  private readonly _id?: SyncerID = undefined
-  private readonly _sync?: SyncerID = undefined
+  private readonly _id?: ID = undefined
+  private readonly _sync?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: SyncerID,
-     _sync?: SyncerID,
+     _id?: ID,
+     _sync?: ID,
    ) {
      super(ctx)
 
      this._id = _id
      this._sync = _sync
    }
-  id = async (): Promise<SyncerID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -14664,7 +18750,7 @@ export class _SyncerClient extends BaseClient {
       "id",
     )
 
-    const response: Awaited<SyncerID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -14674,29 +18760,27 @@ export class _SyncerClient extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<SyncerID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new _SyncerClient(ctx.copy().selectNode(response, "Syncer"))
   }
 }
 
-
-
 /**
  * An interactive terminal that clients can connect to.
  */
 export class Terminal extends BaseClient {
-  private readonly _id?: TerminalID = undefined
-  private readonly _sync?: TerminalID = undefined
+  private readonly _id?: ID = undefined
+  private readonly _sync?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: TerminalID,
-     _sync?: TerminalID,
+     _id?: ID,
+     _sync?: ID,
    ) {
      super(ctx)
 
@@ -14707,7 +18791,7 @@ export class Terminal extends BaseClient {
   /**
    * A unique identifier for this Terminal.
    */
-  id = async (): Promise<TerminalID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -14716,7 +18800,7 @@ export class Terminal extends BaseClient {
       "id",
     )
 
-    const response: Awaited<TerminalID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -14732,20 +18816,18 @@ export class Terminal extends BaseClient {
       "sync",
     )
 
-    const response: Awaited<TerminalID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return new Terminal(ctx.copy().selectNode(response, "Terminal"))
   }
 }
 
-
-
 /**
  * A definition of a parameter or return type in a Module.
  */
 export class TypeDef extends BaseClient {
-  private readonly _id?: TypeDefID = undefined
+  private readonly _id?: ID = undefined
   private readonly _kind?: TypeDefKind = undefined
   private readonly _name?: string = undefined
   private readonly _optional?: boolean = undefined
@@ -14755,7 +18837,7 @@ export class TypeDef extends BaseClient {
    */
    constructor(
     ctx?: Context,
-     _id?: TypeDefID,
+     _id?: ID,
      _kind?: TypeDefKind,
      _name?: string,
      _optional?: boolean,
@@ -14771,7 +18853,7 @@ export class TypeDef extends BaseClient {
   /**
    * A unique identifier for this TypeDef.
    */
-  id = async (): Promise<TypeDefID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -14780,76 +18862,122 @@ export class TypeDef extends BaseClient {
       "id",
     )
 
-    const response: Awaited<TypeDefID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 
   /**
+   * Collection metadata, or null if this object is not a collection.
+   */
+  asCollection = async (): Promise<CollectionTypeDef | null> => {
+    const ctx = this._ctx.select(
+      "asCollection",
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new CollectionTypeDef(ctx.copy().selectNode(response, "CollectionTypeDef"))
+  }
+
+  /**
    * If kind is ENUM, the enum-specific type definition. If kind is not ENUM, this will be null.
    */
-  asEnum = (): EnumTypeDef => {
-
+  asEnum = async (): Promise<EnumTypeDef | null> => {
     const ctx = this._ctx.select(
       "asEnum",
-    )
-    return new EnumTypeDef(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new EnumTypeDef(ctx.copy().selectNode(response, "EnumTypeDef"))
   }
 
   /**
    * If kind is INPUT, the input-specific type definition. If kind is not INPUT, this will be null.
    */
-  asInput = (): InputTypeDef => {
-
+  asInput = async (): Promise<InputTypeDef | null> => {
     const ctx = this._ctx.select(
       "asInput",
-    )
-    return new InputTypeDef(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new InputTypeDef(ctx.copy().selectNode(response, "InputTypeDef"))
   }
 
   /**
    * If kind is INTERFACE, the interface-specific type definition. If kind is not INTERFACE, this will be null.
    */
-  asInterface = (): InterfaceTypeDef => {
-
+  asInterface = async (): Promise<InterfaceTypeDef | null> => {
     const ctx = this._ctx.select(
       "asInterface",
-    )
-    return new InterfaceTypeDef(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new InterfaceTypeDef(ctx.copy().selectNode(response, "InterfaceTypeDef"))
   }
 
   /**
    * If kind is LIST, the list-specific type definition. If kind is not LIST, this will be null.
    */
-  asList = (): ListTypeDef => {
-
+  asList = async (): Promise<ListTypeDef | null> => {
     const ctx = this._ctx.select(
       "asList",
-    )
-    return new ListTypeDef(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new ListTypeDef(ctx.copy().selectNode(response, "ListTypeDef"))
   }
 
   /**
    * If kind is OBJECT, the object-specific type definition. If kind is not OBJECT, this will be null.
    */
-  asObject = (): ObjectTypeDef => {
-
+  asObject = async (): Promise<ObjectTypeDef | null> => {
     const ctx = this._ctx.select(
       "asObject",
-    )
-    return new ObjectTypeDef(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new ObjectTypeDef(ctx.copy().selectNode(response, "ObjectTypeDef"))
   }
 
   /**
    * If kind is SCALAR, the scalar-specific type definition. If kind is not SCALAR, this will be null.
    */
-  asScalar = (): ScalarTypeDef => {
-
+  asScalar = async (): Promise<ScalarTypeDef | null> => {
     const ctx = this._ctx.select(
       "asScalar",
-    )
-    return new ScalarTypeDef(ctx)
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new ScalarTypeDef(ctx.copy().selectNode(response, "ScalarTypeDef"))
   }
 
   /**
@@ -14903,6 +19031,53 @@ export class TypeDef extends BaseClient {
 
     
     return response
+  }
+
+  /**
+   * Mark this object as a collection.
+   */
+  withCollection = (): TypeDef => {
+
+    const ctx = this._ctx.select(
+      "withCollection",
+    )
+    return new TypeDef(ctx)
+  }
+
+  /**
+   * Select the field that receives changes from the original collection.
+   */
+  withCollectionDelta = (name: string): TypeDef => {
+
+    const ctx = this._ctx.select(
+      "withCollectionDelta",
+      { name },
+    )
+    return new TypeDef(ctx)
+  }
+
+  /**
+   * Select the item lookup function for this collection.
+   */
+  withCollectionGet = (name: string): TypeDef => {
+
+    const ctx = this._ctx.select(
+      "withCollectionGet",
+      { name },
+    )
+    return new TypeDef(ctx)
+  }
+
+  /**
+   * Select the stored keys field for this collection.
+   */
+  withCollectionKeys = (name: string): TypeDef => {
+
+    const ctx = this._ctx.select(
+      "withCollectionKeys",
+      { name },
+    )
+    return new TypeDef(ctx)
   }
 
   /**
@@ -15091,32 +19266,28 @@ export class TypeDef extends BaseClient {
 
 
 
-
-export class Up extends BaseClient {
-  private readonly _id?: UpID = undefined
-  private readonly _description?: string = undefined
-  private readonly _name?: string = undefined
+/**
+ * A filesystem volume that can be mounted into containers.
+ */
+export class Volume extends BaseClient {
+  private readonly _id?: ID = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: UpID,
-     _description?: string,
-     _name?: string,
+     _id?: ID,
    ) {
      super(ctx)
 
      this._id = _id
-     this._description = _description
-     this._name = _name
    }
 
   /**
-   * A unique identifier for this Up.
+   * A unique identifier for this Volume.
    */
-  id = async (): Promise<UpID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -15125,213 +19296,59 @@ export class Up extends BaseClient {
       "id",
     )
 
-    const response: Awaited<UpID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
-  }
-
-  /**
-   * The description of the service
-   */
-  description = async (): Promise<string> => {
-    if (this._description) {
-      return this._description
-    }
-
-    const ctx = this._ctx.select(
-      "description",
-    )
-
-    const response: Awaited<string> = await ctx.execute()
-
-    
-    return response
-  }
-
-  /**
-   * Return the command name of the service. Entrypoint targets omit the module prefix.
-   */
-  name = async (): Promise<string> => {
-    if (this._name) {
-      return this._name
-    }
-
-    const ctx = this._ctx.select(
-      "name",
-    )
-
-    const response: Awaited<string> = await ctx.execute()
-
-    
-    return response
-  }
-
-  /**
-   * The original module in which the service has been defined
-   */
-  originalModule = (): Module_ => {
-
-    const ctx = this._ctx.select(
-      "originalModule",
-    )
-    return new Module_(ctx)
-  }
-
-  /**
-   * The path of the service within its module
-   */
-  path = async (): Promise<string[]> => {
-    const ctx = this._ctx.select(
-      "path",
-    )
-
-    const response: Awaited<string[]> = await ctx.execute()
-
-    
-    return response
-  }
-
-  /**
-   * Execute the service function
-   */
-  run = (): Up => {
-
-    const ctx = this._ctx.select(
-      "run",
-    )
-    return new Up(ctx)
-  }
-
-  /**
-   * Call the provided function with current Up.
-   *
-   * This is useful for reusability and readability by not breaking the calling chain.
-   */
-  with = (arg: (param: Up) => Up) => {
-    return arg(this)
   }
 }
-
-
-export class UpGroup extends BaseClient {
-  private readonly _id?: UpGroupID = undefined
-
-  /**
-   * Constructor is used for internal usage only, do not create object from it.
-   */
-   constructor(
-    ctx?: Context,
-     _id?: UpGroupID,
-   ) {
-     super(ctx)
-
-     this._id = _id
-   }
-
-  /**
-   * A unique identifier for this UpGroup.
-   */
-  id = async (): Promise<UpGroupID> => {
-    if (this._id) {
-      return this._id
-    }
-
-    const ctx = this._ctx.select(
-      "id",
-    )
-
-    const response: Awaited<UpGroupID> = await ctx.execute()
-
-    
-    return response
-  }
-
-  /**
-   * Return a list of individual services and their details
-   */
-  list = async (): Promise<Up[]> => {
-    type list = {
-      id: UpID
-    }
-
-    const ctx = this._ctx.select(
-      "list",
-    ).select("id")
-
-    const response: Awaited<list[]> = await ctx.execute()
-
-    
-    return response.map((r) => new Up(ctx.copy().selectNode(r.id, "Up")))
-  }
-
-  /**
-   * Execute all selected service functions
-   */
-  run = (): UpGroup => {
-
-    const ctx = this._ctx.select(
-      "run",
-    )
-    return new UpGroup(ctx)
-  }
-
-  /**
-   * Call the provided function with current UpGroup.
-   *
-   * This is useful for reusability and readability by not breaking the calling chain.
-   */
-  with = (arg: (param: UpGroup) => UpGroup) => {
-    return arg(this)
-  }
-}
-
-
-
-
-
-
 
 /**
  * A Dagger workspace detected from the current working directory or constructed from a Directory.
  */
 export class Workspace extends BaseClient {
-  private readonly _id?: WorkspaceID = undefined
+  private readonly _id?: ID = undefined
   private readonly _address?: string = undefined
-  private readonly _configPath?: string = undefined
+  private readonly _configFile?: string = undefined
+  private readonly _configRead?: string = undefined
+  private readonly _cwd?: string = undefined
+  private readonly _detectScope?: string = undefined
+  private readonly _entrypoint?: string = undefined
+  private readonly _export?: Void = undefined
   private readonly _findUp?: string = undefined
-  private readonly _hasConfig?: boolean = undefined
-  private readonly _initialized?: boolean = undefined
-  private readonly _path?: string = undefined
 
   /**
    * Constructor is used for internal usage only, do not create object from it.
    */
    constructor(
     ctx?: Context,
-     _id?: WorkspaceID,
+     _id?: ID,
      _address?: string,
-     _configPath?: string,
+     _configFile?: string,
+     _configRead?: string,
+     _cwd?: string,
+     _detectScope?: string,
+     _entrypoint?: string,
+     _export?: Void,
      _findUp?: string,
-     _hasConfig?: boolean,
-     _initialized?: boolean,
-     _path?: string,
    ) {
      super(ctx)
 
      this._id = _id
      this._address = _address
-     this._configPath = _configPath
+     this._configFile = _configFile
+     this._configRead = _configRead
+     this._cwd = _cwd
+     this._detectScope = _detectScope
+     this._entrypoint = _entrypoint
+     this._export = _export
      this._findUp = _findUp
-     this._hasConfig = _hasConfig
-     this._initialized = _initialized
-     this._path = _path
    }
 
   /**
    * A unique identifier for this Workspace.
    */
-  id = async (): Promise<WorkspaceID> => {
+  id = async (): Promise<ID> => {
     if (this._id) {
       return this._id
     }
@@ -15340,7 +19357,7 @@ export class Workspace extends BaseClient {
       "id",
     )
 
-    const response: Awaited<WorkspaceID> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
@@ -15365,28 +19382,140 @@ export class Workspace extends BaseClient {
   }
 
   /**
-   * Return all checks from modules loaded in the workspace.
-   * @param opts.include Only include checks matching the specified patterns
+   * Discover static object artifacts from workspace modules without evaluating their values.
+   * @param opts.include Only include artifacts matching these path patterns, as with checks and services. A path selects that path and its children.
    */
-  checks = (opts?: WorkspaceChecksOpts): CheckGroup => {
+  artifacts = (opts?: WorkspaceArtifactsOpts): Artifacts => {
 
     const ctx = this._ctx.select(
-      "checks",
+      "artifacts",
       { ...opts },
     )
-    return new CheckGroup(ctx)
+    return new Artifacts(ctx)
   }
 
   /**
-   * Path to config.toml relative to the workspace boundary (empty if not initialized).
+   * Return this workspace's changes, with paths relative to its working directory.
+   * 
+   * Pass from to compare against an earlier workspace state. Omitting it preserves the cumulative behavior used by clients from before this argument was added.
+   * @param opts.from An earlier workspace state to compare against.
    */
-  configPath = async (): Promise<string> => {
-    if (this._configPath) {
-      return this._configPath
+  changes = (opts?: WorkspaceChangesOpts): Changeset => {
+
+    const ctx = this._ctx.select(
+      "changes",
+      { ...opts },
+    )
+    return new Changeset(ctx)
+  }
+
+  /**
+   * Preview which source commits withCommitsFrom would apply, skip, or report as conflicting.
+   * 
+   * Results are ordered oldest first and account for earlier applicable commits in the same preview. The preview does not apply commits or write to the checkout.
+   * 
+   * A local receiver is snapshotted automatically; untracked files require interactive approval. Source uncommitted changes are ignored. Exceeding maxCommits fails rather than returning a partial preview. Divergent merge commits require manual integration.
+   * @param source Git-backed source workspace. For a local checkout, call snapshot on the source first and pass the returned workspace.
+   * @param opts.commits Full lowercase commit hashes or unambiguous lowercase hex prefixes (4-40 characters) to select, in any order. Prefixes resolve against the frozen source's Git objects and are recorded as full hashes; duplicate selections after resolution are rejected. Empty selects all new source commits. Selected commits must be within the source's latest 10000 commits.
+   * @param opts.maxCommits Maximum commits in either differing history, from 1 to 1000. Exceeding the limit fails; nothing is silently omitted.
+   */
+  compareCommitsFrom = async (source: Workspace, 
+    opts?: WorkspaceCompareCommitsFromOpts): Promise<WorkspaceCommitPick[]> => {
+    type compareCommitsFrom = {
+      id: ID
     }
 
     const ctx = this._ctx.select(
-      "configPath",
+      "compareCommitsFrom",
+      { source, ...opts},
+    ).select("id")
+
+    const response: Awaited<compareCommitsFrom[]> = await ctx.execute()
+
+    
+    return response.map((r) => new WorkspaceCommitPick(ctx.copy().selectNode(r.id, "WorkspaceCommitPick")))
+  }
+
+  /**
+   * Selected native workspace config file relative to the workspace cwd, if any.
+   */
+  configFile = async (): Promise<string> => {
+    if (this._configFile) {
+      return this._configFile
+    }
+
+    const ctx = this._ctx.select(
+      "configFile",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Read a configuration value from dagger.toml.
+   * 
+   * If key is empty, returns the full config.
+   * 
+   * If key points to a scalar, returns the value.
+   * 
+   * If key points to a table, returns flattened dotted-key output.
+   * @param opts.key Dotted key path (e.g. modules.greeter.source). Empty for full config.
+   * @param opts.effective Include the selected environment, user overrides, and legacy workspace settings.
+   */
+  configRead = async (
+    opts?: WorkspaceConfigReadOpts): Promise<string> => {
+    if (this._configRead) {
+      return this._configRead
+    }
+
+    const ctx = this._ctx.select(
+      "configRead",
+      { ...opts},
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Current location within the workspace root.
+   * 
+   * The workspace root is returned as "/".
+   * 
+   * Relative paths in workspace APIs resolve from here.
+   */
+  cwd = async (): Promise<string> => {
+    if (this._cwd) {
+      return this._cwd
+    }
+
+    const ctx = this._ctx.select(
+      "cwd",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Return the selected SDK module's current scope at this workspace location.
+   * @param sdk SDK name to probe. Required.
+   */
+  detectScope = async (sdk: string): Promise<string> => {
+    if (this._detectScope) {
+      return this._detectScope
+    }
+
+    const ctx = this._ctx.select(
+      "detectScope",
+      { sdk},
     )
 
     const response: Awaited<string> = await ctx.execute()
@@ -15414,6 +19543,65 @@ export class Workspace extends BaseClient {
   }
 
   /**
+   * Installed name of the module selected as the workspace entrypoint, or an empty string when none is selected.
+   * 
+   * Reflects the selected env's effective view. Fails if several modules are selected.
+   */
+  entrypoint = async (): Promise<string> => {
+    if (this._entrypoint) {
+      return this._entrypoint
+    }
+
+    const ctx = this._ctx.select(
+      "entrypoint",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * List named environments defined in the workspace configuration.
+   */
+  envList = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "envList",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Write this workspace's commits and pending changes to a checkout on the calling client.
+   * 
+   * With path, accept a frozen source, integrate divergent commits by cherry-picking, preserve unrelated checkout edits, and refuse conflicts. The source is unchanged. Pass from to save only work since an earlier source value, including previously saved pending edits that are now committed.
+   * 
+   * Without path, apply a local workspace's overlay changes at its host root. Pass from to apply only changes since an earlier local workspace state. Export paths are relative to the workspace root regardless of its working directory. Like Directory.export, this writes only to the client making the call, never the source's client.
+   * @param opts.path Destination checkout path on the calling client. Relative paths start at the client's working directory. Omit to apply a local workspace's overlay changes at its host root.
+   * @param opts.from Earlier workspace state to compare against. With path, this must be a previously exported frozen source workspace.
+   */
+  export = async (
+    opts?: WorkspaceExportOpts): Promise<void> => {
+    if (this._export) {
+      return
+    }
+
+    const ctx = this._ctx.select(
+      "export",
+      { ...opts},
+    )
+
+    await ctx.execute()
+
+    
+  }
+
+  /**
    * Returns a File from the workspace.
    * 
    * Relative paths resolve from the workspace cwd. Absolute paths resolve from the workspace root.
@@ -15426,6 +19614,29 @@ export class Workspace extends BaseClient {
       { path },
     )
     return new File(ctx)
+  }
+
+  /**
+   * Find project roots marked by any of the given filenames, starting from a path relative to the workspace cwd.
+   * 
+   * Returns cwd-relative directory paths for every marked directory at or below start, plus the nearest marked ancestor when start itself is not marked.
+   * 
+   * Each returned path is usable as-is with other workspace APIs, e.g. directory(path).
+   * @param opts.start Directory to start from. Relative paths resolve from the workspace cwd.
+   * @param opts.markers File basenames that mark a project root (e.g. ["go.mod"] or ["deno.json", "deno.jsonc"]).
+   * @param opts.exclude Glob patterns pruning the walk below start (e.g. ["**\/node_modules/**"]).
+   */
+  findRoots = async (
+    opts?: WorkspaceFindRootsOpts): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "findRoots",
+      { ...opts},
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
   }
 
   /**
@@ -15457,64 +19668,999 @@ export class Workspace extends BaseClient {
   }
 
   /**
-   * Return all generators from modules loaded in the workspace.
-   * @param opts.include Only include generators matching the specified patterns
+   * Git state for this workspace. Errors if the workspace is not in a git repository.
    */
-  generators = (opts?: WorkspaceGeneratorsOpts): GeneratorGroup => {
+  git = (): WorkspaceGit => {
 
     const ctx = this._ctx.select(
-      "generators",
+      "git",
+    )
+    return new WorkspaceGit(ctx)
+  }
+
+  /**
+   * Returns a list of files and directories that match the given pattern.
+   * 
+   * Patterns match paths relative to the workspace root.
+   * @param pattern Pattern to match (e.g., "*.md").
+   */
+  glob = async (pattern: string): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "glob",
+      { pattern},
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Plan the explicit migration needed for the current workspace.
+   * 
+   * Include installed local modules and their local dependencies. Other module candidates remain unchanged unless selected.
+   * 
+   * The returned plan has an empty changeset and no steps when no migration is needed.
+   * @param opts.modules Additional local modules to migrate. Relative paths start at the workspace cwd; absolute paths start at the workspace root.
+   */
+  migrate = (opts?: WorkspaceMigrateOpts): WorkspaceMigration => {
+
+    const ctx = this._ctx.select(
+      "migrate",
       { ...opts },
     )
-    return new GeneratorGroup(ctx)
+    return new WorkspaceMigration(ctx)
   }
 
   /**
-   * Whether a config.toml file exists in the workspace.
+   * Plan migration of one local module without migrating its dependencies or creating a workspace configuration.
+   * 
+   * Include SDK registration when a workspace configuration exists and remove obsolete generated-file ignore rules.
+   * @param opts.path Module directory. Relative paths start at the workspace cwd; absolute paths start at the workspace root.
    */
-  hasConfig = async (): Promise<boolean> => {
-    if (this._hasConfig) {
-      return this._hasConfig
+  migrateModule = (opts?: WorkspaceMigrateModuleOpts): WorkspaceMigration => {
+
+    const ctx = this._ctx.select(
+      "migrateModule",
+      { ...opts },
+    )
+    return new WorkspaceMigration(ctx)
+  }
+
+  /**
+   * Return a module defined in the workspace configuration.
+   * 
+   * Reflects the selected env's effective view.
+   * @param name Module name to inspect.
+   */
+  module_ = (name: string): WorkspaceModule => {
+
+    const ctx = this._ctx.select(
+      "module",
+      { name },
+    )
+    return new WorkspaceModule(ctx)
+  }
+
+  /**
+   * Load a module source from a path within the workspace.
+   * 
+   * Relative paths (e.g., "foo") resolve from the workspace cwd; absolute paths (e.g., "/foo") resolve from the workspace root.
+   * 
+   * Fails if the path does not point to an initialized module.
+   * @param path Location of the module source to load, relative to the workspace cwd or absolute from the workspace root.
+   */
+  moduleSource = (path: string): ModuleSource => {
+
+    const ctx = this._ctx.select(
+      "moduleSource",
+      { path },
+    )
+    return new ModuleSource(ctx)
+  }
+
+  /**
+   * List modules defined in the workspace configuration.
+   * 
+   * Reflects the selected env's effective view.
+   */
+  modules = async (): Promise<WorkspaceModule[]> => {
+    type modules = {
+      id: ID
     }
 
     const ctx = this._ctx.select(
-      "hasConfig",
+      "modules",
+    ).select("id")
+
+    const response: Awaited<modules[]> = await ctx.execute()
+
+    
+    return response.map((r) => new WorkspaceModule(ctx.copy().selectNode(r.id, "WorkspaceModule")))
+  }
+
+  /**
+   * Resolve an address in this workspace.
+   * 
+   * A DAG address (dag://<path>) selects exactly one workspace artifact: artifacts.filterUri(value).one(). Its typed loaders use that artifact and never fall back to external resolution.
+   * 
+   * A value without the dag:// scheme keeps its external meaning, such as a container image reference.
+   * 
+   * The Address retains this workspace across module calls and ID reloads.
+   * @param value A DAG address, or an external reference.
+   */
+  resolve = (value: string): Address => {
+
+    const ctx = this._ctx.select(
+      "resolve",
+      { value },
+    )
+    return new Address(ctx)
+  }
+
+  /**
+   * An installed SDK, by name.
+   * @param name SDK name to look up.
+   */
+  sdk = (name: string): WorkspaceSDK => {
+
+    const ctx = this._ctx.select(
+      "sdk",
+      { name },
+    )
+    return new WorkspaceSDK(ctx)
+  }
+
+  /**
+   * Installed SDKs.
+   */
+  sdks = async (): Promise<WorkspaceSDK[]> => {
+    type sdks = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "sdks",
+    ).select("id")
+
+    const response: Awaited<sdks[]> = await ctx.execute()
+
+    
+    return response.map((r) => new WorkspaceSDK(ctx.copy().selectNode(r.id, "WorkspaceSDK")))
+  }
+
+  /**
+   * Searches for content matching the given regular expression or literal string.
+   * 
+   * Uses Rust regex syntax; escape literal ., [, ], {, }, | with backslashes.
+   * 
+   * Runs ripgrep on the client host, falling back to grep if unavailable.
+   * @param opts.paths Directory or file paths to search
+   * @param opts.globs Glob patterns to match (e.g., "*.md")
+   * @param opts.pattern The text to match.
+   * @param opts.literal Interpret the pattern as a literal string instead of a regular expression.
+   * @param opts.multiline Enable searching across multiple lines.
+   * @param opts.dotall Allow the . pattern to match newlines in multiline mode.
+   * @param opts.insensitive Enable case-insensitive matching.
+   * @param opts.skipIgnored Honor .gitignore, .ignore, and .rgignore files.
+   * @param opts.skipHidden Skip hidden files (files starting with .).
+   * @param opts.filesOnly Only return matching files, not lines and content
+   * @param opts.limit Limit the number of results to return
+   */
+  search = async (
+    opts?: WorkspaceSearchOpts): Promise<SearchResult[]> => {
+    type search = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "search",
+      { ...opts},
+    ).select("id")
+
+    const response: Awaited<search[]> = await ctx.execute()
+
+    
+    return response.map((r) => new SearchResult(ctx.copy().selectNode(r.id, "SearchResult")))
+  }
+
+  /**
+   * Return a snapshot of this workspace as a stable value.
+   * 
+   * Git capture is a progressive enhancement: if the workspace has no Git repository or commits, or the client cannot capture Git, return this workspace unchanged. Approval rejections and capture failures remain errors.
+   * 
+   * Use the returned workspace for subsequent reads, edits, and module loading against the captured baseline. Snapshotting an existing stable value preserves its baseline; snapshot currentWorkspace again to capture later checkout changes.
+   * 
+   * Only the owning client can capture a local checkout. Tracked changes are captured automatically; untracked files require interactive approval. Remote Git refs are pinned to their resolved commits. Capturing leaves the checkout unchanged.
+   * 
+   * The recipe is portable when a remote can serve its base; otherwise it is frozen for this session only.
+   * @experimental
+   */
+  snapshot = (): Workspace => {
+
+    const ctx = this._ctx.select(
+      "snapshot",
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a changeset applied, without mutating the source.
+   * @param changes Changes to apply.
+   */
+  withChanges = (changes: Changeset): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withChanges",
+      { changes },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a generated module client added to one SDK scope.
+   * 
+   * Select the deepest detected or registered scope. Fail if several SDKs have that deepest scope.
+   * @param module Explicit local path or module address to generate a client for. Installed module names are not supported.
+   * @param opts.sdk Optional SDK name. Inspect all installed SDKs when omitted.
+   * @param opts.settings Explicit SDK-module constructor setting overrides for this scope. Requires an explicit SDK name.
+   */
+  withClient = (module_: string, opts?: WorkspaceWithClientOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withClient",
+      { 
+	        module:module_, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Create a Git commit from a changeset and return a stable workspace with HEAD advanced.
+   * 
+   * The changeset is three-way merged into both HEAD and the frozen working tree. Compatible unselected edits remain uncommitted; incoming changes need not already be in the working tree. Conflicts with either tree fail without modifying the workspace. Empty changesets, or changes already present in HEAD, fail with nothing to commit.
+   * 
+   * A local workspace is snapshotted automatically before committing; untracked files require interactive approval. The host checkout is not modified.
+   * 
+   * Missing author fields are resolved from Git config in the calling client's working directory at commit time, then recorded explicitly for reproducible commits. Unconfigured fields default to Dagger and dagger@localhost.
+   * @param changes Changeset to commit, for example git.uncommitted.filter(...). Paths are rooted at the repository; rename sides are determined by the changeset. Git metadata (.git) is ignored; metadata-only changes fail with nothing to commit.
+   * @param message Commit message.
+   * @param date RFC3339 author and committer date. Required for reproducible commits.
+   * @param opts.authorName Author and committer name. Defaults to git config user.name in the calling client's working directory, otherwise Dagger.
+   * @param opts.authorEmail Author and committer email. Defaults to git config user.email in the calling client's working directory, otherwise dagger@localhost.
+   * @param opts.signoff Add a Signed-off-by trailer using the commit author's name and email.
+   */
+  withCommit = (changes: Changeset, message: string, date: string, opts?: WorkspaceWithCommitOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withCommit",
+      { changes, message, date, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Integrate source commits into this workspace and return the result, preserving this workspace's uncommitted changes and metadata.
+   * 
+   * Fast-forward when the selected commits include all new ancestors of their tip; otherwise cherry-pick them oldest first. Already integrated commits and patches already present are skipped. Any conflict fails the operation. Source uncommitted changes are not transferred; merge them explicitly if needed. Use compareCommitsFrom to preview the integration.
+   * 
+   * A local receiver is snapshotted automatically; untracked files require interactive approval. The checkout is not modified. Export the result with an explicit path to write it to a checkout.
+   * 
+   * Cherry-picks preserve the source author and author date, use the calling client's Git config for committer identity, and reuse the source committer date for reproducible hashes. Origin trailers track cherry-picked commits. Divergent merge commits require manual integration.
+   * @param source Git-backed source workspace. For a local checkout, call snapshot on the source first and pass the returned workspace.
+   * @param opts.commits Full lowercase commit hashes or unambiguous lowercase hex prefixes (4-40 characters) to select, in any order. Prefixes resolve against the frozen source's Git objects and are recorded as full hashes; duplicate selections after resolution are rejected. Empty selects all new source commits. Selected commits must be within the source's latest 10000 commits.
+   * @param opts.maxCommits Maximum commits in either differing history, from 1 to 1000. Exceeding the limit fails; nothing is silently omitted.
+   */
+  withCommitsFrom = (source: Workspace, opts?: WorkspaceWithCommitsFromOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withCommitsFrom",
+      { source, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a named config environment created.
+   * @param name Environment name.
+   * @param opts.here Write to the workspace config directory at the workspace cwd.
+   */
+  withConfigEnv = (name: string, opts?: WorkspaceWithConfigEnvOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withConfigEnv",
+      { name, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Select the config environment carried by this workspace.
+   * @param name Environment name, or empty to clear the selection.
+   */
+  withConfigEnvironment = (name: string): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withConfigEnvironment",
+      { name },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Select workspace-root-relative config and lockfile paths. Empty paths clear the selection.
+   * @param configFile Config file path.
+   * @param lockFile Lockfile path.
+   */
+  withConfigPaths = (configFile: string, lockFile: string): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withConfigPaths",
+      { configFile, lockFile },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a configuration value written.
+   * 
+   * When the session selects an env, the key is scoped to that env's overlay and the env is created if missing.
+   * @param key Dotted key path.
+   * @param value Value to set. Bools, integers, and comma-separated arrays are auto-detected.
+   * @param opts.values List value to set. Elements are stored verbatim, with no auto-detection. Mutually exclusive with value.
+   * @param opts.here Write to the workspace config directory at the workspace cwd.
+   */
+  withConfigValue = (key: string, value: string, opts?: WorkspaceWithConfigValueOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withConfigValue",
+      { key, value, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a directory merged into the given path, without mutating the source.
+   * 
+   * Anything already at the path stays, and files the source carries win, as with Directory.withDirectory. Use withNewDirectory to replace the path instead.
+   * @param path Path to merge into. Relative paths resolve from the workspace cwd.
+   * @param source Directory to merge there.
+   */
+  withDirectory = (path: string, source: Directory): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withDirectory",
+      { path, source },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with an installed module selected as its entrypoint.
+   * 
+   * Every other entrypoint selection is cleared. Entrypoints live in the base workspace config.
+   * @param name Exact installed module name.
+   */
+  withEntrypoint = (name: string): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withEntrypoint",
+      { name },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a file added or replaced, without mutating the source.
+   * @param path Destination path. Relative paths resolve from the workspace cwd.
+   * @param source File to add.
+   * @param opts.permissions Permissions of the added file. Defaults to the source file permissions.
+   */
+  withFile = (path: string, source: File, opts?: WorkspaceWithFileOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withFile",
+      { path, source, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a location initialized as a module scope.
+   * 
+   * The selected SDK module records the scope and generates the module source.
+   * @param sdk Workspace SDK name or module entry name to use. Required.
+   * @param opts.name Module name. The engine infers it from path, the active config file, or the workspace root when omitted.
+   * @param opts.path Module path relative to the workspace cwd, or an absolute workspace path. Defaults to .dagger/modules/<name> beside the active workspace config.
+   * @param opts.install Install the module. When omitted, install only if path is omitted.
+   * @param opts.entrypoint Select this module as the entrypoint and install it. False prevents automatic selection. When omitted, select only if both path and name are omitted and the module is installed.
+   * @param opts.settings Explicit SDK-module constructor setting overrides for this scope.
+   */
+  withInitModule = (sdk: string, opts?: WorkspaceWithInitModuleOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withInitModule",
+      { sdk, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a native configuration, without changing an existing configuration.
+   * 
+   * Fail if legacy configuration needs workspace migration.
+   */
+  withInitialized = (): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withInitialized",
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a module installed in its config.
+   * 
+   * When the session selects an env, the module is recorded in that env's overlay and the env is created if missing.
+   * @param ref Module reference to install.
+   * @param opts.name Override name for the installed module entry.
+   * @param opts.here Write to the workspace config directory at the workspace cwd.
+   */
+  withModule = (ref: string, opts?: WorkspaceWithModuleOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withModule",
+      { ref, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a directory mounted read-only at the given path, without mutating the source.
+   * 
+   * Mounted content is readable through the normal workspace file tools but shadows the source at the mount path and stays out of the pending changeset: it never appears in changes, is never exported, and cannot be modified.
+   * @param path Location of the mounted directory. Relative paths resolve from the workspace cwd.
+   * @param source Directory to mount.
+   */
+  withMountedDirectory = (path: string, source: Directory): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withMountedDirectory",
+      { path, source },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a file mounted read-only at the given path, without mutating the source.
+   * 
+   * Mounted content is readable through the normal workspace file tools but shadows the source at the mount path and stays out of the pending changeset: it never appears in changes, is never exported, and cannot be modified.
+   * @param path Location of the mounted file. Relative paths resolve from the workspace cwd.
+   * @param source File to mount.
+   */
+  withMountedFile = (path: string, source: File): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withMountedFile",
+      { path, source },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with the given path replaced by a directory, without mutating the source.
+   * 
+   * The source becomes the entire contents of the path: anything already there that the source does not carry is removed. Use withDirectory to keep it instead.
+   * @param path Path to replace. Relative paths resolve from the workspace cwd.
+   * @param source Directory to write there.
+   */
+  withNewDirectory = (path: string, source: Directory): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withNewDirectory",
+      { path, source },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a new or replaced file, without mutating the source.
+   * @param path Path of the new file. Relative paths resolve from the workspace cwd.
+   * @param contents Contents of the new file.
+   * @param opts.permissions Permissions of the new file.
+   */
+  withNewFile = (path: string, contents: string, opts?: WorkspaceWithNewFileOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withNewFile",
+      { path, contents, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Move this workspace's Git HEAD to a commit and return the resulting stable workspace.
+   * 
+   * A local workspace is snapshotted automatically before resetting; untracked files require interactive approval. The host checkout is not modified. By default the difference between the previous working tree and the target commit stays uncommitted, as with git reset --mixed, so history can be reworked and reapplied with withCommit — e.g. to amend the latest commit message, reset to its parent and commit again.
+   * 
+   * With hard, the working tree is reset to the commit and every uncommitted change is discarded.
+   * 
+   * Commits orphaned by the reset are not preserved: the frozen repository keeps reachable history only, so a reset cannot be undone by resetting forward again.
+   * @param commit Full commit hash to reset HEAD to.
+   * @param opts.hard Discard uncommitted changes, resetting the working tree to the commit.
+   */
+  withReset = (commit: string, opts?: WorkspaceWithResetOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withReset",
+      { commit, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with an SDK installed in its config.
+   * @param ref SDK module reference to install.
+   * @param opts.name Override name for the installed SDK entry.
+   * @param opts.here Write to the workspace config directory at the workspace cwd.
+   * @param opts.asSdkName Optional override for the SDK name conventionally derived from the installed module name.
+   */
+  withSDK = (ref: string, opts?: WorkspaceWithSdkOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withSDK",
+      { ref, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with the selected module clients updated.
+   * 
+   * The engine re-reads the source of each selected client target and writes the lock entries that those targets reach.
+   * 
+   * The selected SDK module then regenerates every scope that owns one of the targets.
+   * @param opts.modules Recorded client targets to update. All targets in the selected scopes are updated when omitted.
+   * @param opts.all Select clients in every scope instead of only the scopes containing the workspace cwd.
+   * @param opts.sdk Optional SDK name. All installed SDK modules are selected when omitted.
+   */
+  withUpdatedClients = (opts?: WorkspaceWithUpdatedClientsOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withUpdatedClients",
+      { ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with refreshed lockfile state.
+   * 
+   * SDK client scopes are regenerated unless noGenerate is true.
+   * @param opts.noGenerate Do not regenerate SDK client scopes.
+   */
+  withUpdatedLock = (opts?: WorkspaceWithUpdatedLockOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withUpdatedLock",
+      { ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with updated module versions and lockfile state.
+   * 
+   * An SDK client scope is regenerated when it targets an updated module.
+   * @param opts.names Installed module names or sources. A version suffix sets a new request. An empty list refreshes all installed modules.
+   * @param opts.version New version request for exactly one selected module. Cannot be combined with a version suffix.
+   */
+  withUpdatedModules = (opts?: WorkspaceWithUpdatedModulesOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withUpdatedModules",
+      { ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with its working directory pointed at the given workspace-relative path.
+   * @param path Workspace-relative path to use as the working directory.
+   */
+  withWorkdir = (path: string): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withWorkdir",
+      { path },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a module client removed from the deepest matching recorded scope.
+   * 
+   * Fail if several SDKs have that deepest scope. The selected SDK module regenerates the complete scope.
+   * 
+   * If invalid client targets remain, save the removal and skip generation until those targets are corrected or removed.
+   * @param module The recorded target to remove.
+   * @param opts.sdk Optional SDK name. Search all installed SDKs when omitted.
+   */
+  withoutClient = (module_: string, opts?: WorkspaceWithoutClientOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutClient",
+      { 
+	        module:module_, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a named config environment removed.
+   * @param name Environment name.
+   * @param opts.here Write to the workspace config directory at the workspace cwd.
+   */
+  withoutConfigEnv = (name: string, opts?: WorkspaceWithoutConfigEnvOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutConfigEnv",
+      { name, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a configuration value removed.
+   * 
+   * Errors when the key is not currently set.
+   * 
+   * When the session selects an env, the key is scoped to that env's overlay.
+   * @param key Dotted key path (e.g. modules.greeter.settings.greeting).
+   * @param opts.here Write to the workspace config directory at the workspace cwd.
+   */
+  withoutConfigValue = (key: string, opts?: WorkspaceWithoutConfigValueOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutConfigValue",
+      { key, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a directory removed, without mutating the source.
+   * @param path Path of the directory to remove. Relative paths resolve from the workspace cwd.
+   */
+  withoutDirectory = (path: string): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutDirectory",
+      { path },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with no module selected as its entrypoint.
+   */
+  withoutEntrypoint = (): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutEntrypoint",
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a file removed, without mutating the source.
+   * @param path Path of the file to remove. Relative paths resolve from the workspace cwd.
+   */
+  withoutFile = (path: string): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutFile",
+      { path },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with a module removed from its config.
+   * 
+   * When the session selects an env, only that env's overlay entry is removed.
+   * @param name Installed module name or source to remove. Version selectors are not accepted.
+   * @param opts.here Write to the workspace config directory at the workspace cwd.
+   */
+  withoutModule = (name: string, opts?: WorkspaceWithoutModuleOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutModule",
+      { name, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with the content mounted at the given path unmounted.
+   * 
+   * Removes directory and file mounts at or below the path, revealing the underlying workspace content. Other mounts and pending changes are preserved.
+   * @param path Location of the mount to remove. Relative paths resolve from the workspace cwd. Use / to remove all mounts.
+   */
+  withoutMount = (path: string): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutMount",
+      { path },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Return this workspace with an SDK removed from its config.
+   * @param name Name of the installed SDK entry to remove.
+   * @param opts.here Write to the workspace config directory at the workspace cwd.
+   */
+  withoutSDK = (name: string, opts?: WorkspaceWithoutSdkOpts): Workspace => {
+
+    const ctx = this._ctx.select(
+      "withoutSDK",
+      { name, ...opts },
+    )
+    return new Workspace(ctx)
+  }
+
+  /**
+   * Call the provided function with current Workspace.
+   *
+   * This is useful for reusability and readability by not breaking the calling chain.
+   */
+  with = (arg: (param: Workspace) => Workspace) => {
+    return arg(this)
+  }
+}
+
+/**
+ * A source commit classified against the receiving workspace.
+ */
+export class WorkspaceCommitPick extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _reason?: WorkspaceCommitPickReason = undefined
+  private readonly _status?: WorkspaceCommitPickStatus = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _reason?: WorkspaceCommitPickReason,
+     _status?: WorkspaceCommitPickStatus,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._reason = _reason
+     this._status = _status
+   }
+
+  /**
+   * A unique identifier for this WorkspaceCommitPick.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
     )
 
-    const response: Awaited<boolean> = await ctx.execute()
+    const response: Awaited<ID> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * Whether .dagger/config.toml exists.
+   * The commit in the source workspace.
    */
-  initialized = async (): Promise<boolean> => {
-    if (this._initialized) {
-      return this._initialized
-    }
+  commit = (): GitCommit => {
 
     const ctx = this._ctx.select(
-      "initialized",
+      "commit",
+    )
+    return new GitCommit(ctx)
+  }
+
+  /**
+   * Workspace-root-relative conflicting paths. Empty unless the status is CONFLICT.
+   */
+  conflictPaths = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "conflictPaths",
     )
 
-    const response: Awaited<boolean> = await ctx.execute()
+    const response: Awaited<string[]> = await ctx.execute()
 
     
     return response
   }
 
   /**
-   * Workspace directory path relative to the workspace boundary.
+   * Why the commit conflicts, or NONE.
    */
-  path = async (): Promise<string> => {
-    if (this._path) {
-      return this._path
+  reason = async (): Promise<WorkspaceCommitPickReason> => {
+    if (this._reason) {
+      return this._reason
     }
 
     const ctx = this._ctx.select(
-      "path",
+      "reason",
+    )
+
+    const response: Awaited<WorkspaceCommitPickReason> = await ctx.execute()
+
+    return WorkspaceCommitPickReasonNameToValue(response)
+  }
+
+  /**
+   * Whether this commit can be applied.
+   */
+  status = async (): Promise<WorkspaceCommitPickStatus> => {
+    if (this._status) {
+      return this._status
+    }
+
+    const ctx = this._ctx.select(
+      "status",
+    )
+
+    const response: Awaited<WorkspaceCommitPickStatus> = await ctx.execute()
+
+    return WorkspaceCommitPickStatusNameToValue(response)
+  }
+}
+
+
+
+
+
+/**
+ * Local git state for a workspace.
+ */
+export class WorkspaceGit extends BaseClient {
+  private readonly _id?: ID = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+   ) {
+     super(ctx)
+
+     this._id = _id
+   }
+
+  /**
+   * A unique identifier for this WorkspaceGit.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Return a self-contained Git metadata directory for this workspace's HEAD, including its full reachable history and an index matching HEAD.
+   * 
+   * Mount this directory at .git alongside workspace.directory("/") to create a usable checkout. Pending workspace edits remain uncommitted; the original checkout's staging state is not preserved.
+   * 
+   * This is a snapshot: Git writes to a mounted copy do not update the workspace. The workspace must have a Git repository with a HEAD commit.
+   */
+  directory = (): Directory => {
+
+    const ctx = this._ctx.select(
+      "directory",
+    )
+    return new Directory(ctx)
+  }
+
+  /**
+   * The checked-out HEAD of this workspace.
+   */
+  head = (): GitRef => {
+
+    const ctx = this._ctx.select(
+      "head",
+    )
+    return new GitRef(ctx)
+  }
+
+  /**
+   * Uncommitted changes in this workspace, using the same rules as GitRepository.uncommitted.
+   */
+  uncommitted = (): Changeset => {
+
+    const ctx = this._ctx.select(
+      "uncommitted",
+    )
+    return new Changeset(ctx)
+  }
+}
+
+/**
+ * A planned workspace migration.
+ */
+export class WorkspaceMigration extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _configFile?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _configFile?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._configFile = _configFile
+   }
+
+  /**
+   * A unique identifier for this WorkspaceMigration.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Filesystem changes for the full migration plan.
+   */
+  changes = (): Changeset => {
+
+    const ctx = this._ctx.select(
+      "changes",
+    )
+    return new Changeset(ctx)
+  }
+
+  /**
+   * Native workspace config path after migration, relative to the workspace root. Empty if no workspace config exists.
+   */
+  configFile = async (): Promise<string> => {
+    if (this._configFile) {
+      return this._configFile
+    }
+
+    const ctx = this._ctx.select(
+      "configFile",
     )
 
     const response: Awaited<string> = await ctx.execute()
@@ -15524,20 +20670,583 @@ export class Workspace extends BaseClient {
   }
 
   /**
-   * Return all services from modules loaded in the workspace.
-   * @param opts.include Only include services matching the specified patterns
+   * Unselected legacy module directories relative to the workspace root. Candidates can include fixtures.
    */
-  services = (opts?: WorkspaceServicesOpts): UpGroup => {
+  moduleCandidates = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "moduleCandidates",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Logical migration steps, each identified by a stable code.
+   */
+  steps = async (): Promise<WorkspaceMigrationStep[]> => {
+    type steps = {
+      id: ID
+    }
 
     const ctx = this._ctx.select(
-      "services",
-      { ...opts },
-    )
-    return new UpGroup(ctx)
+      "steps",
+    ).select("id")
+
+    const response: Awaited<steps[]> = await ctx.execute()
+
+    
+    return response.map((r) => new WorkspaceMigrationStep(ctx.copy().selectNode(r.id, "WorkspaceMigrationStep")))
   }
 }
 
+/**
+ * A single logical part of a workspace migration.
+ */
+export class WorkspaceMigrationStep extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _code?: string = undefined
+  private readonly _description?: string = undefined
 
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _code?: string,
+     _description?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._code = _code
+     this._description = _description
+   }
+
+  /**
+   * A unique identifier for this WorkspaceMigrationStep.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Filesystem changes for this step.
+   */
+  changes = (): Changeset => {
+
+    const ctx = this._ctx.select(
+      "changes",
+    )
+    return new Changeset(ctx)
+  }
+
+  /**
+   * Stable code identifying this logical migration step.
+   */
+  code = async (): Promise<string> => {
+    if (this._code) {
+      return this._code
+    }
+
+    const ctx = this._ctx.select(
+      "code",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Generic summary of this step's purpose and impact.
+   */
+  description = async (): Promise<string> => {
+    if (this._description) {
+      return this._description
+    }
+
+    const ctx = this._ctx.select(
+      "description",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Non-fatal warnings raised while planning this step.
+   */
+  warnings = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "warnings",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+/**
+ * A module entry in the workspace configuration.
+ */
+export class WorkspaceModule extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _entrypoint?: boolean = undefined
+  private readonly _name?: string = undefined
+  private readonly _source?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _entrypoint?: boolean,
+     _name?: string,
+     _source?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._entrypoint = _entrypoint
+     this._name = _name
+     this._source = _source
+   }
+
+  /**
+   * A unique identifier for this WorkspaceModule.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Whether the module is the workspace entrypoint (functions aliased to Query root).
+   */
+  entrypoint = async (): Promise<boolean> => {
+    if (this._entrypoint) {
+      return this._entrypoint
+    }
+
+    const ctx = this._ctx.select(
+      "entrypoint",
+    )
+
+    const response: Awaited<boolean> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * List the functions of this module's main object, in GraphQL field form.
+   */
+  functions = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "functions",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The module name.
+   */
+  name = async (): Promise<string> => {
+    if (this._name) {
+      return this._name
+    }
+
+    const ctx = this._ctx.select(
+      "name",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * List constructor-backed settings for this module.
+   */
+  settings = async (): Promise<WorkspaceModuleSetting[]> => {
+    type settings = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "settings",
+    ).select("id")
+
+    const response: Awaited<settings[]> = await ctx.execute()
+
+    
+    return response.map((r) => new WorkspaceModuleSetting(ctx.copy().selectNode(r.id, "WorkspaceModuleSetting")))
+  }
+
+  /**
+   * The module source path.
+   */
+  source = async (): Promise<string> => {
+    if (this._source) {
+      return this._source
+    }
+
+    const ctx = this._ctx.select(
+      "source",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+/**
+ * A constructor-backed module setting.
+ */
+export class WorkspaceModuleSetting extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _defaultValue?: string = undefined
+  private readonly _description?: string = undefined
+  private readonly _isList?: boolean = undefined
+  private readonly _isObject?: boolean = undefined
+  private readonly _isString?: boolean = undefined
+  private readonly _key?: string = undefined
+  private readonly _value?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _defaultValue?: string,
+     _description?: string,
+     _isList?: boolean,
+     _isObject?: boolean,
+     _isString?: boolean,
+     _key?: string,
+     _value?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._defaultValue = _defaultValue
+     this._description = _description
+     this._isList = _isList
+     this._isObject = _isObject
+     this._isString = _isString
+     this._key = _key
+     this._value = _value
+   }
+
+  /**
+   * A unique identifier for this WorkspaceModuleSetting.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The constructor argument's declared default, formatted like value, or empty when the argument has no default.
+   */
+  defaultValue = async (): Promise<string> => {
+    if (this._defaultValue) {
+      return this._defaultValue
+    }
+
+    const ctx = this._ctx.select(
+      "defaultValue",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The constructor argument description.
+   */
+  description = async (): Promise<string> => {
+    if (this._description) {
+      return this._description
+    }
+
+    const ctx = this._ctx.select(
+      "description",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Whether the setting accepts a list of values.
+   */
+  isList = async (): Promise<boolean> => {
+    if (this._isList) {
+      return this._isList
+    }
+
+    const ctx = this._ctx.select(
+      "isList",
+    )
+
+    const response: Awaited<boolean> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Whether the setting is an object type resolved from an address string (Container, Directory, File, Secret, Service, ...), which may be a module reference.
+   */
+  isObject = async (): Promise<boolean> => {
+    if (this._isObject) {
+      return this._isObject
+    }
+
+    const ctx = this._ctx.select(
+      "isObject",
+    )
+
+    const response: Awaited<boolean> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Whether the setting is a string argument, stored as a TOML string even when the value reads as a number or boolean.
+   */
+  isString = async (): Promise<boolean> => {
+    if (this._isString) {
+      return this._isString
+    }
+
+    const ctx = this._ctx.select(
+      "isString",
+    )
+
+    const response: Awaited<boolean> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The setting key.
+   */
+  key = async (): Promise<string> => {
+    if (this._key) {
+      return this._key
+    }
+
+    const ctx = this._ctx.select(
+      "key",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The value stored in workspace config after applying the selected workspace environment, or empty when unset.
+   */
+  value = async (): Promise<string> => {
+    if (this._value) {
+      return this._value
+    }
+
+    const ctx = this._ctx.select(
+      "value",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+/**
+ * An installed SDK: a module marked for scaffolding other modules and clients.
+ */
+export class WorkspaceSDK extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _name?: string = undefined
+  private readonly _ref?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _name?: string,
+     _ref?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._name = _name
+     this._ref = _ref
+   }
+
+  /**
+   * A unique identifier for this WorkspaceSDK.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Clients generated with this SDK.
+   */
+  clients = async (): Promise<WorkspaceModule[]> => {
+    type clients = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "clients",
+    ).select("id")
+
+    const response: Awaited<clients[]> = await ctx.execute()
+
+    
+    return response.map((r) => new WorkspaceModule(ctx.copy().selectNode(r.id, "WorkspaceModule")))
+  }
+
+  /**
+   * Generate the modules and clients managed by this SDK.
+   */
+  generate = (): Changeset => {
+
+    const ctx = this._ctx.select(
+      "generate",
+    )
+    return new Changeset(ctx)
+  }
+
+  /**
+   * Modules authored with this SDK.
+   */
+  modules = async (): Promise<WorkspaceModule[]> => {
+    type modules = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "modules",
+    ).select("id")
+
+    const response: Awaited<modules[]> = await ctx.execute()
+
+    
+    return response.map((r) => new WorkspaceModule(ctx.copy().selectNode(r.id, "WorkspaceModule")))
+  }
+
+  /**
+   * The user-facing SDK name.
+   */
+  name = async (): Promise<string> => {
+    if (this._name) {
+      return this._name
+    }
+
+    const ctx = this._ctx.select(
+      "name",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The module reference this SDK was installed from.
+   */
+  ref = async (): Promise<string> => {
+    if (this._ref) {
+      return this._ref
+    }
+
+    const ctx = this._ctx.select(
+      "ref",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
 
 
 export const dag = new Client()

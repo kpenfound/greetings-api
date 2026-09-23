@@ -12,7 +12,7 @@ import (
 type Frontend struct { // frontend (../../../../../.dagger/modules/frontend/src/index.ts:15:14)
 	query *querybuilder.Selection
 
-	id *FrontendID
+	id *ID
 }
 
 func (r *Frontend) WithGraphQLQuery(q *querybuilder.Selection) *Frontend {
@@ -30,13 +30,13 @@ func (r *Frontend) Build() *Directory { // frontend (../../../../../.dagger/modu
 }
 
 // A unique identifier for this Frontend.
-func (r *Frontend) ID(ctx context.Context) (FrontendID, error) {
+func (r *Frontend) ID(ctx context.Context) (ID, error) {
 	if r.id != nil {
 		return *r.id, nil
 	}
 	q := r.query.Select("id")
 
-	var response FrontendID
+	var response ID
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
