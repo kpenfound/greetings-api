@@ -26,13 +26,13 @@ source = "github.com/dagger/go@collections"
 base = "dag://backend/go-test-base"
 
 [modules.golangci-lint]
-source = "dagger.io/go/golangci-lint@do-not-merge-hack"
+source = "dagger.io/go/golangci-lint@collections"
 
 [modules.eslint]
-source = "dagger.io/js/eslint@pull/13/head"
+source = "dagger.io/js/eslint@collections"
 
 [modules.playwright]
-source = "github.com/dagger/playwright"
+source = "github.com/dagger/playwright@collections"
 
 [modules.playwright.settings]
 service = "dag://frontend/serve"
