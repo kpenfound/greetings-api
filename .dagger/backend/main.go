@@ -26,9 +26,15 @@ func New(
 // golangciLintImage matches the pinned lint image used by the dagger/go module
 const golangciLintImage = "docker.io/golangci/golangci-lint:v2.11.4-alpine@sha256:72bcd68512b4e27540dd3a778a1b7afd45759d8145cfb3c089f1d7af53e718e9"
 
-// source mounted into the Go toolchain container, ready to run go commands
+// source mounted into the Go toolchain container, ready to run go commands.
+// Go.base is the plain Go image, so mount the module and build caches here:
+// without them every source edit recompiles the whole binary from scratch.
 func (b *Backend) goBase() *dagger.Container {
 	return dag.Go().Base().
+		WithMountedCache("/go/pkg/mod", dag.CacheVolume("go-mod")).
+		WithEnvVariable("GOMODCACHE", "/go/pkg/mod").
+		WithMountedCache("/root/.cache/go-build", dag.CacheVolume("go-build")).
+		WithEnvVariable("GOCACHE", "/root/.cache/go-build").
 		WithDirectory("/ws", b.Source).
 		WithWorkdir("/ws")
 }
