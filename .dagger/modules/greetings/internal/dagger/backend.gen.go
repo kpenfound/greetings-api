@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-type Backend struct { // backend (../../../../../.dagger/modules/backend/main.go:9:6)
+type Backend struct { // backend (../../../../../.dagger/modules/backend/main.go:7:6)
 	query *querybuilder.Selection
 
 	id *ID
@@ -21,60 +21,18 @@ func (r *Backend) WithGraphQLQuery(q *querybuilder.Selection) *Backend {
 	}
 }
 
-// BackendBinaryOpts contains options for Backend.Binary
-type BackendBinaryOpts struct {
-	Arch string // backend (../../../../../.dagger/modules/backend/main.go:50:2)
-}
-
-// Return the compiled backend binary for a particular architecture
-func (r *Backend) Binary(opts ...BackendBinaryOpts) *File { // backend (../../../../../.dagger/modules/backend/main.go:48:1)
+// The compiled backend binary
+func (r *Backend) Binary() *File { // backend (../../../../../.dagger/modules/backend/main.go:9:2)
 	q := r.query.Select("binary")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `arch` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Arch) {
-			q = q.Arg("arch", opts[i].Arch)
-		}
-	}
 
 	return &File{
 		query: q,
 	}
 }
 
-// BackendBuildOpts contains options for Backend.Build
-type BackendBuildOpts struct {
-	Arch string // backend (../../../../../.dagger/modules/backend/main.go:35:2)
-}
-
-// Build the backend
-func (r *Backend) Build(opts ...BackendBuildOpts) *Directory { // backend (../../../../../.dagger/modules/backend/main.go:33:1)
-	q := r.query.Select("build")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `arch` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Arch) {
-			q = q.Arg("arch", opts[i].Arch)
-		}
-	}
-
-	return &Directory{
-		query: q,
-	}
-}
-
-// BackendContainerOpts contains options for Backend.Container
-type BackendContainerOpts struct {
-	Arch string // backend (../../../../../.dagger/modules/backend/main.go:59:2)
-}
-
 // Get a container ready to run the backend
-func (r *Backend) Container(opts ...BackendContainerOpts) *Container { // backend (../../../../../.dagger/modules/backend/main.go:57:1)
+func (r *Backend) Container() *Container { // backend (../../../../../.dagger/modules/backend/main.go:23:1)
 	q := r.query.Select("container")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `arch` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Arch) {
-			q = q.Arg("arch", opts[i].Arch)
-		}
-	}
 
 	return &Container{
 		query: q,
@@ -97,7 +55,7 @@ func (r *Backend) Container(opts ...BackendContainerOpts) *Container { // backen
 // The image matches the toolchain's own default rather than the version in
 // go.mod. It has to: this base also builds the toolchain's helper binaries,
 // whose go.mod requires 1.26, so an older image fails before any test runs.
-func (r *Backend) GoTestBase() *Container { // backend (../../../../../.dagger/modules/backend/main.go:96:1)
+func (r *Backend) GoTestBase() *Container { // backend (../../../../../.dagger/modules/backend/main.go:55:1)
 	q := r.query.Select("goTestBase")
 
 	return &Container{
@@ -155,18 +113,10 @@ func (r *Backend) UnmarshalJSON(bs []byte) error {
 }
 
 // Get a Service to run the backend
-func (r *Backend) Serve() *Service { // backend (../../../../../.dagger/modules/backend/main.go:76:1)
+func (r *Backend) Serve() *Service { // backend (../../../../../.dagger/modules/backend/main.go:35:1)
 	q := r.query.Select("serve")
 
 	return &Service{
-		query: q,
-	}
-}
-
-func (r *Backend) Source() *Directory { // backend (../../../../../.dagger/modules/backend/main.go:10:2)
-	q := r.query.Select("source")
-
-	return &Directory{
 		query: q,
 	}
 }
@@ -179,19 +129,10 @@ func (r *Backend) AsNode() Node {
 	}
 }
 
-// BackendOpts contains options for Query.Backend
-type BackendOpts struct {
-	Source *Directory // backend (../../../../../.dagger/modules/backend/main.go:17:2)
-}
-
-func (r *Query) Backend(opts ...BackendOpts) *Backend { // backend (../../../../../.dagger/modules/backend/main.go:13:1)
+func (r *Query) Backend(binary *File) *Backend { // backend (../../../../../.dagger/modules/backend/main.go:12:1)
+	assertNotNil("binary", binary)
 	q := r.query.Select("backend")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `source` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Source) {
-			q = q.Arg("source", opts[i].Source)
-		}
-	}
+	q = q.Arg("binary", binary)
 
 	return &Backend{
 		query: q,

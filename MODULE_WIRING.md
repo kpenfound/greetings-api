@@ -56,6 +56,22 @@ service = "frontend:serve"
 
 The playwright module binds that service into its test container as `frontend` and sets `PLAYWRIGHT_BASE_URL` to its exposed port. [website/playwright.config.ts](./website/playwright.config.ts) reads the variable, so the same specs run against `http://frontend:8081` in Dagger and `http://localhost:8081` on a laptop.
 
+### backend, greetings ← go-build binaries
+
+The backend binary comes from the go module too, rather than from a `go build` in the project's own code. The go module lists each main package as a binary, so the backend and greetings modules take the root package's compiled file as a setting:
+
+```toml
+[modules.backend.settings]
+binary = "dag://go-build/modules/binaries/build?go-module=.&go-binary=."
+
+[modules.greetings.settings]
+backendBinary = "dag://go-build/modules/binaries/build?go-module=.&go-binary=."
+```
+
+`dagger list files --all -f=link` prints these addresses.
+
+It is a second install of the same module, `go-build`, because the go module builds on its `base`. With `go`'s base wired to `backend:go-test-base`, which serves the backend, building there would need the binary it is building, and Dagger reports `recursive call detected`. `go-build` has no base, so it builds on the default Go container. It sets `test` and `generate` to `["!**"]` so its checks do not repeat `go`'s, and `go` sets `build` to `["!**"]` so it offers no binaries to wire, since any it built would hit the cycle.
+
 ### What this replaces
 
 Before wiring, each of these needed a custom check function in the project's Dagger module: build a test container, start the service, bind it, run the tests, and keep that in step with whatever the upstream module did. Now the project's modules expose a `Container` and a `Service`, the reusable modules own the test logic, and `dagger.toml` connects the two.

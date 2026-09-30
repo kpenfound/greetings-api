@@ -198,7 +198,7 @@ export enum AgentState {
   Stopped = "STOPPED",
 
   /**
-   * Blocked on input from the user (derived; see waitingOn).
+   * Blocked on input from the user.
    */
   WaitingInput = "WAITING_INPUT",
 }
@@ -272,13 +272,45 @@ export type ArtifactValueOpts = {
   arguments: JSON
 }
 
-export type ArtifactsFilterCheckCommandOpts = {
-  /**
-   * Include generated-file checks. Defaults to the workspace check-generated setting, or true when unset.
-   */
-  generated?: boolean
+export enum ArtifactDimensionKind {
+  Collection = "COLLECTION",
+  Module = "MODULE",
+  Type = "TYPE",
 }
 
+/**
+ * Utility function to convert a ArtifactDimensionKind value to its name so
+ * it can be uses as argument to call a exposed function.
+ */
+export function ArtifactDimensionKindValueToName(value: ArtifactDimensionKind): string {
+  switch (value) {
+    case ArtifactDimensionKind.Collection:
+      return "COLLECTION"
+    case ArtifactDimensionKind.Module:
+      return "MODULE"
+    case ArtifactDimensionKind.Type:
+      return "TYPE"
+    default:
+      return value
+  }
+}
+
+/**
+ * Utility function to convert a ArtifactDimensionKind name to its value so
+ * it can be properly used inside the module runtime.
+ */
+export function ArtifactDimensionKindNameToValue(name: string): ArtifactDimensionKind {
+  switch (name) {
+    case "COLLECTION":
+      return ArtifactDimensionKind.Collection
+    case "MODULE":
+      return ArtifactDimensionKind.Module
+    case "TYPE":
+      return ArtifactDimensionKind.Type
+    default:
+      return name as ArtifactDimensionKind
+  }
+}
 export type ArtifactsFilterDirectivesOpts = {
   /**
    * Remove the matching artifacts instead.
@@ -312,6 +344,16 @@ export type ArtifactsPathDefinitionsOpts = {
    * Prefix each address with the workspace's Git address and commit.
    */
   absolute?: boolean
+
+  /**
+   * Include the artifact type in each address scheme.
+   */
+  typeAssertion?: boolean
+
+  /**
+   * Project paths to the items of this collection dimension. Preserve parent dimensions and remove descendant dimensions.
+   */
+  dimension?: string
 }
 
 export type ArtifactsValuesOpts = {
@@ -554,7 +596,12 @@ export type ContainerAsServiceOpts = {
   useEntrypoint?: boolean
 
   /**
-   * Provides Dagger access to the executed command.
+   * Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+   */
+  disableDaggerInDagger?: boolean
+
+  /**
+   * @deprecated Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
    */
   experimentalPrivilegedNesting?: boolean
 
@@ -784,6 +831,13 @@ export type ContainerPublishOpts = {
   insecureSkipTLSVerify?: boolean
 }
 
+export type ContainerShellOpts = {
+  /**
+   * Return the batch command instead of the interactive command.
+   */
+  batch?: boolean
+}
+
 export type ContainerStatOpts = {
   /**
    * If specified, do not follow symlinks.
@@ -798,7 +852,12 @@ export type ContainerTerminalOpts = {
   cmd?: string[]
 
   /**
-   * Provides Dagger access to the executed command.
+   * Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+   */
+  disableDaggerInDagger?: boolean
+
+  /**
+   * @deprecated Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
    */
   experimentalPrivilegedNesting?: boolean
 
@@ -834,7 +893,12 @@ export type ContainerUpOpts = {
   useEntrypoint?: boolean
 
   /**
-   * Provides Dagger access to the executed command.
+   * Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+   */
+  disableDaggerInDagger?: boolean
+
+  /**
+   * @deprecated Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
    */
   experimentalPrivilegedNesting?: boolean
 
@@ -858,7 +922,12 @@ export type ContainerUpOpts = {
 
 export type ContainerWithDefaultTerminalCmdOpts = {
   /**
-   * Provides Dagger access to the executed command.
+   * Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+   */
+  disableDaggerInDagger?: boolean
+
+  /**
+   * @deprecated Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
    */
   experimentalPrivilegedNesting?: boolean
 
@@ -983,7 +1052,12 @@ export type ContainerWithExecOpts = {
   expect?: ReturnType
 
   /**
-   * Provides Dagger access to the executed command.
+   * Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+   */
+  disableDaggerInDagger?: boolean
+
+  /**
+   * @deprecated Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
    */
   experimentalPrivilegedNesting?: boolean
 
@@ -1232,6 +1306,50 @@ export type ContainerWithNewFileOpts = {
    * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo.txt").
    */
   expand?: boolean
+}
+
+export type ContainerWithRunOpts = {
+  /**
+   * Override the batch shell arguments. Example: ["bash", "-c"].
+   */
+  shell?: string[]
+
+  /**
+   * Override whether the shell is denied Dagger API access. Omit to use the configured shell setting.
+   */
+  disableDaggerInDagger?: boolean
+
+  /**
+   * @deprecated Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
+   */
+  experimentalPrivilegedNesting?: boolean
+
+  /**
+   * Override whether the shell has all root capabilities.
+   */
+  insecureRootCapabilities?: boolean
+}
+
+export type ContainerWithShellOpts = {
+  /**
+   * Command arguments for batch use. The script is appended as one argument. Defaults to interactive followed by "-c".
+   */
+  batch?: string[]
+
+  /**
+   * Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+   */
+  disableDaggerInDagger?: boolean
+
+  /**
+   * @deprecated Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
+   */
+  experimentalPrivilegedNesting?: boolean
+
+  /**
+   * Give the shell all root capabilities. Use only with trusted commands.
+   */
+  insecureRootCapabilities?: boolean
 }
 
 export type ContainerWithSymlinkOpts = {
@@ -1587,7 +1705,12 @@ export type DirectoryTerminalOpts = {
   cmd?: string[]
 
   /**
-   * Provides Dagger access to the executed command.
+   * Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+   */
+  disableDaggerInDagger?: boolean
+
+  /**
+   * @deprecated Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
    */
   experimentalPrivilegedNesting?: boolean
 
@@ -2486,6 +2609,11 @@ export type LLMSpawnOpts = {
   state?: AgentState
 
   /**
+   * Recorded parent handle when restoring an agent. Lineage does not install a notification subscription. Requires a supplied handle. The parent must already be restored in this session and cannot be the agent itself or its descendant.
+   */
+  parentHandle?: string
+
+  /**
    * The loop error to create the agent with, for state FAILED. Refused with any other state.
    */
   error?: string
@@ -2565,6 +2693,11 @@ export type LLMWithToolsOpts = {
    * Method names to exclude from the toolset (e.g. constructors, entrypoints).
    */
   except?: string[]
+
+  /**
+   * Version of this binding's state contract. Recomposition preserves compatible state when the version is unchanged and resets to the newly bound object's defaults when it differs. Change this when the state layout changes incompatibly. Same-type tool returns retain the version. Module identity and ownership checks still apply.
+   */
+  version?: number
 }
 
 export type LLMContentBlockInput = {
@@ -3757,12 +3890,12 @@ export type WorkspaceDirectoryOpts = {
 
 export type WorkspaceExportOpts = {
   /**
-   * Destination checkout path on the calling client. Relative paths start at the client's working directory. Omit to apply a local workspace's overlay changes at its host root.
+   * Destination checkout path on the calling client. Relative paths start at the client's working directory. Omit to use the calling client's current local workspace root.
    */
   path?: string
 
   /**
-   * Earlier workspace state to compare against. With path, this must be a previously exported frozen source workspace.
+   * Earlier workspace state to compare against. For Git integration, live inputs are snapshotted at export time; use a snapshot to retain the baseline of a previous export.
    */
   from?: Workspace
 }
@@ -4535,6 +4668,8 @@ export class Agent extends BaseClient {
    * 
    * Events never relaunch a stopped subscriber, and an already-reached state fires immediately at subscribe time, so a fast agent settling before the subscription lands is not missed.
    * 
+   * A restored agent that nothing has sent to, started, or resumed yet is the exception: its state was reached in the session it was restored from, so subscribing to it announces nothing until it next transitions. This is how a restore reinstalls recorded subscriptions without waking their subscribers.
+   * 
    * Idempotent per subscriber; re-subscribing replaces the state set.
    * @param subscriber The agent to deliver event messages to. You must hold its handle: subscriptions are capability-based like everything else.
    * @param opts.on The lifecycle states that fire an event. IDLE events carry the turn's final reply; FAILED events carry the loop error.
@@ -4844,6 +4979,7 @@ export class Artifact extends BaseClient {
   private readonly _id?: ID = undefined
   private readonly _description?: string = undefined
   private readonly _loadError?: string = undefined
+  private readonly _moduleName?: string = undefined
   private readonly _uri?: string = undefined
 
   /**
@@ -4854,6 +4990,7 @@ export class Artifact extends BaseClient {
      _id?: ID,
      _description?: string,
      _loadError?: string,
+     _moduleName?: string,
      _uri?: string,
    ) {
      super(ctx)
@@ -4861,6 +4998,7 @@ export class Artifact extends BaseClient {
      this._id = _id
      this._description = _description
      this._loadError = _loadError
+     this._moduleName = _moduleName
      this._uri = _uri
    }
 
@@ -4919,7 +5057,7 @@ export class Artifact extends BaseClient {
   }
 
   /**
-   * The selected keys for each dimension. Empty for static artifacts.
+   * The module name, collection keys, and full path key in the artifact type dimension.
    */
   dimensionKeys = async (): Promise<ArtifactDimensionKey[]> => {
     type dimensionKeys = {
@@ -4960,6 +5098,24 @@ export class Artifact extends BaseClient {
 
     const ctx = this._ctx.select(
       "loadError",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The installed module name.
+   */
+  moduleName = async (): Promise<string> => {
+    if (this._moduleName) {
+      return this._moduleName
+    }
+
+    const ctx = this._ctx.select(
+      "moduleName",
     )
 
     const response: Awaited<string> = await ctx.execute()
@@ -5027,6 +5183,7 @@ export class ArtifactDimension extends BaseClient {
   private readonly _itemType?: string = undefined
   private readonly _keyDescription?: string = undefined
   private readonly _keyName?: string = undefined
+  private readonly _kind?: ArtifactDimensionKind = undefined
   private readonly _name?: string = undefined
   private readonly _qualifiedName?: string = undefined
 
@@ -5041,6 +5198,7 @@ export class ArtifactDimension extends BaseClient {
      _itemType?: string,
      _keyDescription?: string,
      _keyName?: string,
+     _kind?: ArtifactDimensionKind,
      _name?: string,
      _qualifiedName?: string,
    ) {
@@ -5052,6 +5210,7 @@ export class ArtifactDimension extends BaseClient {
      this._itemType = _itemType
      this._keyDescription = _keyDescription
      this._keyName = _keyName
+     this._kind = _kind
      this._name = _name
      this._qualifiedName = _qualifiedName
    }
@@ -5075,7 +5234,7 @@ export class ArtifactDimension extends BaseClient {
   }
 
   /**
-   * The schema type name of the collection that supplies this dimension.
+   * The collection type, or null for a static dimension.
    */
   collectionType = async (): Promise<string> => {
     if (this._collectionType) {
@@ -5093,7 +5252,7 @@ export class ArtifactDimension extends BaseClient {
   }
 
   /**
-   * Exact GraphQL ParentType.field identifier.
+   * Stable identifier: collection schema path, type:TypeName for an artifact type, or module.
    */
   identifier = async (): Promise<string> => {
     if (this._identifier) {
@@ -5111,7 +5270,7 @@ export class ArtifactDimension extends BaseClient {
   }
 
   /**
-   * The author item type name.
+   * The collection item or artifact type name, or empty for the module dimension.
    */
   itemType = async (): Promise<string> => {
     if (this._itemType) {
@@ -5129,7 +5288,7 @@ export class ArtifactDimension extends BaseClient {
   }
 
   /**
-   * The description of the author get function's key argument.
+   * The collection key argument description, or empty for a static dimension.
    */
   keyDescription = async (): Promise<string> => {
     if (this._keyDescription) {
@@ -5147,7 +5306,7 @@ export class ArtifactDimension extends BaseClient {
   }
 
   /**
-   * The name of the author get function's key argument.
+   * The collection key argument name, or name for a static dimension.
    */
   keyName = async (): Promise<string> => {
     if (this._keyName) {
@@ -5165,7 +5324,24 @@ export class ArtifactDimension extends BaseClient {
   }
 
   /**
-   * Short name derived from the author item type.
+   * How this dimension gets its keys.
+   */
+  kind = async (): Promise<ArtifactDimensionKind> => {
+    if (this._kind) {
+      return this._kind
+    }
+
+    const ctx = this._ctx.select(
+      "kind",
+    )
+
+    const response: Awaited<ArtifactDimensionKind> = await ctx.execute()
+
+    return ArtifactDimensionKindNameToValue(response)
+  }
+
+  /**
+   * Short name used to select this dimension.
    */
   name = async (): Promise<string> => {
     if (this._name) {
@@ -5183,7 +5359,7 @@ export class ArtifactDimension extends BaseClient {
   }
 
   /**
-   * Author parent type and field name, in CLI case.
+   * Qualified name used when the short name is ambiguous.
    */
   qualifiedName = async (): Promise<string> => {
     if (this._qualifiedName) {
@@ -5278,12 +5454,16 @@ export class ArtifactDimensionKey extends BaseClient {
   }
 }
 
+
+
 /**
  * A schema path and its dimensions. The path can exist even when its collections have no runtime items.
  */
 export class ArtifactPath extends BaseClient {
   private readonly _id?: ID = undefined
   private readonly _description?: string = undefined
+  private readonly _loadError?: string = undefined
+  private readonly _moduleName?: string = undefined
   private readonly _uri?: string = undefined
 
   /**
@@ -5293,12 +5473,16 @@ export class ArtifactPath extends BaseClient {
     ctx?: Context,
      _id?: ID,
      _description?: string,
+     _loadError?: string,
+     _moduleName?: string,
      _uri?: string,
    ) {
      super(ctx)
 
      this._id = _id
      this._description = _description
+     this._loadError = _loadError
+     this._moduleName = _moduleName
      this._uri = _uri
    }
 
@@ -5347,6 +5531,42 @@ export class ArtifactPath extends BaseClient {
     )
 
     const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * A module load failure for this path, or an empty string.
+   */
+  loadError = async (): Promise<string> => {
+    if (this._loadError) {
+      return this._loadError
+    }
+
+    const ctx = this._ctx.select(
+      "loadError",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The installed module name.
+   */
+  moduleName = async (): Promise<string> => {
+    if (this._moduleName) {
+      return this._moduleName
+    }
+
+    const ctx = this._ctx.select(
+      "moduleName",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
 
     
     return response
@@ -5489,6 +5709,96 @@ export class Artifacts extends BaseClient {
   }
 
   /**
+   * Convert the selection to Changesets. Fail if any artifact is not a Changeset. Does not apply command filters.
+   */
+  asChangesets = async (): Promise<Changeset[]> => {
+    type asChangesets = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "asChangesets",
+    ).select("id")
+
+    const response: Awaited<asChangesets[]> = await ctx.execute()
+
+    
+    return response.map((r) => new Changeset(ctx.copy().selectNode(r.id, "Changeset")))
+  }
+
+  /**
+   * Convert the selection to Checks. Fail if any artifact is not a Check. Does not apply command filters or run the checks.
+   */
+  asChecks = async (): Promise<Check[]> => {
+    type asChecks = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "asChecks",
+    ).select("id")
+
+    const response: Awaited<asChecks[]> = await ctx.execute()
+
+    
+    return response.map((r) => new Check(ctx.copy().selectNode(r.id, "Check")))
+  }
+
+  /**
+   * Convert the selection to expertise without running the functions. Fail if any artifact is not a source of expertise.
+   */
+  asExpertise = async (): Promise<Expertise[]> => {
+    type asExpertise = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "asExpertise",
+    ).select("id")
+
+    const response: Awaited<asExpertise[]> = await ctx.execute()
+
+    
+    return response.map((r) => new Expertise(ctx.copy().selectNode(r.id, "Expertise")))
+  }
+
+  /**
+   * Convert the selection to Generators without running them. Fail if any artifact is not a Generator.
+   */
+  asGenerators = async (): Promise<Generator[]> => {
+    type asGenerators = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "asGenerators",
+    ).select("id")
+
+    const response: Awaited<asGenerators[]> = await ctx.execute()
+
+    
+    return response.map((r) => new Generator(ctx.copy().selectNode(r.id, "Generator")))
+  }
+
+  /**
+   * Convert the selection to Services. Fail if any artifact is not a Service. Does not apply command filters or start the services.
+   */
+  asServices = async (): Promise<Service[]> => {
+    type asServices = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "asServices",
+    ).select("id")
+
+    const response: Awaited<asServices[]> = await ctx.execute()
+
+    
+    return response.map((r) => new Service(ctx.copy().selectNode(r.id, "Service")))
+  }
+
+  /**
    * List dimensions on the selected schema paths, including empty collections. Does not read runtime values.
    */
   dimensionDefinitions = async (): Promise<ArtifactDimension[]> => {
@@ -5504,6 +5814,25 @@ export class Artifacts extends BaseClient {
 
     
     return response.map((r) => new ArtifactDimension(ctx.copy().selectNode(r.id, "ArtifactDimension")))
+  }
+
+  /**
+   * List collection items represented in this selection for the given dimension. Preserve parent keys and remove duplicate item addresses. Does not evaluate item values.
+   */
+  dimensionItems = async (dimension: string): Promise<Artifact[]> => {
+    type dimensionItems = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "dimensionItems",
+      { dimension},
+    ).select("id")
+
+    const response: Awaited<dimensionItems[]> = await ctx.execute()
+
+    
+    return response.map((r) => new Artifact(ctx.copy().selectNode(r.id, "Artifact")))
   }
 
   /**
@@ -5533,30 +5862,6 @@ export class Artifacts extends BaseClient {
 
     
     return response
-  }
-
-  /**
-   * Select LLM artifacts marked agent.
-   */
-  filterAgentCommand = (): Artifacts => {
-
-    const ctx = this._ctx.select(
-      "filterAgentCommand",
-    )
-    return new Artifacts(ctx)
-  }
-
-  /**
-   * Select Check artifacts for dagger check, using each workspace's check and generator settings. Include stale checks only for Changesets marked generate.
-   * @param opts.generated Include generated-file checks. Defaults to the workspace check-generated setting, or true when unset.
-   */
-  filterCheckCommand = (opts?: ArtifactsFilterCheckCommandOpts): Artifacts => {
-
-    const ctx = this._ctx.select(
-      "filterCheckCommand",
-      { ...opts },
-    )
-    return new Artifacts(ctx)
   }
 
   /**
@@ -5592,17 +5897,6 @@ export class Artifacts extends BaseClient {
     const ctx = this._ctx.select(
       "filterDirectives",
       { directives, ...opts },
-    )
-    return new Artifacts(ctx)
-  }
-
-  /**
-   * Select Changeset artifacts marked generate, using each workspace's generator settings.
-   */
-  filterGenerateCommand = (): Artifacts => {
-
-    const ctx = this._ctx.select(
-      "filterGenerateCommand",
     )
     return new Artifacts(ctx)
   }
@@ -5646,6 +5940,18 @@ export class Artifacts extends BaseClient {
   }
 
   /**
+   * Keep paths that match a glob pattern. A literal path matches exactly. Both module-qualified and entrypoint paths match.
+   */
+  filterPathPattern = (pattern: string): Artifacts => {
+
+    const ctx = this._ctx.select(
+      "filterPathPattern",
+      { pattern },
+    )
+    return new Artifacts(ctx)
+  }
+
+  /**
    * Keep artifacts of any listed concrete GraphQL type.
    * @param opts.exclude Remove the matching artifacts instead.
    */
@@ -5654,17 +5960,6 @@ export class Artifacts extends BaseClient {
     const ctx = this._ctx.select(
       "filterTypes",
       { types, ...opts },
-    )
-    return new Artifacts(ctx)
-  }
-
-  /**
-   * Select Service artifacts marked up, using each workspace's service settings.
-   */
-  filterUpCommand = (): Artifacts => {
-
-    const ctx = this._ctx.select(
-      "filterUpCommand",
     )
     return new Artifacts(ctx)
   }
@@ -5703,6 +5998,24 @@ export class Artifacts extends BaseClient {
   }
 
   /**
+   * List the modules represented in this selection without evaluating artifact values.
+   */
+  modules = async (): Promise<Module_[]> => {
+    type modules = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "modules",
+    ).select("id")
+
+    const response: Awaited<modules[]> = await ctx.execute()
+
+    
+    return response.map((r) => new Module_(ctx.copy().selectNode(r.id, "Module")))
+  }
+
+  /**
    * Require exactly one artifact; fail if there are zero or multiple matches. Several matches are listed, one address per line.
    */
   one = (): Artifact => {
@@ -5714,8 +6027,10 @@ export class Artifacts extends BaseClient {
   }
 
   /**
-   * List selected schema paths, including empty collections. Does not read runtime values or resolve dimension-key filters.
+   * List selected schema paths, including empty collections. Does not read runtime values. Applies type keys and collection presence; collection key values require items.
    * @param opts.absolute Prefix each address with the workspace's Git address and commit.
+   * @param opts.typeAssertion Include the artifact type in each address scheme.
+   * @param opts.dimension Project paths to the items of this collection dimension. Preserve parent dimensions and remove descendant dimensions.
    */
   pathDefinitions = async (
     opts?: ArtifactsPathDefinitionsOpts): Promise<ArtifactPath[]> => {
@@ -6072,17 +6387,6 @@ export class Changeset extends BaseClient {
 
     
     return response
-  }
-
-  /**
-   * A check that passes when the changeset is empty.
-   */
-  stale = (): Check => {
-
-    const ctx = this._ctx.select(
-      "stale",
-    )
-    return new Check(ctx)
   }
 
   /**
@@ -6518,6 +6822,138 @@ export class CollectionTypeDef extends BaseClient {
 }
 
 /**
+ * A command's arguments and execution settings.
+ */
+export class Command extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _insecureRootCapabilities?: boolean = undefined
+  private readonly _privilegedNesting?: boolean = undefined
+  private readonly _workdir?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _insecureRootCapabilities?: boolean,
+     _privilegedNesting?: boolean,
+     _workdir?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._insecureRootCapabilities = _insecureRootCapabilities
+     this._privilegedNesting = _privilegedNesting
+     this._workdir = _workdir
+   }
+
+  /**
+   * A unique identifier for this Command.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The command arguments.
+   */
+  args = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "args",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Environment variable overrides. Other variables come from the container.
+   */
+  env = async (): Promise<EnvVariable[]> => {
+    type env = {
+      id: ID
+    }
+
+    const ctx = this._ctx.select(
+      "env",
+    ).select("id")
+
+    const response: Awaited<env[]> = await ctx.execute()
+
+    
+    return response.map((r) => new EnvVariable(ctx.copy().selectNode(r.id, "EnvVariable")))
+  }
+
+  /**
+   * Whether the command has all root capabilities.
+   */
+  insecureRootCapabilities = async (): Promise<boolean> => {
+    if (this._insecureRootCapabilities) {
+      return this._insecureRootCapabilities
+    }
+
+    const ctx = this._ctx.select(
+      "insecureRootCapabilities",
+    )
+
+    const response: Awaited<boolean> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Whether the command has access to Dagger.
+   */
+  privilegedNesting = async (): Promise<boolean> => {
+    if (this._privilegedNesting) {
+      return this._privilegedNesting
+    }
+
+    const ctx = this._ctx.select(
+      "privilegedNesting",
+    )
+
+    const response: Awaited<boolean> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Working directory override. If unset, use the container's working directory.
+   */
+  workdir = async (): Promise<string> => {
+    if (this._workdir) {
+      return this._workdir
+    }
+
+    const ctx = this._ctx.select(
+      "workdir",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+/**
  * An OCI-compatible container, also known as a Docker container.
  */
 export class Container extends BaseClient {
@@ -6609,7 +7045,7 @@ export class Container extends BaseClient {
    * 
    * If empty, the container's default command is used.
    * @param opts.useEntrypoint If the container has an entrypoint, prepend it to the args.
-   * @param opts.experimentalPrivilegedNesting Provides Dagger access to the executed command.
+   * @param opts.disableDaggerInDagger Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
    * @param opts.insecureRootCapabilities Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the args according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    * @param opts.noInit If set, skip the automatic init process injected into containers by default.
@@ -6818,11 +7254,10 @@ export class Container extends BaseClient {
   }
 
   /**
-   * EXPERIMENTAL API! Subject to change/removal at any time.
-   * 
    * Configures all available GPUs on the host to be accessible to this container.
    * 
    * This currently works for Nvidia devices only.
+   * @deprecated Use "withGPU" instead.
    */
   experimentalWithAllGPUs = (): Container => {
 
@@ -6833,12 +7268,11 @@ export class Container extends BaseClient {
   }
 
   /**
-   * EXPERIMENTAL API! Subject to change/removal at any time.
-   * 
    * Configures the provided list of devices to be accessible to this container.
    * 
    * This currently works for Nvidia devices only.
    * @param devices List of devices to be accessible to this container.
+   * @deprecated Use "withGPU" instead, which exposes all GPUs available on the host.
    */
   experimentalWithGPU = (devices: string[]): Container => {
 
@@ -7190,6 +7624,19 @@ export class Container extends BaseClient {
   }
 
   /**
+   * Return the configured shell command. Defaults to ["sh"].
+   * @param opts.batch Return the batch command instead of the interactive command.
+   */
+  shell = (opts?: ContainerShellOpts): Command => {
+
+    const ctx = this._ctx.select(
+      "shell",
+      { ...opts },
+    )
+    return new Command(ctx)
+  }
+
+  /**
    * Return file status
    * @param path Path to check (e.g., "/file.txt").
    * @param opts.doNotFollowSymlinks If specified, do not follow symlinks.
@@ -7268,7 +7715,7 @@ export class Container extends BaseClient {
   /**
    * Opens an interactive terminal for this container using its configured default terminal command if not overridden by args (or sh as a fallback default).
    * @param opts.cmd If set, override the container's default terminal command and invoke these command arguments instead.
-   * @param opts.experimentalPrivilegedNesting Provides Dagger access to the executed command.
+   * @param opts.disableDaggerInDagger Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
    * @param opts.insecureRootCapabilities Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
    */
   terminal = (opts?: ContainerTerminalOpts): Container => {
@@ -7292,7 +7739,7 @@ export class Container extends BaseClient {
    * 
    * If empty, the container's default command is used.
    * @param opts.useEntrypoint If the container has an entrypoint, prepend it to the args.
-   * @param opts.experimentalPrivilegedNesting Provides Dagger access to the executed command.
+   * @param opts.disableDaggerInDagger Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
    * @param opts.insecureRootCapabilities Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
    * @param opts.expand Replace "${VAR}" or "$VAR" in the args according to the current environment variables defined in the container (e.g. "/$VAR/foo").
    * @param opts.noInit If set, skip the automatic init process injected into containers by default.
@@ -7363,8 +7810,9 @@ export class Container extends BaseClient {
   /**
    * Set the default command to invoke for the container's terminal API.
    * @param args The args of the command.
-   * @param opts.experimentalPrivilegedNesting Provides Dagger access to the executed command.
+   * @param opts.disableDaggerInDagger Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
    * @param opts.insecureRootCapabilities Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
+   * @deprecated Use withShell.
    */
   withDefaultTerminalCmd = (args: string[], opts?: ContainerWithDefaultTerminalCmdOpts): Container => {
 
@@ -7486,7 +7934,7 @@ export class Container extends BaseClient {
    * @param opts.redirectStdout Redirect the command's standard output to a file in the container. Example: "./stdout.txt"
    * @param opts.redirectStderr Redirect the command's standard error to a file in the container. Example: "./stderr.txt"
    * @param opts.expect Exit codes this command is allowed to exit with without error
-   * @param opts.experimentalPrivilegedNesting Provides Dagger access to the executed command.
+   * @param opts.disableDaggerInDagger Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
    * @param opts.insecureRootCapabilities Execute the command with all root capabilities. Like --privileged in Docker
    * 
    * DANGER: this grants the command full access to the host system. Only use when 1) you trust the command being executed and 2) you specifically need this level of access.
@@ -7574,6 +8022,19 @@ export class Container extends BaseClient {
     const ctx = this._ctx.select(
       "withFiles",
       { path, sources, ...opts },
+    )
+    return new Container(ctx)
+  }
+
+  /**
+   * Configures all GPUs available on the host to be accessible to this container.
+   * 
+   * This currently works with NVIDIA devices only, and requires the engine to run with GPU support enabled.
+   */
+  withGPU = (): Container => {
+
+    const ctx = this._ctx.select(
+      "withGPU",
     )
     return new Container(ctx)
   }
@@ -7770,6 +8231,22 @@ export class Container extends BaseClient {
   }
 
   /**
+   * Execute a script with the configured batch shell and return the modified container.
+   * @param command Script to append to the shell command as one argument.
+   * @param opts.shell Override the batch shell arguments. Example: ["bash", "-c"].
+   * @param opts.disableDaggerInDagger Override whether the shell is denied Dagger API access. Omit to use the configured shell setting.
+   * @param opts.insecureRootCapabilities Override whether the shell has all root capabilities.
+   */
+  withRun = (command: string, opts?: ContainerWithRunOpts): Container => {
+
+    const ctx = this._ctx.select(
+      "withRun",
+      { command, ...opts },
+    )
+    return new Container(ctx)
+  }
+
+  /**
    * Set a new environment variable, using a secret value
    * @param name Name of the secret variable (e.g., "API_SECRET").
    * @param secret Identifier of the secret value.
@@ -7799,6 +8276,22 @@ export class Container extends BaseClient {
     const ctx = this._ctx.select(
       "withServiceBinding",
       { alias, service },
+    )
+    return new Container(ctx)
+  }
+
+  /**
+   * Set the shell used by terminal() and withRun().
+   * @param interactive Command arguments for interactive use. Example: ["sh"].
+   * @param opts.batch Command arguments for batch use. The script is appended as one argument. Defaults to interactive followed by "-c".
+   * @param opts.disableDaggerInDagger Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+   * @param opts.insecureRootCapabilities Give the shell all root capabilities. Use only with trusted commands.
+   */
+  withShell = (interactive: string[], opts?: ContainerWithShellOpts): Container => {
+
+    const ctx = this._ctx.select(
+      "withShell",
+      { interactive, ...opts },
     )
     return new Container(ctx)
   }
@@ -8839,7 +9332,7 @@ export class Directory extends BaseClient {
    * Opens an interactive terminal in new container with this directory mounted inside.
    * @param opts.container If set, override the default container used for the terminal.
    * @param opts.cmd If set, override the container's default terminal command and invoke these command arguments instead.
-   * @param opts.experimentalPrivilegedNesting Provides Dagger access to the executed command.
+   * @param opts.disableDaggerInDagger Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
    * @param opts.insecureRootCapabilities Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
    */
   terminal = (opts?: DirectoryTerminalOpts): Directory => {
@@ -10332,6 +10825,110 @@ export class ErrorValue extends BaseClient {
 
 
 /**
+ * An agent function that can modify a conversation.
+ */
+export class Expertise extends BaseClient {
+  private readonly _id?: ID = undefined
+  private readonly _description?: string = undefined
+  private readonly _name?: string = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+     _description?: string,
+     _name?: string,
+   ) {
+     super(ctx)
+
+     this._id = _id
+     this._description = _description
+     this._name = _name
+   }
+
+  /**
+   * A unique identifier for this Expertise.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The agent function's description.
+   */
+  description = async (): Promise<string> => {
+    if (this._description) {
+      return this._description
+    }
+
+    const ctx = this._ctx.select(
+      "description",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The agent function's name.
+   */
+  name = async (): Promise<string> => {
+    if (this._name) {
+      return this._name
+    }
+
+    const ctx = this._ctx.select(
+      "name",
+    )
+
+    const response: Awaited<string> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * The module that defines the agent function.
+   */
+  originalModule = (): Module_ => {
+
+    const ctx = this._ctx.select(
+      "originalModule",
+    )
+    return new Module_(ctx)
+  }
+
+  /**
+   * The agent function's path within its module.
+   */
+  path = async (): Promise<string[]> => {
+    const ctx = this._ctx.select(
+      "path",
+    )
+
+    const response: Awaited<string[]> = await ctx.execute()
+
+    
+    return response
+  }
+}
+
+/**
  * An object that can be exported to the host.
  * 
  * Calling export writes the object to a path on the host filesystem and returns the path that was written.
@@ -11020,7 +11617,7 @@ export class Function_ extends BaseClient {
   }
 
   /**
-   * Returns the function with a flag indicating it is an agent middleware.
+   * Returns the function with a flag indicating it is a source of expertise.
    * @experimental
    */
   withAgent = (): Function_ => {
@@ -11705,6 +12302,85 @@ export class GeneratedCode extends BaseClient {
    * This is useful for reusability and readability by not breaking the calling chain.
    */
   with = (arg: (param: GeneratedCode) => GeneratedCode) => {
+    return arg(this)
+  }
+}
+
+/**
+ * A generation function and its staleness check. Reading changeset runs the function.
+ */
+export class Generator extends BaseClient {
+  private readonly _id?: ID = undefined
+
+  /**
+   * Constructor is used for internal usage only, do not create object from it.
+   */
+   constructor(
+    ctx?: Context,
+     _id?: ID,
+   ) {
+     super(ctx)
+
+     this._id = _id
+   }
+
+  /**
+   * A unique identifier for this Generator.
+   */
+  id = async (): Promise<ID> => {
+    if (this._id) {
+      return this._id
+    }
+
+    const ctx = this._ctx.select(
+      "id",
+    )
+
+    const response: Awaited<ID> = await ctx.execute()
+
+    
+    return response
+  }
+
+  /**
+   * Run the generator and return its changes.
+   */
+  changeset = (): Changeset => {
+
+    const ctx = this._ctx.select(
+      "changeset",
+    )
+    return new Changeset(ctx)
+  }
+
+  /**
+   * A check that passes when this generator would produce no changes.
+   */
+  stale = (): Check => {
+
+    const ctx = this._ctx.select(
+      "stale",
+    )
+    return new Check(ctx)
+  }
+
+  /**
+   * Run the generator and retain its result.
+   */
+  sync = (): Generator => {
+
+    const ctx = this._ctx.select(
+      "sync",
+    )
+    return new Generator(ctx)
+  }
+
+  /**
+   * Call the provided function with current Generator.
+   *
+   * This is useful for reusability and readability by not breaking the calling chain.
+   */
+  with = (arg: (param: Generator) => Generator) => {
     return arg(this)
   }
 }
@@ -12812,6 +13488,8 @@ export class GitRepository extends BaseClient {
    * @param name Ref's name (can be a commit identifier, a tag name, a branch name, or a fully-qualified ref).
    * 
    * Commit identifiers may be abbreviated: an unambiguous hex prefix (4-40 characters) of a commit SHA resolves like git rev-parse, with named refs taking precedence. Abbreviated SHAs resolve against locally available objects, so remote repositories (resolved via ls-remote) can only expand prefixes of already-fetched commits; use the full SHA or a named ref otherwise.
+   * 
+   * The name may be followed by git revision suffixes, applied left to right: `~N` follows first parents N times and `^N` selects the Nth parent (`~` and `^` mean 1, `^0` is the commit itself), e.g. `HEAD~3`, `main^2` or `abc1234~2`. The result is a detached ref of the resulting commit; remote repositories fetch the history the walk needs. Other git revision syntax (`^{...}`, `@{...}`, `:path`, ranges) is not supported.
    */
   ref = (name: string): GitRef => {
 
@@ -13787,11 +14465,9 @@ export class LLM extends BaseClient {
   private readonly _id?: ID = undefined
   private readonly _contextTokens?: number = undefined
   private readonly _contextWindow?: number = undefined
-  private readonly _emitHistory?: ID = undefined
   private readonly _hasPending?: boolean = undefined
   private readonly _lastReply?: string = undefined
   private readonly _model?: string = undefined
-  private readonly _portableID?: ID = undefined
   private readonly _provider?: string = undefined
   private readonly _reasoningEffort?: string = undefined
   private readonly _spawn?: ID = undefined
@@ -13807,11 +14483,9 @@ export class LLM extends BaseClient {
      _id?: ID,
      _contextTokens?: number,
      _contextWindow?: number,
-     _emitHistory?: ID,
      _hasPending?: boolean,
      _lastReply?: string,
      _model?: string,
-     _portableID?: ID,
      _provider?: string,
      _reasoningEffort?: string,
      _spawn?: ID,
@@ -13824,11 +14498,9 @@ export class LLM extends BaseClient {
      this._id = _id
      this._contextTokens = _contextTokens
      this._contextWindow = _contextWindow
-     this._emitHistory = _emitHistory
      this._hasPending = _hasPending
      this._lastReply = _lastReply
      this._model = _model
-     this._portableID = _portableID
      this._provider = _provider
      this._reasoningEffort = _reasoningEffort
      this._spawn = _spawn
@@ -13873,6 +14545,19 @@ export class LLM extends BaseClient {
   }
 
   /**
+   * Run expertise in list order, passing this conversation through each function. Retain existing contributions.
+   * @param expertise The expertise to run. Each reference retains its source workspace.
+   */
+  compose = (expertise: Expertise[]): LLM => {
+
+    const ctx = this._ctx.select(
+      "compose",
+      { expertise },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
    * estimated number of tokens currently occupying the context window; unlike tokenUsage this is not cumulative over the session
    */
   contextTokens = async (): Promise<number> => {
@@ -13906,20 +14591,6 @@ export class LLM extends BaseClient {
 
     
     return response
-  }
-
-  /**
-   * Re-emit telemetry spans for the full message history, so a loaded conversation displays in the TUI.
-   */
-  emitHistory = async (): Promise<LLM> => {
-    const ctx = this._ctx.select(
-      "emitHistory",
-    )
-
-    const response: Awaited<ID> = await ctx.execute()
-
-    
-    return new LLM(ctx.copy().selectNode(response, "LLM"))
   }
 
   /**
@@ -14022,24 +14693,6 @@ export class LLM extends BaseClient {
   }
 
   /**
-   * A portable, self-contained ID for the conversation that node() can resolve in any session. Unlike id, which may return an engine-local runtime handle valid only within the current session, this returns the recipe form suitable for persisting and later restoring the conversation. The recipe is flattened: bindings superseded during the session (workspace overlays recorded by each mutating tool call, and re-bound toolsets) are dropped, while the current workspace binding — including any pending, un-exported edits — is preserved.
-   */
-  portableID = async (): Promise<ID> => {
-    if (this._portableID) {
-      return this._portableID
-    }
-
-    const ctx = this._ctx.select(
-      "portableID",
-    )
-
-    const response: Awaited<ID> = await ctx.execute()
-
-    
-    return response
-  }
-
-  /**
    * The provider serving the model, e.g. "anthropic", "openai", "google", or "local".
    */
   provider = async (): Promise<string> => {
@@ -14076,6 +14729,23 @@ export class LLM extends BaseClient {
   }
 
   /**
+   * Run expertise in list order, replacing their modules' contributions and preserving compatible tool state.
+   * 
+   * Clear each selected module's contributions once before execution. Retain unowned contributions and contributions from other modules. Keep this LLM's workspace.
+   * 
+   * A change to a tool binding's version resets its state. Removed bindings, changed identities, and incompatible state are errors.
+   * @param expertise The expertise to run. Each reference retains its source workspace.
+   */
+  recompose = (expertise: Expertise[]): LLM => {
+
+    const ctx = this._ctx.select(
+      "recompose",
+      { expertise },
+    )
+    return new LLM(ctx)
+  }
+
+  /**
    * The skills visible to the model, exactly as the ListSkills tool serves them: engine-embedded skills, skills installed with withSkills, and skills discovered in the workspace.
    */
   skills = async (): Promise<LLMSkill[]> => {
@@ -14106,6 +14776,7 @@ export class LLM extends BaseClient {
    * @param opts.state The lifecycle state to create the agent in, as facts on the entry: IDLE is ready to be prompted, PAUSED parks it, FAILED holds an error a resume retries past, STOPPED preserves a dormant snapshot that send or resume can relaunch.
    * 
    * RUNNING and WAITING_INPUT are refused: they describe a loop, and a restored loop died with the session that published it — restore such an agent as IDLE, its interrupted turn's input still pending on the conversation.
+   * @param opts.parentHandle Recorded parent handle when restoring an agent. Lineage does not install a notification subscription. Requires a supplied handle. The parent must already be restored in this session and cannot be the agent itself or its descendant.
    * @param opts.error The loop error to create the agent with, for state FAILED. Refused with any other state.
    * @experimental
    */
@@ -14375,6 +15046,7 @@ export class LLM extends BaseClient {
    * Expose an object's methods as tools. Every eligible method of the bound object becomes a tool; a tool that returns this object's own type replaces it as the new state. Repeatable to bind several objects.
    * @param object The object whose methods become tools.
    * @param opts.except Method names to exclude from the toolset (e.g. constructors, entrypoints).
+   * @param opts.version Version of this binding's state contract. Recomposition preserves compatible state when the version is unchanged and resets to the newly bound object's defaults when it differs. Change this when the state layout changes incompatibly. Same-type tool returns retain the version. Module identity and ownership checks still apply.
    */
   withTools = (object: Node, opts?: LLMWithToolsOpts): LLM => {
 
@@ -15330,6 +16002,22 @@ export class Module_ extends BaseClient {
 
     
     return response
+  }
+
+  /**
+   * The source used to resolve contextual files and directories, when different from source.
+   */
+  contextSource = async (): Promise<ModuleSource | null> => {
+    const ctx = this._ctx.select(
+      "contextSource",
+    ).select("id")
+
+    const response: Awaited<string | null> = await ctx.execute()
+
+    if (response === null) {
+      return null
+    }
+    return new ModuleSource(ctx.copy().selectNode(response, "ModuleSource"))
   }
 
   /**
@@ -16966,6 +17654,7 @@ export class Client extends BaseClient {
   private readonly _currentTimestamp?: string = undefined
   private readonly _defaultPlatform?: Platform = undefined
   private readonly _serveModule?: Void = undefined
+  private readonly _setSessionTitle?: Void = undefined
   private readonly _version?: string = undefined
 
   /**
@@ -16977,6 +17666,7 @@ export class Client extends BaseClient {
      _currentTimestamp?: string,
      _defaultPlatform?: Platform,
      _serveModule?: Void,
+     _setSessionTitle?: Void,
      _version?: string,
    ) {
      super(ctx)
@@ -16985,6 +17675,7 @@ export class Client extends BaseClient {
      this._currentTimestamp = _currentTimestamp
      this._defaultPlatform = _defaultPlatform
      this._serveModule = _serveModule
+     this._setSessionTitle = _setSessionTitle
      this._version = _version
    }
 
@@ -17496,6 +18187,24 @@ export class Client extends BaseClient {
       { name, plaintext },
     )
     return new Secret(ctx)
+  }
+
+  /**
+   * Name the current session.
+   * 
+   * The title renames the session wherever its telemetry is shown (the calling client's primary span, e.g. the CLI's command span) and labels its engine archive, as listed by dagger agent --resume. The latest title wins. Only the session's main client may set it.
+   * @param title The title, sanitized to a single printable line.
+   * @experimental
+   */
+  setSessionTitle = async (title: string): Promise<void> => {
+    const ctx = this._ctx.select(
+      "setSessionTitle",
+      { title},
+    )
+
+    await ctx.execute()
+
+    
   }
 
   /**
@@ -19579,11 +20288,13 @@ export class Workspace extends BaseClient {
   /**
    * Write this workspace's commits and pending changes to a checkout on the calling client.
    * 
-   * With path, accept a frozen source, integrate divergent commits by cherry-picking, preserve unrelated checkout edits, and refuse conflicts. The source is unchanged. Pass from to save only work since an earlier source value, including previously saved pending edits that are now committed.
+   * Path selects the destination; omitting it uses the calling client's current local workspace root, including when exporting a snapshot or committed workspace. Exported file paths are relative to the workspace root regardless of its working directory. This writes only to the client making the call, never the source's client.
    * 
-   * Without path, apply a local workspace's overlay changes at its host root. Pass from to apply only changes since an earlier local workspace state. Export paths are relative to the workspace root regardless of its working directory. Like Directory.export, this writes only to the client making the call, never the source's client.
-   * @param opts.path Destination checkout path on the calling client. Relative paths start at the client's working directory. Omit to apply a local workspace's overlay changes at its host root.
-   * @param opts.from Earlier workspace state to compare against. With path, this must be a previously exported frozen source workspace.
+   * A live workspace exported to its own checkout applies only its overlay edits, without capturing the whole checkout. This also applies with an explicit path. Pass from with the same live base to apply only changes since that overlay state.
+   * 
+   * Other exports integrate divergent commits by cherry-picking, preserve unrelated checkout edits, and refuse conflicts. Live inputs are snapshotted automatically; capturing untracked source files requires interactive approval. Stable inputs retain their baseline. Pass from to save only work since an earlier source value, including previously saved pending edits that are now committed.
+   * @param opts.path Destination checkout path on the calling client. Relative paths start at the client's working directory. Omit to use the calling client's current local workspace root.
+   * @param opts.from Earlier workspace state to compare against. For Git integration, live inputs are snapshotted at export time; use a snapshot to retain the baseline of a previous export.
    */
   export = async (
     opts?: WorkspaceExportOpts): Promise<void> => {
@@ -20187,7 +20898,7 @@ export class Workspace extends BaseClient {
    * With hard, the working tree is reset to the commit and every uncommitted change is discarded.
    * 
    * Commits orphaned by the reset are not preserved: the frozen repository keeps reachable history only, so a reset cannot be undone by resetting forward again.
-   * @param commit Full commit hash to reset HEAD to.
+   * @param commit Commit to reset HEAD to, resolved against this workspace's repository like GitRepository.ref: a full commit hash, an unambiguous hex prefix (4-40 characters), or a ref name, optionally followed by revision suffixes such as HEAD~1, main^2 or abc1234~2. Only the commit it resolves to is used: a ref name selects its commit, it does not check out that ref.
    * @param opts.hard Discard uncommitted changes, resetting the working tree to the commit.
    */
   withReset = (commit: string, opts?: WorkspaceWithResetOpts): Workspace => {

@@ -2,8 +2,14 @@
 source = ".dagger/modules/greetings"
 entrypoint = true
 
+[modules.greetings.settings]
+backendBinary = "dag://go-build/modules/binaries/build?go-module=.&go-binary=."
+
 [modules.backend]
 source = ".dagger/modules/backend"
+
+[modules.backend.settings]
+binary = "dag://go-build/modules/binaries/build?go-module=.&go-binary=."
 
 [modules.frontend]
 source = ".dagger/modules/frontend"
@@ -24,6 +30,23 @@ source = "github.com/dagger/go@collections"
 # would run without the variable, and the e2e tests skip when that is unset,
 # which looks exactly like passing.
 base = "dag://backend/go-test-base"
+# Binaries come from go-build instead: building here would run on the base
+# above, which needs the backend binary, a cycle.
+build = ["!**"]
+
+[modules.go-build]
+source = "github.com/dagger/go@collections"
+
+[modules.go-build.settings]
+# Builds the binaries backend and greetings are wired to, on the default Go
+# container. Tests and generate stay with go.
+#
+# Go 1.26 rather than the 1.18 in go.mod: 1.18 builds with cgo on, linking
+# against Alpine's musl, and the binary then fails to start on glibc-based
+# wolfi. From 1.20 cgo is off without a C compiler, so the binary is static.
+version = "1.26"
+test = ["!**"]
+generate = ["!**"]
 
 [modules.golangci-lint]
 source = "dagger.io/go/golangci-lint@collections"
@@ -45,7 +68,7 @@ is-module = true
 
 [sdks.go.scopes.".dagger/modules/greetings"]
 is-module = true
-clients = ["./.dagger/modules/backend", "./.dagger/modules/frontend"]
+clients = ["./.dagger/modules/frontend"]
 
 [sdks.typescript]
 module = "dagger-typescript-sdk"

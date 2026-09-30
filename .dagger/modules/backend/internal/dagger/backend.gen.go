@@ -21,60 +21,18 @@ func (r *Backend) WithGraphQLQuery(q *querybuilder.Selection) *Backend {
 	}
 }
 
-// BackendBinaryOpts contains options for Backend.Binary
-type BackendBinaryOpts struct {
-	Arch string
-}
-
-// Return the compiled backend binary for a particular architecture
-func (r *Backend) Binary(opts ...BackendBinaryOpts) *File {
+// The compiled backend binary
+func (r *Backend) Binary() *File {
 	q := r.query.Select("binary")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `arch` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Arch) {
-			q = q.Arg("arch", opts[i].Arch)
-		}
-	}
 
 	return &File{
 		query: q,
 	}
 }
 
-// BackendBuildOpts contains options for Backend.Build
-type BackendBuildOpts struct {
-	Arch string
-}
-
-// Build the backend
-func (r *Backend) Build(opts ...BackendBuildOpts) *Directory {
-	q := r.query.Select("build")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `arch` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Arch) {
-			q = q.Arg("arch", opts[i].Arch)
-		}
-	}
-
-	return &Directory{
-		query: q,
-	}
-}
-
-// BackendContainerOpts contains options for Backend.Container
-type BackendContainerOpts struct {
-	Arch string
-}
-
 // Get a container ready to run the backend
-func (r *Backend) Container(opts ...BackendContainerOpts) *Container {
+func (r *Backend) Container() *Container {
 	q := r.query.Select("container")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `arch` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Arch) {
-			q = q.Arg("arch", opts[i].Arch)
-		}
-	}
 
 	return &Container{
 		query: q,
@@ -163,27 +121,10 @@ func (r *Backend) Serve() *Service {
 	}
 }
 
-func (r *Backend) Source() *Directory {
-	q := r.query.Select("source")
-
-	return &Directory{
-		query: q,
-	}
-}
-
-// BackendOpts contains options for Query.Backend
-type BackendOpts struct {
-	Source *Directory
-}
-
-func (r *Query) Backend(opts ...BackendOpts) *Backend { // backend (../../../../../:0:0)
+func (r *Query) Backend(binary *File) *Backend { // backend (../../../../../:0:0)
+	assertNotNil("binary", binary)
 	q := r.query.Select("backend")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `source` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Source) {
-			q = q.Arg("source", opts[i].Source)
-		}
-	}
+	q = q.Arg("binary", binary)
 
 	return &Backend{
 		query: q,

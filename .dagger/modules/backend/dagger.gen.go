@@ -61,21 +61,21 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 
 func (r Backend) MarshalJSON() ([]byte, error) {
 	var concrete struct {
-		Source *dagger.Directory
+		Binary *dagger.File
 	}
-	concrete.Source = r.Source
+	concrete.Binary = r.Binary
 	return json.Marshal(&concrete)
 }
 
 func (r *Backend) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
-		Source *dagger.Directory
+		Binary *dagger.File
 	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
-	r.Source = concrete.Source
+	r.Binary = concrete.Binary
 	return nil
 }
 
@@ -198,48 +198,13 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	switch parentName {
 	case "Backend":
 		switch fnName {
-		case "Binary":
-			var parent Backend
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var arch string
-			if inputArgs["arch"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["arch"]), &arch)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg arch", err))
-				}
-			}
-			return (*Backend).Binary(&parent, arch), nil
-		case "Build":
-			var parent Backend
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			var arch string
-			if inputArgs["arch"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["arch"]), &arch)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg arch", err))
-				}
-			}
-			return (*Backend).Build(&parent, arch), nil
 		case "Container":
 			var parent Backend
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var arch string
-			if inputArgs["arch"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["arch"]), &arch)
-				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg arch", err))
-				}
-			}
-			return (*Backend).Container(&parent, arch), nil
+			return (*Backend).Container(&parent), nil
 		case "GoTestBase":
 			var parent Backend
 			err = json.Unmarshal(parentJSON, &parent)
@@ -260,56 +225,43 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			var source *dagger.Directory
-			if inputArgs["source"] != nil {
-				err = json.Unmarshal([]byte(inputArgs["source"]), &source)
+			var binary *dagger.File
+			if inputArgs["binary"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["binary"]), &binary)
 				if err != nil {
-					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg binary", err))
 				}
 			}
-			return New(source), nil
+			return New(binary), nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
 	case "":
 		return dag.Module().
 			WithObject(
-				dag.TypeDef().WithObject("Backend", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 9, 6)}).
-					WithFunction(
-						dag.Function("Binary",
-							dag.TypeDef().WithObject("File")).
-							WithDescription("Return the compiled backend binary for a particular architecture").
-							WithSourceMap(dag.SourceMap("main.go", 48, 1)).
-							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 50, 2)})).
-					WithFunction(
-						dag.Function("Build",
-							dag.TypeDef().WithObject("Directory")).
-							WithDescription("Build the backend").
-							WithSourceMap(dag.SourceMap("main.go", 33, 1)).
-							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 35, 2)})).
+				dag.TypeDef().WithObject("Backend", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 7, 6)}).
 					WithFunction(
 						dag.Function("Container",
 							dag.TypeDef().WithObject("Container")).
 							WithDescription("Get a container ready to run the backend").
-							WithSourceMap(dag.SourceMap("main.go", 57, 1)).
-							WithArg("arch", dag.TypeDef().WithKind(dagger.TypeDefKindStringKind).WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 59, 2)})).
+							WithSourceMap(dag.SourceMap("main.go", 23, 1))).
 					WithFunction(
 						dag.Function("GoTestBase",
 							dag.TypeDef().WithObject("Container")).
 							WithDescription("A Go container with the backend API running as a bound service, for the go\nmodule's `base` setting (dagger.toml: [modules.go.settings] base =\n\"backend:go-test-base\").\n\nThe e2e tests in e2e_test.go need a server to talk to, which the go\ntoolchain has no way to start. Handing it a base container with the service\nalready bound lets its own test check run them; without this they skip, and\na skip reports the same as a pass.\n\nDeliberately no workdir, source mount or cache mounts: the go module adds its\nown on top. This is only an image plus a service and the address to reach it.\nThe binding survives into every command the toolchain derives from this.\n\nThe image matches the toolchain's own default rather than the version in\ngo.mod. It has to: this base also builds the toolchain's helper binaries,\nwhose go.mod requires 1.26, so an older image fails before any test runs.").
-							WithSourceMap(dag.SourceMap("main.go", 96, 1))).
+							WithSourceMap(dag.SourceMap("main.go", 55, 1))).
 					WithFunction(
 						dag.Function("Serve",
 							dag.TypeDef().WithObject("Service")).
 							WithDescription("Get a Service to run the backend").
-							WithSourceMap(dag.SourceMap("main.go", 76, 1)).
+							WithSourceMap(dag.SourceMap("main.go", 35, 1)).
 							WithUp()).
-					WithField("Source", dag.TypeDef().WithObject("Directory"), dagger.TypeDefWithFieldOpts{SourceMap: dag.SourceMap("main.go", 10, 2)}).
+					WithField("Binary", dag.TypeDef().WithObject("File"), dagger.TypeDefWithFieldOpts{Description: "The compiled backend binary", SourceMap: dag.SourceMap("main.go", 9, 2)}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("Backend")).
-							WithSourceMap(dag.SourceMap("main.go", 13, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 17, 2), DefaultPath: "/", Ignore: []string{".git", "**/node_modules", "website"}}))), nil
+							WithSourceMap(dag.SourceMap("main.go", 12, 1)).
+							WithArg("binary", dag.TypeDef().WithObject("File"), dagger.FunctionWithArgOpts{Description: "The compiled backend binary. dagger.toml wires this to the go module's\nbuild of the root package.", SourceMap: dag.SourceMap("main.go", 15, 2)}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

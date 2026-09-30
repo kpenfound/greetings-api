@@ -6,9 +6,5 @@ disableDefaultFunctionCaching = true
   source = "go"
 
 [[dependencies]]
-  name = "backend"
-  source = "../backend"
-
-[[dependencies]]
   name = "frontend"
   source = "../frontend"

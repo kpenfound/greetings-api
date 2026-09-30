@@ -84,7 +84,8 @@ type GreetingsOpts struct {
 	Source *Directory
 }
 
-func (r *Query) Greetings(opts ...GreetingsOpts) *Greetings { // greetings (../../../../../:0:0)
+func (r *Query) Greetings(backendBinary *File, opts ...GreetingsOpts) *Greetings { // greetings (../../../../../:0:0)
+	assertNotNil("backendBinary", backendBinary)
 	q := r.query.Select("greetings")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `source` optional argument
@@ -92,6 +93,7 @@ func (r *Query) Greetings(opts ...GreetingsOpts) *Greetings { // greetings (../.
 			q = q.Arg("source", opts[i].Source)
 		}
 	}
+	q = q.Arg("backendBinary", backendBinary)
 
 	return &Greetings{
 		query: q,

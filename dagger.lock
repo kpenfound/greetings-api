@@ -12,7 +12,7 @@
 ["","git-sha",["github.com/dagger/eslint","collections"],"00f959a8ef970c15851d27aafd7749b2541a0694"]
 ["","git-sha",["github.com/dagger/eslint","pull/13/head"],"b3a5dc23622ec2c97e2ec2a4a0175b681cb8eae2"]
 ["","git-sha",["github.com/dagger/eslint","refs/heads/main"],"35a0cc0923fdf625608afb1c2b276e00262c0f81"]
-["","git-sha",["github.com/dagger/go","collections"],"20ca6d8dc746da3e16af215373e6bb10328ec906"]
+["","git-sha",["github.com/dagger/go","collections"],"69101a5530dbc3a51afa05ec09185fcbe2221706"]
 ["","git-sha",["github.com/dagger/go","do-not-merge-hack"],"4219c8493df59eddb2df7c9e678d812fb3ba9a42"]
 ["","git-sha",["github.com/dagger/go","refs/heads/main"],"3202b07da551a4d3936769a548305c2bf0ade6b5"]
 ["","git-sha",["github.com/dagger/go","refs/tags/v0.1.0"],"0b68a41656546134aa6b5c0a439fd1ffcd2ecae9"]

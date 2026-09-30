@@ -6,7 +6,7 @@ import (
 
 type Greetings struct {
 	// +private
-	Backend *dagger.Backend
+	BackendBinary *dagger.File
 	// +private
 	Frontend *dagger.Frontend
 }
@@ -16,21 +16,21 @@ func New(
 	// +defaultPath="/"
 	// +ignore=[".git", "**/node_modules"]
 	source *dagger.Directory,
+	// The compiled backend binary. dagger.toml wires this to the go module's
+	// build of the root package.
+	backendBinary *dagger.File,
 ) *Greetings {
-	g := &Greetings{
-		Backend: dag.Backend(dagger.BackendOpts{
-			Source: source.WithoutDirectory("website"),
+	return &Greetings{
+		BackendBinary: backendBinary,
+		Frontend: dag.Frontend(dagger.FrontendOpts{
+			Source: source.Directory("website"),
 		}),
 	}
-	g.Frontend = dag.Frontend(dagger.FrontendOpts{
-		Source: source.Directory("website"),
-	})
-	return g
 }
 
 // Build the backend and frontend for a specified environment
 func (g *Greetings) Build() *dagger.Directory {
 	return dag.Directory().
-		WithFile("/build/greetings-api", g.Backend.Binary()).
+		WithFile("/build/greetings-api", g.BackendBinary).
 		WithDirectory("build/website/", g.Frontend.Build())
 }

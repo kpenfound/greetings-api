@@ -61,24 +61,24 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 
 func (r Greetings) MarshalJSON() ([]byte, error) {
 	var concrete struct {
-		Backend  *dagger.Backend
-		Frontend *dagger.Frontend
+		BackendBinary *dagger.File
+		Frontend      *dagger.Frontend
 	}
-	concrete.Backend = r.Backend
+	concrete.BackendBinary = r.BackendBinary
 	concrete.Frontend = r.Frontend
 	return json.Marshal(&concrete)
 }
 
 func (r *Greetings) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
-		Backend  *dagger.Backend
-		Frontend *dagger.Frontend
+		BackendBinary *dagger.File
+		Frontend      *dagger.Frontend
 	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
-	r.Backend = concrete.Backend
+	r.BackendBinary = concrete.BackendBinary
 	r.Frontend = concrete.Frontend
 	return nil
 }
@@ -222,7 +222,14 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg source", err))
 				}
 			}
-			return New(source), nil
+			var backendBinary *dagger.File
+			if inputArgs["backendBinary"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["backendBinary"]), &backendBinary)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg backendBinary", err))
+				}
+			}
+			return New(source, backendBinary), nil
 		default:
 			return nil, fmt.Errorf("unknown function %s", fnName)
 		}
@@ -239,7 +246,8 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 						dag.Function("New",
 							dag.TypeDef().WithObject("Greetings")).
 							WithSourceMap(dag.SourceMap("main.go", 14, 1)).
-							WithArg("source", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 18, 2), DefaultPath: "/", Ignore: []string{".git", "**/node_modules"}}))), nil
+							WithArg("source", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 18, 2), DefaultPath: "/", Ignore: []string{".git", "**/node_modules"}}).
+							WithArg("backendBinary", dag.TypeDef().WithObject("File"), dagger.FunctionWithArgOpts{Description: "The compiled backend binary. dagger.toml wires this to the go module's\nbuild of the root package.", SourceMap: dag.SourceMap("main.go", 21, 2)}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

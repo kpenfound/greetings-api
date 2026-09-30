@@ -627,6 +627,8 @@ type AgentNotifyOpts struct {
 //
 // Events never relaunch a stopped subscriber, and an already-reached state fires immediately at subscribe time, so a fast agent settling before the subscription lands is not missed.
 //
+// A restored agent that nothing has sent to, started, or resumed yet is the exception: its state was reached in the session it was restored from, so subscribing to it announces nothing until it next transitions. This is how a restore reinstalls recorded subscriptions without waking their subscribers.
+//
 // Idempotent per subscriber; re-subscribing replaces the state set.
 //
 // Experimental: Agent APIs are likely to change.
@@ -984,6 +986,7 @@ type Artifact struct {
 	description *string
 	id          *ID
 	loadError   *string
+	moduleName  *string
 	uri         *string
 }
 
@@ -1039,7 +1042,7 @@ func (r *Artifact) Description(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
-// The selected keys for each dimension. Empty for static artifacts.
+// The module name, collection keys, and full path key in the artifact type dimension.
 func (r *Artifact) DimensionKeys(ctx context.Context) ([]ArtifactDimensionKey, error) {
 	q := r.query.Select("dimensionKeys")
 
@@ -1144,6 +1147,19 @@ func (r *Artifact) LoadError(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
+// The installed module name.
+func (r *Artifact) ModuleName(ctx context.Context) (string, error) {
+	if r.moduleName != nil {
+		return *r.moduleName, nil
+	}
+	q := r.query.Select("moduleName")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
 // Ordered, literal fields to follow. Entrypoint targets use their shorthand.
 func (r *Artifact) Path(ctx context.Context) ([]string, error) {
 	q := r.query.Select("path")
@@ -1232,6 +1248,7 @@ type ArtifactDimension struct {
 	itemType       *string
 	keyDescription *string
 	keyName        *string
+	kind           *ArtifactDimensionKind
 	name           *string
 	qualifiedName  *string
 }
@@ -1242,7 +1259,7 @@ func (r *ArtifactDimension) WithGraphQLQuery(q *querybuilder.Selection) *Artifac
 	}
 }
 
-// The schema type name of the collection that supplies this dimension.
+// The collection type, or null for a static dimension.
 func (r *ArtifactDimension) CollectionType(ctx context.Context) (string, error) {
 	if r.collectionType != nil {
 		return *r.collectionType, nil
@@ -1304,7 +1321,7 @@ func (r *ArtifactDimension) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-// Exact GraphQL ParentType.field identifier.
+// Stable identifier: collection schema path, type:TypeName for an artifact type, or module.
 func (r *ArtifactDimension) Identifier(ctx context.Context) (string, error) {
 	if r.identifier != nil {
 		return *r.identifier, nil
@@ -1317,7 +1334,7 @@ func (r *ArtifactDimension) Identifier(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
-// The author item type name.
+// The collection item or artifact type name, or empty for the module dimension.
 func (r *ArtifactDimension) ItemType(ctx context.Context) (string, error) {
 	if r.itemType != nil {
 		return *r.itemType, nil
@@ -1330,7 +1347,7 @@ func (r *ArtifactDimension) ItemType(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
-// The description of the author get function's key argument.
+// The collection key argument description, or empty for a static dimension.
 func (r *ArtifactDimension) KeyDescription(ctx context.Context) (string, error) {
 	if r.keyDescription != nil {
 		return *r.keyDescription, nil
@@ -1343,7 +1360,7 @@ func (r *ArtifactDimension) KeyDescription(ctx context.Context) (string, error) 
 	return response, q.Execute(ctx)
 }
 
-// The name of the author get function's key argument.
+// The collection key argument name, or name for a static dimension.
 func (r *ArtifactDimension) KeyName(ctx context.Context) (string, error) {
 	if r.keyName != nil {
 		return *r.keyName, nil
@@ -1356,7 +1373,20 @@ func (r *ArtifactDimension) KeyName(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
-// Short name derived from the author item type.
+// How this dimension gets its keys.
+func (r *ArtifactDimension) Kind(ctx context.Context) (ArtifactDimensionKind, error) {
+	if r.kind != nil {
+		return *r.kind, nil
+	}
+	q := r.query.Select("kind")
+
+	var response ArtifactDimensionKind
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// Short name used to select this dimension.
 func (r *ArtifactDimension) Name(ctx context.Context) (string, error) {
 	if r.name != nil {
 		return *r.name, nil
@@ -1369,7 +1399,7 @@ func (r *ArtifactDimension) Name(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
-// Author parent type and field name, in CLI case.
+// Qualified name used when the short name is ambiguous.
 func (r *ArtifactDimension) QualifiedName(ctx context.Context) (string, error) {
 	if r.qualifiedName != nil {
 		return *r.qualifiedName, nil
@@ -1493,6 +1523,8 @@ type ArtifactPath struct {
 
 	description *string
 	id          *ID
+	loadError   *string
+	moduleName  *string
 	uri         *string
 }
 
@@ -1572,6 +1604,32 @@ func (r *ArtifactPath) UnmarshalJSON(bs []byte) error {
 	}
 	*r = ArtifactPath{query: selectNode(dag.query, id, "ArtifactPath")}
 	return nil
+}
+
+// A module load failure for this path, or an empty string.
+func (r *ArtifactPath) LoadError(ctx context.Context) (string, error) {
+	if r.loadError != nil {
+		return *r.loadError, nil
+	}
+	q := r.query.Select("loadError")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The installed module name.
+func (r *ArtifactPath) ModuleName(ctx context.Context) (string, error) {
+	if r.moduleName != nil {
+		return *r.moduleName, nil
+	}
+	q := r.query.Select("moduleName")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 // The DAG address of this path, without dimension keys.
@@ -1729,6 +1787,171 @@ func (r *Artifacts) WithGraphQLQuery(q *querybuilder.Selection) *Artifacts {
 	}
 }
 
+// Convert the selection to Changesets. Fail if any artifact is not a Changeset. Does not apply command filters.
+func (r *Artifacts) AsChangesets(ctx context.Context) ([]Changeset, error) {
+	q := r.query.Select("asChangesets")
+
+	q = q.Select("id")
+
+	type asChangesets struct {
+		Id ID
+	}
+
+	convert := func(fields []asChangesets) []Changeset {
+		out := []Changeset{}
+
+		for i := range fields {
+			val := Changeset{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "Changeset")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []asChangesets
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
+// Convert the selection to Checks. Fail if any artifact is not a Check. Does not apply command filters or run the checks.
+func (r *Artifacts) AsChecks(ctx context.Context) ([]Check, error) {
+	q := r.query.Select("asChecks")
+
+	q = q.Select("id")
+
+	type asChecks struct {
+		Id ID
+	}
+
+	convert := func(fields []asChecks) []Check {
+		out := []Check{}
+
+		for i := range fields {
+			val := Check{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "Check")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []asChecks
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
+// Convert the selection to expertise without running the functions. Fail if any artifact is not a source of expertise.
+func (r *Artifacts) AsExpertise(ctx context.Context) ([]Expertise, error) {
+	q := r.query.Select("asExpertise")
+
+	q = q.Select("id")
+
+	type asExpertise struct {
+		Id ID
+	}
+
+	convert := func(fields []asExpertise) []Expertise {
+		out := []Expertise{}
+
+		for i := range fields {
+			val := Expertise{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "Expertise")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []asExpertise
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
+// Convert the selection to Generators without running them. Fail if any artifact is not a Generator.
+func (r *Artifacts) AsGenerators(ctx context.Context) ([]Generator, error) {
+	q := r.query.Select("asGenerators")
+
+	q = q.Select("id")
+
+	type asGenerators struct {
+		Id ID
+	}
+
+	convert := func(fields []asGenerators) []Generator {
+		out := []Generator{}
+
+		for i := range fields {
+			val := Generator{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "Generator")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []asGenerators
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
+// Convert the selection to Services. Fail if any artifact is not a Service. Does not apply command filters or start the services.
+func (r *Artifacts) AsServices(ctx context.Context) ([]Service, error) {
+	q := r.query.Select("asServices")
+
+	q = q.Select("id")
+
+	type asServices struct {
+		Id ID
+	}
+
+	convert := func(fields []asServices) []Service {
+		out := []Service{}
+
+		for i := range fields {
+			val := Service{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "Service")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []asServices
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
 // List dimensions on the selected schema paths, including empty collections. Does not read runtime values.
 func (r *Artifacts) DimensionDefinitions(ctx context.Context) ([]ArtifactDimension, error) {
 	q := r.query.Select("dimensionDefinitions")
@@ -1762,6 +1985,40 @@ func (r *Artifacts) DimensionDefinitions(ctx context.Context) ([]ArtifactDimensi
 	return convert(response), nil
 }
 
+// List collection items represented in this selection for the given dimension. Preserve parent keys and remove duplicate item addresses. Does not evaluate item values.
+func (r *Artifacts) DimensionItems(ctx context.Context, dimension string) ([]Artifact, error) {
+	q := r.query.Select("dimensionItems")
+	q = q.Arg("dimension", dimension)
+
+	q = q.Select("id")
+
+	type dimensionItems struct {
+		Id ID
+	}
+
+	convert := func(fields []dimensionItems) []Artifact {
+		out := []Artifact{}
+
+		for i := range fields {
+			val := Artifact{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "Artifact")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []dimensionItems
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
 // List keys represented in this selection for the given dimension, sorted with no duplicates.
 func (r *Artifacts) DimensionKeys(ctx context.Context, dimension string) ([]string, error) {
 	q := r.query.Select("dimensionKeys")
@@ -1781,36 +2038,6 @@ func (r *Artifacts) Dimensions(ctx context.Context) ([]string, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
-}
-
-// Select LLM artifacts marked agent.
-func (r *Artifacts) FilterAgentCommand() *Artifacts {
-	q := r.query.Select("filterAgentCommand")
-
-	return &Artifacts{
-		query: q,
-	}
-}
-
-// ArtifactsFilterCheckCommandOpts contains options for Artifacts.FilterCheckCommand
-type ArtifactsFilterCheckCommandOpts struct {
-	// Include generated-file checks. Defaults to the workspace check-generated setting, or true when unset.
-	Generated bool
-}
-
-// Select Check artifacts for dagger check, using each workspace's check and generator settings. Include stale checks only for Changesets marked generate.
-func (r *Artifacts) FilterCheckCommand(opts ...ArtifactsFilterCheckCommandOpts) *Artifacts {
-	q := r.query.Select("filterCheckCommand")
-	for i := len(opts) - 1; i >= 0; i-- {
-		// `generated` optional argument
-		if !querybuilder.IsZeroValue(opts[i].Generated) {
-			q = q.Arg("generated", opts[i].Generated)
-		}
-	}
-
-	return &Artifacts{
-		query: q,
-	}
 }
 
 // Keep artifacts with any listed key in this dimension.
@@ -1850,15 +2077,6 @@ func (r *Artifacts) FilterDirectives(directives []string, opts ...ArtifactsFilte
 		}
 	}
 	q = q.Arg("directives", directives)
-
-	return &Artifacts{
-		query: q,
-	}
-}
-
-// Select Changeset artifacts marked generate, using each workspace's generator settings.
-func (r *Artifacts) FilterGenerateCommand() *Artifacts {
-	q := r.query.Select("filterGenerateCommand")
 
 	return &Artifacts{
 		query: q,
@@ -1919,6 +2137,16 @@ func (r *Artifacts) FilterPath(path []string) *Artifacts {
 	}
 }
 
+// Keep paths that match a glob pattern. A literal path matches exactly. Both module-qualified and entrypoint paths match.
+func (r *Artifacts) FilterPathPattern(pattern string) *Artifacts {
+	q := r.query.Select("filterPathPattern")
+	q = q.Arg("pattern", pattern)
+
+	return &Artifacts{
+		query: q,
+	}
+}
+
 // ArtifactsFilterTypesOpts contains options for Artifacts.FilterTypes
 type ArtifactsFilterTypesOpts struct {
 	// Remove the matching artifacts instead.
@@ -1935,15 +2163,6 @@ func (r *Artifacts) FilterTypes(types []string, opts ...ArtifactsFilterTypesOpts
 		}
 	}
 	q = q.Arg("types", types)
-
-	return &Artifacts{
-		query: q,
-	}
-}
-
-// Select Service artifacts marked up, using each workspace's service settings.
-func (r *Artifacts) FilterUpCommand() *Artifacts {
-	q := r.query.Select("filterUpCommand")
 
 	return &Artifacts{
 		query: q,
@@ -2044,6 +2263,39 @@ func (r *Artifacts) Items(ctx context.Context) ([]Artifact, error) {
 	return convert(response), nil
 }
 
+// List the modules represented in this selection without evaluating artifact values.
+func (r *Artifacts) Modules(ctx context.Context) ([]Module, error) {
+	q := r.query.Select("modules")
+
+	q = q.Select("id")
+
+	type modules struct {
+		Id ID
+	}
+
+	convert := func(fields []modules) []Module {
+		out := []Module{}
+
+		for i := range fields {
+			val := Module{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "Module")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []modules
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
 // Require exactly one artifact; fail if there are zero or multiple matches. Several matches are listed, one address per line.
 func (r *Artifacts) One() *Artifact {
 	q := r.query.Select("one")
@@ -2057,15 +2309,27 @@ func (r *Artifacts) One() *Artifact {
 type ArtifactsPathDefinitionsOpts struct {
 	// Prefix each address with the workspace's Git address and commit.
 	Absolute bool
+	// Include the artifact type in each address scheme.
+	TypeAssertion bool
+	// Project paths to the items of this collection dimension. Preserve parent dimensions and remove descendant dimensions.
+	Dimension string
 }
 
-// List selected schema paths, including empty collections. Does not read runtime values or resolve dimension-key filters.
+// List selected schema paths, including empty collections. Does not read runtime values. Applies type keys and collection presence; collection key values require items.
 func (r *Artifacts) PathDefinitions(ctx context.Context, opts ...ArtifactsPathDefinitionsOpts) ([]ArtifactPath, error) {
 	q := r.query.Select("pathDefinitions")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `absolute` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Absolute) {
 			q = q.Arg("absolute", opts[i].Absolute)
+		}
+		// `typeAssertion` optional argument
+		if !querybuilder.IsZeroValue(opts[i].TypeAssertion) {
+			q = q.Arg("typeAssertion", opts[i].TypeAssertion)
+		}
+		// `dimension` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Dimension) {
+			q = q.Arg("dimension", opts[i].Dimension)
 		}
 	}
 
@@ -2522,15 +2786,6 @@ func (r *Changeset) RemovedPaths(ctx context.Context) ([]string, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
-}
-
-// A check that passes when the changeset is empty.
-func (r *Changeset) Stale() *Check {
-	q := r.query.Select("stale")
-
-	return &Check{
-		query: q,
-	}
 }
 
 // Force evaluation in the engine.
@@ -3121,6 +3376,161 @@ func (r *CollectionTypeDef) AsNode() Node {
 	}
 }
 
+// A command's arguments and execution settings.
+type Command struct {
+	query *querybuilder.Selection
+
+	id                       *ID
+	insecureRootCapabilities *bool
+	privilegedNesting        *bool
+	workdir                  *string
+}
+
+func (r *Command) WithGraphQLQuery(q *querybuilder.Selection) *Command {
+	return &Command{
+		query: q,
+	}
+}
+
+// The command arguments.
+func (r *Command) Args(ctx context.Context) ([]string, error) {
+	q := r.query.Select("args")
+
+	var response []string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// Environment variable overrides. Other variables come from the container.
+func (r *Command) Env(ctx context.Context) ([]EnvVariable, error) {
+	q := r.query.Select("env")
+
+	q = q.Select("id")
+
+	type env struct {
+		Id ID
+	}
+
+	convert := func(fields []env) []EnvVariable {
+		out := []EnvVariable{}
+
+		for i := range fields {
+			val := EnvVariable{id: &fields[i].Id}
+			val.query = selectNode(q.Root(), fields[i].Id, "EnvVariable")
+			out = append(out, val)
+		}
+
+		return out
+	}
+	var response []env
+
+	q = q.Bind(&response)
+
+	err := q.Execute(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return convert(response), nil
+}
+
+// A unique identifier for this Command.
+func (r *Command) ID(ctx context.Context) (ID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response ID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *Command) XXX_GraphQLType() string {
+	return "Command"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *Command) XXX_GraphQLIDType() string {
+	return "ID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *Command) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *Command) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+func (r *Command) UnmarshalJSON(bs []byte) error {
+	var id string
+	err := json.Unmarshal(bs, &id)
+	if err != nil {
+		return err
+	}
+	*r = Command{query: selectNode(dag.query, id, "Command")}
+	return nil
+}
+
+// Whether the command has all root capabilities.
+func (r *Command) InsecureRootCapabilities(ctx context.Context) (bool, error) {
+	if r.insecureRootCapabilities != nil {
+		return *r.insecureRootCapabilities, nil
+	}
+	q := r.query.Select("insecureRootCapabilities")
+
+	var response bool
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// Whether the command has access to Dagger.
+func (r *Command) PrivilegedNesting(ctx context.Context) (bool, error) {
+	if r.privilegedNesting != nil {
+		return *r.privilegedNesting, nil
+	}
+	q := r.query.Select("privilegedNesting")
+
+	var response bool
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// Working directory override. If unset, use the container's working directory.
+func (r *Command) Workdir(ctx context.Context) (string, error) {
+	if r.workdir != nil {
+		return *r.workdir, nil
+	}
+	q := r.query.Select("workdir")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// AsNode returns this Command as a Node.
+// This is a local type conversion — no GraphQL call.
+func (r *Command) AsNode() Node {
+	return &NodeClient{
+		query: r.query,
+	}
+}
+
 // An OCI-compatible container, also known as a Docker container.
 type Container struct {
 	query *querybuilder.Selection
@@ -3166,7 +3576,10 @@ type ContainerAsServiceOpts struct {
 	Args []string
 	// If the container has an entrypoint, prepend it to the args.
 	UseEntrypoint bool
-	// Provides Dagger access to the executed command.
+	// Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+	DisableDaggerInDagger bool
+
+	// Deprecated: Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
 	ExperimentalPrivilegedNesting bool
 	// Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
 	InsecureRootCapabilities bool
@@ -3191,6 +3604,10 @@ func (r *Container) AsService(opts ...ContainerAsServiceOpts) *Service {
 		// `useEntrypoint` optional argument
 		if !querybuilder.IsZeroValue(opts[i].UseEntrypoint) {
 			q = q.Arg("useEntrypoint", opts[i].UseEntrypoint)
+		}
+		// `disableDaggerInDagger` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DisableDaggerInDagger) {
+			q = q.Arg("disableDaggerInDagger", opts[i].DisableDaggerInDagger)
 		}
 		// `experimentalPrivilegedNesting` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
@@ -3432,11 +3849,11 @@ func (r *Container) ExitCode(ctx context.Context) (int, error) {
 	return response, q.Execute(ctx)
 }
 
-// EXPERIMENTAL API! Subject to change/removal at any time.
-//
 // Configures all available GPUs on the host to be accessible to this container.
 //
 // This currently works for Nvidia devices only.
+//
+// Deprecated: Use "withGPU" instead.
 func (r *Container) ExperimentalWithAllGPUs() *Container {
 	q := r.query.Select("experimentalWithAllGPUs")
 
@@ -3445,11 +3862,11 @@ func (r *Container) ExperimentalWithAllGPUs() *Container {
 	}
 }
 
-// EXPERIMENTAL API! Subject to change/removal at any time.
-//
 // Configures the provided list of devices to be accessible to this container.
 //
 // This currently works for Nvidia devices only.
+//
+// Deprecated: Use "withGPU" instead, which exposes all GPUs available on the host.
 func (r *Container) ExperimentalWithGPU(devices []string) *Container {
 	q := r.query.Select("experimentalWithGPU")
 	q = q.Arg("devices", devices)
@@ -3956,6 +4373,27 @@ func (r *Container) Rootfs() *Directory {
 	}
 }
 
+// ContainerShellOpts contains options for Container.Shell
+type ContainerShellOpts struct {
+	// Return the batch command instead of the interactive command.
+	Batch bool
+}
+
+// Return the configured shell command. Defaults to ["sh"].
+func (r *Container) Shell(opts ...ContainerShellOpts) *Command {
+	q := r.query.Select("shell")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `batch` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Batch) {
+			q = q.Arg("batch", opts[i].Batch)
+		}
+	}
+
+	return &Command{
+		query: q,
+	}
+}
+
 // ContainerStatOpts contains options for Container.Stat
 type ContainerStatOpts struct {
 	// If specified, do not follow symlinks.
@@ -4035,7 +4473,10 @@ func (r *Container) Sync(ctx context.Context) (*Container, error) {
 type ContainerTerminalOpts struct {
 	// If set, override the container's default terminal command and invoke these command arguments instead.
 	Cmd []string
-	// Provides Dagger access to the executed command.
+	// Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+	DisableDaggerInDagger bool
+
+	// Deprecated: Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
 	ExperimentalPrivilegedNesting bool
 	// Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
 	InsecureRootCapabilities bool
@@ -4048,6 +4489,10 @@ func (r *Container) Terminal(opts ...ContainerTerminalOpts) *Container {
 		// `cmd` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Cmd) {
 			q = q.Arg("cmd", opts[i].Cmd)
+		}
+		// `disableDaggerInDagger` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DisableDaggerInDagger) {
+			q = q.Arg("disableDaggerInDagger", opts[i].DisableDaggerInDagger)
 		}
 		// `experimentalPrivilegedNesting` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
@@ -4078,7 +4523,10 @@ type ContainerUpOpts struct {
 	Args []string
 	// If the container has an entrypoint, prepend it to the args.
 	UseEntrypoint bool
-	// Provides Dagger access to the executed command.
+	// Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+	DisableDaggerInDagger bool
+
+	// Deprecated: Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
 	ExperimentalPrivilegedNesting bool
 	// Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
 	InsecureRootCapabilities bool
@@ -4114,6 +4562,10 @@ func (r *Container) Up(ctx context.Context, opts ...ContainerUpOpts) error {
 		// `useEntrypoint` optional argument
 		if !querybuilder.IsZeroValue(opts[i].UseEntrypoint) {
 			q = q.Arg("useEntrypoint", opts[i].UseEntrypoint)
+		}
+		// `disableDaggerInDagger` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DisableDaggerInDagger) {
+			q = q.Arg("disableDaggerInDagger", opts[i].DisableDaggerInDagger)
 		}
 		// `experimentalPrivilegedNesting` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
@@ -4172,16 +4624,25 @@ func (r *Container) WithDefaultArgs(args []string) *Container {
 
 // ContainerWithDefaultTerminalCmdOpts contains options for Container.WithDefaultTerminalCmd
 type ContainerWithDefaultTerminalCmdOpts struct {
-	// Provides Dagger access to the executed command.
+	// Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+	DisableDaggerInDagger bool
+
+	// Deprecated: Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
 	ExperimentalPrivilegedNesting bool
 	// Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
 	InsecureRootCapabilities bool
 }
 
 // Set the default command to invoke for the container's terminal API.
+//
+// Deprecated: Use withShell.
 func (r *Container) WithDefaultTerminalCmd(args []string, opts ...ContainerWithDefaultTerminalCmdOpts) *Container {
 	q := r.query.Select("withDefaultTerminalCmd")
 	for i := len(opts) - 1; i >= 0; i-- {
+		// `disableDaggerInDagger` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DisableDaggerInDagger) {
+			q = q.Arg("disableDaggerInDagger", opts[i].DisableDaggerInDagger)
+		}
 		// `experimentalPrivilegedNesting` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
 			q = q.Arg("experimentalPrivilegedNesting", opts[i].ExperimentalPrivilegedNesting)
@@ -4396,7 +4857,10 @@ type ContainerWithExecOpts struct {
 	//
 	// Default: SUCCESS
 	Expect ReturnType
-	// Provides Dagger access to the executed command.
+	// Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+	DisableDaggerInDagger bool
+
+	// Deprecated: Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
 	ExperimentalPrivilegedNesting bool
 	// Execute the command with all root capabilities. Like --privileged in Docker
 	//
@@ -4437,6 +4901,10 @@ func (r *Container) WithExec(args []string, opts ...ContainerWithExecOpts) *Cont
 		// `expect` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Expect) {
 			q = q.Arg("expect", opts[i].Expect)
+		}
+		// `disableDaggerInDagger` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DisableDaggerInDagger) {
+			q = q.Arg("disableDaggerInDagger", opts[i].DisableDaggerInDagger)
 		}
 		// `experimentalPrivilegedNesting` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
@@ -4589,6 +5057,17 @@ func (r *Container) WithFiles(path string, sources []*File, opts ...ContainerWit
 	}
 	q = q.Arg("path", path)
 	q = q.Arg("sources", sources)
+
+	return &Container{
+		query: q,
+	}
+}
+
+// Configures all GPUs available on the host to be accessible to this container.
+//
+// This currently works with NVIDIA devices only, and requires the engine to run with GPU support enabled.
+func (r *Container) WithGPU() *Container {
+	q := r.query.Select("withGPU")
 
 	return &Container{
 		query: q,
@@ -4927,6 +5406,47 @@ func (r *Container) WithRootfs(directory *Directory) *Container {
 	}
 }
 
+// ContainerWithRunOpts contains options for Container.WithRun
+type ContainerWithRunOpts struct {
+	// Override the batch shell arguments. Example: ["bash", "-c"].
+	Shell []string
+	// Override whether the shell is denied Dagger API access. Omit to use the configured shell setting.
+	DisableDaggerInDagger bool
+
+	// Deprecated: Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
+	ExperimentalPrivilegedNesting bool
+	// Override whether the shell has all root capabilities.
+	InsecureRootCapabilities bool
+}
+
+// Execute a script with the configured batch shell and return the modified container.
+func (r *Container) WithRun(command string, opts ...ContainerWithRunOpts) *Container {
+	q := r.query.Select("withRun")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `shell` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Shell) {
+			q = q.Arg("shell", opts[i].Shell)
+		}
+		// `disableDaggerInDagger` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DisableDaggerInDagger) {
+			q = q.Arg("disableDaggerInDagger", opts[i].DisableDaggerInDagger)
+		}
+		// `experimentalPrivilegedNesting` optional argument
+		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
+			q = q.Arg("experimentalPrivilegedNesting", opts[i].ExperimentalPrivilegedNesting)
+		}
+		// `insecureRootCapabilities` optional argument
+		if !querybuilder.IsZeroValue(opts[i].InsecureRootCapabilities) {
+			q = q.Arg("insecureRootCapabilities", opts[i].InsecureRootCapabilities)
+		}
+	}
+	q = q.Arg("command", command)
+
+	return &Container{
+		query: q,
+	}
+}
+
 // Set a new environment variable, using a secret value
 func (r *Container) WithSecretVariable(name string, secret *Secret) *Container {
 	assertNotNil("secret", secret)
@@ -4951,6 +5471,47 @@ func (r *Container) WithServiceBinding(alias string, service *Service) *Containe
 	q := r.query.Select("withServiceBinding")
 	q = q.Arg("alias", alias)
 	q = q.Arg("service", service)
+
+	return &Container{
+		query: q,
+	}
+}
+
+// ContainerWithShellOpts contains options for Container.WithShell
+type ContainerWithShellOpts struct {
+	// Command arguments for batch use. The script is appended as one argument. Defaults to interactive followed by "-c".
+	Batch []string
+	// Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+	DisableDaggerInDagger bool
+
+	// Deprecated: Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
+	ExperimentalPrivilegedNesting bool
+	// Give the shell all root capabilities. Use only with trusted commands.
+	InsecureRootCapabilities bool
+}
+
+// Set the shell used by terminal() and withRun().
+func (r *Container) WithShell(interactive []string, opts ...ContainerWithShellOpts) *Container {
+	q := r.query.Select("withShell")
+	for i := len(opts) - 1; i >= 0; i-- {
+		// `batch` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Batch) {
+			q = q.Arg("batch", opts[i].Batch)
+		}
+		// `disableDaggerInDagger` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DisableDaggerInDagger) {
+			q = q.Arg("disableDaggerInDagger", opts[i].DisableDaggerInDagger)
+		}
+		// `experimentalPrivilegedNesting` optional argument
+		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
+			q = q.Arg("experimentalPrivilegedNesting", opts[i].ExperimentalPrivilegedNesting)
+		}
+		// `insecureRootCapabilities` optional argument
+		if !querybuilder.IsZeroValue(opts[i].InsecureRootCapabilities) {
+			q = q.Arg("insecureRootCapabilities", opts[i].InsecureRootCapabilities)
+		}
+	}
+	q = q.Arg("interactive", interactive)
 
 	return &Container{
 		query: q,
@@ -6271,7 +6832,10 @@ type DirectoryTerminalOpts struct {
 	Container *Container
 	// If set, override the container's default terminal command and invoke these command arguments instead.
 	Cmd []string
-	// Provides Dagger access to the executed command.
+	// Disable Dagger API access for the executed command. By default, commands can connect to the current Dagger engine.
+	DisableDaggerInDagger bool
+
+	// Deprecated: Commands can access Dagger by default. Use "disableDaggerInDagger" to opt out.
 	ExperimentalPrivilegedNesting bool
 	// Execute the command with all root capabilities. This is similar to running a command with "sudo" or executing "docker run" with the "--privileged" flag. Containerization does not provide any security guarantees when using this option. It should only be used when absolutely necessary and only with trusted commands.
 	InsecureRootCapabilities bool
@@ -6288,6 +6852,10 @@ func (r *Directory) Terminal(opts ...DirectoryTerminalOpts) *Directory {
 		// `cmd` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Cmd) {
 			q = q.Arg("cmd", opts[i].Cmd)
+		}
+		// `disableDaggerInDagger` optional argument
+		if !querybuilder.IsZeroValue(opts[i].DisableDaggerInDagger) {
+			q = q.Arg("disableDaggerInDagger", opts[i].DisableDaggerInDagger)
 		}
 		// `experimentalPrivilegedNesting` optional argument
 		if !querybuilder.IsZeroValue(opts[i].ExperimentalPrivilegedNesting) {
@@ -7486,6 +8054,123 @@ func (r *ErrorValue) AsNode() Node {
 	}
 }
 
+// An agent function that can modify a conversation.
+type Expertise struct {
+	query *querybuilder.Selection
+
+	description *string
+	id          *ID
+	name        *string
+}
+
+func (r *Expertise) WithGraphQLQuery(q *querybuilder.Selection) *Expertise {
+	return &Expertise{
+		query: q,
+	}
+}
+
+// The agent function's description.
+func (r *Expertise) Description(ctx context.Context) (string, error) {
+	if r.description != nil {
+		return *r.description, nil
+	}
+	q := r.query.Select("description")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// A unique identifier for this Expertise.
+func (r *Expertise) ID(ctx context.Context) (ID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response ID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *Expertise) XXX_GraphQLType() string {
+	return "Expertise"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *Expertise) XXX_GraphQLIDType() string {
+	return "ID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *Expertise) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *Expertise) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+func (r *Expertise) UnmarshalJSON(bs []byte) error {
+	var id string
+	err := json.Unmarshal(bs, &id)
+	if err != nil {
+		return err
+	}
+	*r = Expertise{query: selectNode(dag.query, id, "Expertise")}
+	return nil
+}
+
+// The agent function's name.
+func (r *Expertise) Name(ctx context.Context) (string, error) {
+	if r.name != nil {
+		return *r.name, nil
+	}
+	q := r.query.Select("name")
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// The module that defines the agent function.
+func (r *Expertise) OriginalModule() *Module {
+	q := r.query.Select("originalModule")
+
+	return &Module{
+		query: q,
+	}
+}
+
+// The agent function's path within its module.
+func (r *Expertise) Path(ctx context.Context) ([]string, error) {
+	q := r.query.Select("path")
+
+	var response []string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// AsNode returns this Expertise as a Node.
+// This is a local type conversion — no GraphQL call.
+func (r *Expertise) AsNode() Node {
+	return &NodeClient{
+		query: r.query,
+	}
+}
+
 // A definition of a field on a custom object defined in a Module.
 //
 // A field on an object has a static value, as opposed to a function on an object whose value is computed by invoking code (and can accept arguments).
@@ -8260,7 +8945,7 @@ func (r *Function) SourceModuleName(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
-// Returns the function with a flag indicating it is an agent middleware.
+// Returns the function with a flag indicating it is a source of expertise.
 //
 // Experimental: Agent APIs are likely to change.
 func (r *Function) WithAgent() *Function {
@@ -9012,6 +9697,111 @@ func (r *GeneratedCode) WithVCSIgnoredPaths(paths []string) *GeneratedCode {
 // AsNode returns this GeneratedCode as a Node.
 // This is a local type conversion — no GraphQL call.
 func (r *GeneratedCode) AsNode() Node {
+	return &NodeClient{
+		query: r.query,
+	}
+}
+
+// A generation function and its staleness check. Reading changeset runs the function.
+type Generator struct {
+	query *querybuilder.Selection
+
+	id *ID
+}
+type WithGeneratorFunc func(r *Generator) *Generator
+
+// With calls the provided function with current Generator.
+//
+// This is useful for reusability and readability by not breaking the calling chain.
+func (r *Generator) With(f WithGeneratorFunc) *Generator {
+	return f(r)
+}
+
+func (r *Generator) WithGraphQLQuery(q *querybuilder.Selection) *Generator {
+	return &Generator{
+		query: q,
+	}
+}
+
+// Run the generator and return its changes.
+func (r *Generator) Changeset() *Changeset {
+	q := r.query.Select("changeset")
+
+	return &Changeset{
+		query: q,
+	}
+}
+
+// A unique identifier for this Generator.
+func (r *Generator) ID(ctx context.Context) (ID, error) {
+	if r.id != nil {
+		return *r.id, nil
+	}
+	q := r.query.Select("id")
+
+	var response ID
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
+}
+
+// XXX_GraphQLType is an internal function. It returns the native GraphQL type name
+func (r *Generator) XXX_GraphQLType() string {
+	return "Generator"
+}
+
+// XXX_GraphQLIDType is an internal function. It returns the native GraphQL type name for the ID of this object
+func (r *Generator) XXX_GraphQLIDType() string {
+	return "ID"
+}
+
+// XXX_GraphQLID is an internal function. It returns the underlying type ID
+func (r *Generator) XXX_GraphQLID(ctx context.Context) (string, error) {
+	id, err := r.ID(ctx)
+	if err != nil {
+		return "", err
+	}
+	return string(id), nil
+}
+
+func (r *Generator) MarshalJSON() ([]byte, error) {
+	id, err := r.ID(marshalCtx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(id)
+}
+func (r *Generator) UnmarshalJSON(bs []byte) error {
+	var id string
+	err := json.Unmarshal(bs, &id)
+	if err != nil {
+		return err
+	}
+	*r = Generator{query: selectNode(dag.query, id, "Generator")}
+	return nil
+}
+
+// A check that passes when this generator would produce no changes.
+func (r *Generator) Stale() *Check {
+	q := r.query.Select("stale")
+
+	return &Check{
+		query: q,
+	}
+}
+
+// Run the generator and retain its result.
+func (r *Generator) Sync() *Generator {
+	q := r.query.Select("sync")
+
+	return &Generator{
+		query: q,
+	}
+}
+
+// AsNode returns this Generator as a Node.
+// This is a local type conversion — no GraphQL call.
+func (r *Generator) AsNode() Node {
 	return &NodeClient{
 		query: r.query,
 	}
@@ -11251,12 +12041,10 @@ type LLM struct {
 
 	contextTokens   *int
 	contextWindow   *int
-	emitHistory     *ID
 	hasPending      *bool
 	id              *ID
 	lastReply       *string
 	model           *string
-	portableID      *ID
 	provider        *string
 	reasoningEffort *string
 	spawn           *ID
@@ -11294,6 +12082,16 @@ func (r *LLM) Agent(handle string, name string) *Agent {
 	}
 }
 
+// Run expertise in list order, passing this conversation through each function. Retain existing contributions.
+func (r *LLM) Compose(expertise []*Expertise) *LLM {
+	q := r.query.Select("compose")
+	q = q.Arg("expertise", expertise)
+
+	return &LLM{
+		query: q,
+	}
+}
+
 // estimated number of tokens currently occupying the context window; unlike tokenUsage this is not cumulative over the session
 func (r *LLM) ContextTokens(ctx context.Context) (int, error) {
 	if r.contextTokens != nil {
@@ -11318,19 +12116,6 @@ func (r *LLM) ContextWindow(ctx context.Context) (int, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
-}
-
-// Re-emit telemetry spans for the full message history, so a loaded conversation displays in the TUI.
-func (r *LLM) EmitHistory(ctx context.Context) (*LLM, error) {
-	q := r.query.Select("emitHistory")
-
-	var id ID
-	if err := q.Bind(&id).Execute(ctx); err != nil {
-		return nil, err
-	}
-	return &LLM{
-		query: selectNode(q.Root(), id, "LLM"),
-	}, nil
 }
 
 // Fork the conversation, so that otherwise-identical follow-ups evaluate independently instead of deduplicating to a single cached result.
@@ -11491,19 +12276,6 @@ func (r *LLM) Model(ctx context.Context) (string, error) {
 	return response, q.Execute(ctx)
 }
 
-// A portable, self-contained ID for the conversation that node() can resolve in any session. Unlike id, which may return an engine-local runtime handle valid only within the current session, this returns the recipe form suitable for persisting and later restoring the conversation. The recipe is flattened: bindings superseded during the session (workspace overlays recorded by each mutating tool call, and re-bound toolsets) are dropped, while the current workspace binding — including any pending, un-exported edits — is preserved.
-func (r *LLM) PortableID(ctx context.Context) (ID, error) {
-	if r.portableID != nil {
-		return *r.portableID, nil
-	}
-	q := r.query.Select("portableID")
-
-	var response ID
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
-}
-
 // The provider serving the model, e.g. "anthropic", "openai", "google", or "local".
 func (r *LLM) Provider(ctx context.Context) (string, error) {
 	if r.provider != nil {
@@ -11528,6 +12300,20 @@ func (r *LLM) ReasoningEffort(ctx context.Context) (string, error) {
 
 	q = q.Bind(&response)
 	return response, q.Execute(ctx)
+}
+
+// Run expertise in list order, replacing their modules' contributions and preserving compatible tool state.
+//
+// Clear each selected module's contributions once before execution. Retain unowned contributions and contributions from other modules. Keep this LLM's workspace.
+//
+// A change to a tool binding's version resets its state. Removed bindings, changed identities, and incompatible state are errors.
+func (r *LLM) Recompose(expertise []*Expertise) *LLM {
+	q := r.query.Select("recompose")
+	q = q.Arg("expertise", expertise)
+
+	return &LLM{
+		query: q,
+	}
 }
 
 // The skills visible to the model, exactly as the ListSkills tool serves them: engine-embedded skills, skills installed with withSkills, and skills discovered in the workspace.
@@ -11575,6 +12361,8 @@ type LLMSpawnOpts struct {
 	//
 	// Default: IDLE
 	State AgentState
+	// Recorded parent handle when restoring an agent. Lineage does not install a notification subscription. Requires a supplied handle. The parent must already be restored in this session and cannot be the agent itself or its descendant.
+	ParentHandle string
 	// The loop error to create the agent with, for state FAILED. Refused with any other state.
 	Error string
 }
@@ -11602,6 +12390,10 @@ func (r *LLM) Spawn(ctx context.Context, opts ...LLMSpawnOpts) (*Agent, error) {
 		// `state` optional argument
 		if !querybuilder.IsZeroValue(opts[i].State) {
 			q = q.Arg("state", opts[i].State)
+		}
+		// `parentHandle` optional argument
+		if !querybuilder.IsZeroValue(opts[i].ParentHandle) {
+			q = q.Arg("parentHandle", opts[i].ParentHandle)
 		}
 		// `error` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Error) {
@@ -11913,6 +12705,8 @@ func (r *LLM) WithToolResult(callId string, content string, errored bool, opts .
 type LLMWithToolsOpts struct {
 	// Method names to exclude from the toolset (e.g. constructors, entrypoints).
 	Except []string
+	// Version of this binding's state contract. Recomposition preserves compatible state when the version is unchanged and resets to the newly bound object's defaults when it differs. Change this when the state layout changes incompatibly. Same-type tool returns retain the version. Module identity and ownership checks still apply.
+	Version int
 }
 
 // Expose an object's methods as tools. Every eligible method of the bound object becomes a tool; a tool that returns this object's own type replaces it as the new state. Repeatable to bind several objects.
@@ -11922,6 +12716,10 @@ func (r *LLM) WithTools(object Node, opts ...LLMWithToolsOpts) *LLM {
 		// `except` optional argument
 		if !querybuilder.IsZeroValue(opts[i].Except) {
 			q = q.Arg("except", opts[i].Except)
+		}
+		// `version` optional argument
+		if !querybuilder.IsZeroValue(opts[i].Version) {
+			q = q.Arg("version", opts[i].Version)
 		}
 	}
 	q = q.Arg("object", object)
@@ -12944,6 +13742,23 @@ func (r *Module) WithGraphQLQuery(q *querybuilder.Selection) *Module {
 	return &Module{
 		query: q,
 	}
+}
+
+// The source used to resolve contextual files and directories, when different from source.
+func (r *Module) ContextSource(ctx context.Context) (*ModuleSource, error) {
+	q := r.query.Select("contextSource")
+
+	q = q.Select("id")
+	var objectID *ID
+	if err := q.Bind(&objectID).Execute(ctx); err != nil {
+		return nil, err
+	}
+	if objectID == nil {
+		return nil, nil
+	}
+	return &ModuleSource{
+		query: selectNode(q.Root(), *objectID, "ModuleSource"),
+	}, nil
 }
 
 // The dependencies of the module.
@@ -17676,17 +18491,19 @@ func (r *Workspace) EnvList(ctx context.Context) ([]string, error) {
 
 // WorkspaceExportOpts contains options for Workspace.Export
 type WorkspaceExportOpts struct {
-	// Destination checkout path on the calling client. Relative paths start at the client's working directory. Omit to apply a local workspace's overlay changes at its host root.
+	// Destination checkout path on the calling client. Relative paths start at the client's working directory. Omit to use the calling client's current local workspace root.
 	Path string
-	// Earlier workspace state to compare against. With path, this must be a previously exported frozen source workspace.
+	// Earlier workspace state to compare against. For Git integration, live inputs are snapshotted at export time; use a snapshot to retain the baseline of a previous export.
 	From *Workspace
 }
 
 // Write this workspace's commits and pending changes to a checkout on the calling client.
 //
-// With path, accept a frozen source, integrate divergent commits by cherry-picking, preserve unrelated checkout edits, and refuse conflicts. The source is unchanged. Pass from to save only work since an earlier source value, including previously saved pending edits that are now committed.
+// Path selects the destination; omitting it uses the calling client's current local workspace root, including when exporting a snapshot or committed workspace. Exported file paths are relative to the workspace root regardless of its working directory. This writes only to the client making the call, never the source's client.
 //
-// Without path, apply a local workspace's overlay changes at its host root. Pass from to apply only changes since an earlier local workspace state. Export paths are relative to the workspace root regardless of its working directory. Like Directory.export, this writes only to the client making the call, never the source's client.
+// A live workspace exported to its own checkout applies only its overlay edits, without capturing the whole checkout. This also applies with an explicit path. Pass from with the same live base to apply only changes since that overlay state.
+//
+// Other exports integrate divergent commits by cherry-picking, preserve unrelated checkout edits, and refuse conflicts. Live inputs are snapshotted automatically; capturing untracked source files requires interactive approval. Stable inputs retain their baseline. Pass from to save only work since an earlier source value, including previously saved pending edits that are now committed.
 func (r *Workspace) Export(ctx context.Context, opts ...WorkspaceExportOpts) error {
 	if r.export != nil {
 		return nil
@@ -20300,7 +21117,7 @@ const (
 	// A model request or tool evaluation is in flight.
 	AgentStateRunning AgentState = "RUNNING"
 
-	// Blocked on input from the user (derived; see waitingOn).
+	// Blocked on input from the user.
 	AgentStateWaitingInput AgentState = "WAITING_INPUT"
 
 	// Mailbox accepting but not draining, until resume.
@@ -20311,6 +21128,66 @@ const (
 
 	// The loop failed; snapshot holds the completed prefix. Resume retries.
 	AgentStateFailed AgentState = "FAILED"
+)
+
+type ArtifactDimensionKind string
+
+func (ArtifactDimensionKind) IsEnum() {}
+
+func (v ArtifactDimensionKind) Name() string {
+	switch v {
+	case ArtifactDimensionKindCollection:
+		return "COLLECTION"
+	case ArtifactDimensionKindModule:
+		return "MODULE"
+	case ArtifactDimensionKindType:
+		return "TYPE"
+	default:
+		return ""
+	}
+}
+
+func (v ArtifactDimensionKind) Value() string {
+	return string(v)
+}
+
+func (v *ArtifactDimensionKind) MarshalJSON() ([]byte, error) {
+	if *v == "" {
+		return []byte(`""`), nil
+	}
+	name := v.Name()
+	if name == "" {
+		return nil, fmt.Errorf("invalid enum value %q", *v)
+	}
+	return json.Marshal(name)
+}
+
+func (v *ArtifactDimensionKind) UnmarshalJSON(dt []byte) error {
+	var s string
+	if err := json.Unmarshal(dt, &s); err != nil {
+		return err
+	}
+	switch s {
+	case "":
+		*v = ""
+	case "COLLECTION":
+		*v = ArtifactDimensionKindCollection
+	case "MODULE":
+		*v = ArtifactDimensionKindModule
+	case "TYPE":
+		*v = ArtifactDimensionKindType
+	default:
+		return fmt.Errorf("invalid enum value %q", s)
+	}
+	return nil
+}
+
+const (
+	ArtifactDimensionKindCollection ArtifactDimensionKind = "COLLECTION"
+
+	ArtifactDimensionKindModule ArtifactDimensionKind = "MODULE"
+
+	ArtifactDimensionKindType ArtifactDimensionKind = "TYPE"
 )
 
 // Sharing mode of the cache volume.

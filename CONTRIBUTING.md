@@ -57,7 +57,7 @@ greetings-api/
 │   └── tests/          # Playwright E2E tests
 ├── .dagger/modules/     # Dagger modules
 │   ├── greetings/      # Entrypoint module (build)
-│   ├── backend/        # Backend build module
+│   ├── backend/        # Backend container and service module
 │   └── frontend/       # Frontend build module
 ├── dagger.toml          # Dagger workspace configuration
 └── dagger.lock          # Dagger dependency lock file
@@ -84,7 +84,7 @@ greetings-api/
 
 - **Tool**: Dagger for CI/CD operations
 - **Modules**: Project modules for backend and frontend, plus reusable modules installed in `dagger.toml`: [go](https://github.com/dagger/go) (Go lint/test), [golangci-lint](https://github.com/dagger/go/tree/do-not-merge-hack/golangci-lint) (Go lint), [eslint](https://github.com/dagger/eslint) (JS/TS lint), and [playwright](https://github.com/dagger/playwright) (E2E tests)
-- **Wiring**: Reusable modules get project services through settings in `dagger.toml` rather than custom check functions. The go module's `base` is `backend:go-test-base`, a Go container with `backend:serve` bound as `GREETINGS_API_URL`, so `go:test-all` runs the e2e tests against the real API. The playwright module's `service` is `frontend:serve`, so `playwright:test` runs the browser tests against the served site
+- **Wiring**: Reusable modules get project services through settings in `dagger.toml` rather than custom check functions. The go module's `base` is `backend:go-test-base`, a Go container with `backend:serve` bound as `GREETINGS_API_URL`, so `go:test-all` runs the e2e tests against the real API. The playwright module's `service` is `frontend:serve`, so `playwright:test` runs the browser tests against the served site. The backend binary is built by a second go install, `go-build`, and wired into the backend and greetings modules' `binary` and `backendBinary` settings
 - **Checks**: All validation runs through `dagger check`; services run through `dagger up`
 
 ## Development Workflow

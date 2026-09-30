@@ -1,71 +1,30 @@
 package main
 
 import (
-	"runtime"
-
 	"backend/internal/dagger"
 )
 
 type Backend struct {
-	Source *dagger.Directory
+	// The compiled backend binary
+	Binary *dagger.File
 }
 
 func New(
-	// +optional
-	// +defaultPath="/"
-	// +ignore=[".git", "**/node_modules", "website"]
-	source *dagger.Directory,
+	// The compiled backend binary. dagger.toml wires this to the go module's
+	// build of the root package.
+	binary *dagger.File,
 ) *Backend {
 	return &Backend{
-		Source: source,
+		Binary: binary,
 	}
-}
-
-// source mounted into the Go toolchain container, ready to run go commands
-func (b *Backend) goBase() *dagger.Container {
-	return dag.Container().
-		From("golang:1.26-alpine").
-		WithDirectory("/ws", b.Source).
-		WithWorkdir("/ws")
-}
-
-// Build the backend
-func (b *Backend) Build(
-	// +optional
-	arch string,
-) *dagger.Directory {
-	if arch == "" {
-		arch = runtime.GOARCH
-	}
-	built := b.goBase().
-		WithEnvVariable("GOOS", "linux").
-		WithEnvVariable("GOARCH", arch).
-		WithExec([]string{"go", "build", "-o", "greetings-api", "."})
-	return dag.Directory().WithFile("greetings-api", built.File("greetings-api"))
-}
-
-// Return the compiled backend binary for a particular architecture
-func (b *Backend) Binary(
-	// +optional
-	arch string,
-) *dagger.File {
-	d := b.Build(arch)
-	return d.File("greetings-api")
 }
 
 // Get a container ready to run the backend
-func (b *Backend) Container(
-	// +optional
-	arch string,
-) *dagger.Container {
-	if arch == "" {
-		arch = runtime.GOARCH
-	}
-	bin := b.Binary(arch)
+func (b *Backend) Container() *dagger.Container {
 	return dag.
-		Container(dagger.ContainerOpts{Platform: dagger.Platform(arch)}).
+		Container().
 		From("cgr.dev/chainguard/wolfi-base:latest@sha256:a8c9c2888304e62c133af76f520c9c9e6b3ce6f1a45e3eaa57f6639eb8053c90").
-		WithFile("/bin/greetings-api", bin).
+		WithFile("/bin/greetings-api", b.Binary).
 		WithEntrypoint([]string{"/bin/greetings-api"}).
 		WithExposedPort(8080)
 }
@@ -74,7 +33,7 @@ func (b *Backend) Container(
 //
 // +up
 func (b *Backend) Serve() *dagger.Service {
-	return b.Container(runtime.GOARCH).AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
+	return b.Container().AsService(dagger.ContainerAsServiceOpts{UseEntrypoint: true})
 }
 
 // A Go container with the backend API running as a bound service, for the go
