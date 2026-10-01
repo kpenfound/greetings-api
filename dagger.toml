@@ -3,13 +3,13 @@ source = ".dagger/modules/greetings"
 entrypoint = true
 
 [modules.greetings.settings]
-backendBinary = "dag://go-build/modules/binaries/build?go-module=.&go-binary=."
+backendBinary = "dag+file://go-build/packages/binary?go-package=."
 
 [modules.backend]
 source = ".dagger/modules/backend"
 
 [modules.backend.settings]
-binary = "dag://go-build/modules/binaries/build?go-module=.&go-binary=."
+binary = "dag+file://go-build/packages/binary?go-package=."
 
 [modules.frontend]
 source = ".dagger/modules/frontend"
