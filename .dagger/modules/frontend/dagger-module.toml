@@ -1,0 +1,6 @@
+name = "frontend"
+engineVersion = "v1.0.0-0"
+disableDefaultFunctionCaching = true
+
+[runtime]
+  source = "typescript"
