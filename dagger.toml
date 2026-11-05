@@ -37,6 +37,12 @@ build = ["!**"]
 [modules.go-build]
 source = "github.com/dagger/go"
 
+[modules.go-build.check]
+# Tests run under the go module above (test = ["!**"] below), which leaves this
+# check with no tests. Skip it outright: an empty check fails when run by name,
+# as CI does with every check `dagger check -l` lists.
+skip = ["modules/packages/tests/test"]
+
 [modules.go-build.settings]
 # Builds the binaries backend and greetings are wired to, on the default Go
 # container. Tests and generate stay with go.
