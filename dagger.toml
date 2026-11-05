@@ -29,7 +29,7 @@ source = "github.com/dagger/go"
 # GREETINGS_API_URL) and it runs the tests itself. Without this its test check
 # would run without the variable, and the e2e tests skip when that is unset,
 # which looks exactly like passing.
-#base = "dag://backend/go-test-base"
+base = "dag://backend/go-test-base"
 # Binaries come from go-build instead: building here would run on the base
 # above, which needs the backend binary, a cycle.
 build = ["!**"]
