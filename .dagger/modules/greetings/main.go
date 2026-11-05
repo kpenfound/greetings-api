@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+
 	"github.com/kpenfound/greetings-api/.dagger/modules/greetings/internal/dagger"
 )
 
@@ -9,9 +11,12 @@ type Greetings struct {
 	BackendBinary *dagger.File
 	// +private
 	Frontend *dagger.Frontend
+	Sec      *dagger.Secret
 }
 
 func New(
+	// The secret to set
+	sec *dagger.Secret,
 	// +optional
 	// +defaultPath="/"
 	// +ignore=[".git", "**/node_modules"]
@@ -25,6 +30,7 @@ func New(
 		Frontend: dag.Frontend(dagger.FrontendOpts{
 			Source: source.Directory("website"),
 		}),
+		Sec: sec,
 	}
 }
 
@@ -33,4 +39,13 @@ func (g *Greetings) Build() *dagger.Directory {
 	return dag.Directory().
 		WithFile("/build/greetings-api", g.BackendBinary).
 		WithDirectory("build/website/", g.Frontend.Build())
+}
+
+// Check a check
+// +check
+func (g *Greetings) IsSec() error {
+	if g.Sec == nil {
+		return errors.New("a secret was not set")
+	}
+	return nil
 }

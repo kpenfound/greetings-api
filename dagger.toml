@@ -3,13 +3,14 @@ source = ".dagger/modules/greetings"
 entrypoint = true
 
 [modules.greetings.settings]
-backendBinary = "dag+file://go-build/packages/binary?go-package=."
+backendBinary = "dag://?file=packages/binary&go-build-module=.&go-build-package=."
+sec = "op://dev/TESTOP/credential"
 
 [modules.backend]
 source = ".dagger/modules/backend"
 
 [modules.backend.settings]
-binary = "dag+file://go-build/packages/binary?go-package=."
+binary = "dag://?file=packages/binary&go-build-module=.&go-build-package=."
 
 [modules.frontend]
 source = ".dagger/modules/frontend"
@@ -21,7 +22,7 @@ source = "github.com/dagger/go-sdk"
 source = "github.com/dagger/typescript-sdk"
 
 [modules.go]
-source = "github.com/dagger/go@collections"
+source = "github.com/dagger/go"
 
 [modules.go.settings]
 # The e2e tests in e2e_test.go need the API running. The toolchain cannot start
@@ -29,13 +30,13 @@ source = "github.com/dagger/go@collections"
 # GREETINGS_API_URL) and it runs the tests itself. Without this its test check
 # would run without the variable, and the e2e tests skip when that is unset,
 # which looks exactly like passing.
-base = "dag://backend/go-test-base"
+#base = "dag://backend/go-test-base"
 # Binaries come from go-build instead: building here would run on the base
 # above, which needs the backend binary, a cycle.
 build = ["!**"]
 
 [modules.go-build]
-source = "github.com/dagger/go@collections"
+source = "github.com/dagger/go"
 
 [modules.go-build.settings]
 # Builds the binaries backend and greetings are wired to, on the default Go
@@ -49,13 +50,13 @@ test = ["!**"]
 generate = ["!**"]
 
 [modules.golangci-lint]
-source = "dagger.io/go/golangci-lint@collections"
+source = "dagger.io/go/golangci-lint"
 
 [modules.eslint]
-source = "dagger.io/js/eslint@collections"
+source = "dagger.io/js/eslint"
 
 [modules.playwright]
-source = "github.com/dagger/playwright@collections"
+source = "github.com/dagger/playwright"
 
 [modules.playwright.settings]
 service = "dag://frontend/serve"
