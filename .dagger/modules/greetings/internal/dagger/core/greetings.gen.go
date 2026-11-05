@@ -16,8 +16,7 @@ type Greetings struct { // greetings (../../../../../../:0:0)
 	// field again.
 	refetchID bool
 
-	id    *ID
-	isSec *Void
+	id *ID
 }
 
 func (r *Greetings) WithGraphQLQuery(q *querybuilder.Selection) *Greetings {
@@ -94,32 +93,12 @@ func (r *Greetings) UnmarshalJSON(bs []byte) error {
 	return nil
 }
 
-// Check a check
-func (r *Greetings) IsSec(ctx context.Context) error {
-	if r.isSec != nil {
-		return nil
-	}
-	q := r.query.Select("isSec")
-
-	return q.Execute(ctx)
-}
-
-func (r *Greetings) Sec() *Secret {
-	q := r.query.Select("sec")
-
-	return &Secret{
-		query:     q,
-		refetchID: r.refetchID,
-	}
-}
-
 // GreetingsOpts contains options for Query.Greetings
 type GreetingsOpts struct {
 	Source *Directory
 }
 
-func (r *Query) Greetings(sec *Secret, backendBinary *File, opts ...GreetingsOpts) *Greetings { // greetings (../../../../../../:0:0)
-	assertNotNil("sec", sec)
+func (r *Query) Greetings(backendBinary *File, opts ...GreetingsOpts) *Greetings { // greetings (../../../../../../:0:0)
 	assertNotNil("backendBinary", backendBinary)
 	q := r.query.Select("greetings")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -128,7 +107,6 @@ func (r *Query) Greetings(sec *Secret, backendBinary *File, opts ...GreetingsOpt
 			q = q.Arg("source", opts[i].Source)
 		}
 	}
-	q = q.Arg("sec", sec)
 	q = q.Arg("backendBinary", backendBinary)
 
 	return &Greetings{

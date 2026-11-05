@@ -4,7 +4,6 @@ entrypoint = true
 
 [modules.greetings.settings]
 backendBinary = "dag://?file=packages/binary&go-build-module=.&go-build-package=."
-sec = "op://dev/TESTOP/credential"
 
 [modules.backend]
 source = ".dagger/modules/backend"
