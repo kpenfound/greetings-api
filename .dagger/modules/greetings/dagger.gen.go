@@ -194,7 +194,7 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 			if err != nil {
 				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
 			}
-			return nil, (*Greetings).IsSec(&parent)
+			return nil, (*Greetings).IsSec(&parent, ctx)
 		case "":
 			var parent Greetings
 			err = json.Unmarshal(parentJSON, &parent)
@@ -229,26 +229,26 @@ func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName st
 	case "":
 		return dag.Module().
 			WithObject(
-				dag.TypeDef().WithObject("Greetings", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 9, 6)}).
+				dag.TypeDef().WithObject("Greetings", dagger.TypeDefWithObjectOpts{SourceMap: dag.SourceMap("main.go", 10, 6)}).
 					WithFunction(
 						dag.Function("Build",
 							dag.TypeDef().WithObject("Directory")).
 							WithDescription("Build the backend and frontend for a specified environment").
-							WithSourceMap(dag.SourceMap("main.go", 38, 1))).
+							WithSourceMap(dag.SourceMap("main.go", 39, 1))).
 					WithFunction(
 						dag.Function("IsSec",
 							dag.TypeDef().WithKind(dagger.TypeDefKindVoidKind).WithOptional(true)).
 							WithDescription("Check a check").
-							WithSourceMap(dag.SourceMap("main.go", 46, 1)).
+							WithSourceMap(dag.SourceMap("main.go", 47, 1)).
 							WithCheck()).
-					WithField("Sec", dag.TypeDef().WithObject("Secret"), dagger.TypeDefWithFieldOpts{SourceMap: dag.SourceMap("main.go", 14, 2)}).
+					WithField("Sec", dag.TypeDef().WithObject("Secret"), dagger.TypeDefWithFieldOpts{SourceMap: dag.SourceMap("main.go", 15, 2)}).
 					WithConstructor(
 						dag.Function("New",
 							dag.TypeDef().WithObject("Greetings")).
-							WithSourceMap(dag.SourceMap("main.go", 17, 1)).
-							WithArg("sec", dag.TypeDef().WithObject("Secret"), dagger.FunctionWithArgOpts{Description: "The secret to set", SourceMap: dag.SourceMap("main.go", 19, 2)}).
-							WithArg("source", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 23, 2), DefaultPath: "/", Ignore: []string{".git", "**/node_modules"}}).
-							WithArg("backendBinary", dag.TypeDef().WithObject("File"), dagger.FunctionWithArgOpts{Description: "The compiled backend binary. dagger.toml wires this to the go module's\nbuild of the root package.", SourceMap: dag.SourceMap("main.go", 26, 2)}))), nil
+							WithSourceMap(dag.SourceMap("main.go", 18, 1)).
+							WithArg("sec", dag.TypeDef().WithObject("Secret"), dagger.FunctionWithArgOpts{Description: "The secret to set", SourceMap: dag.SourceMap("main.go", 20, 2)}).
+							WithArg("source", dag.TypeDef().WithObject("Directory").WithOptional(true), dagger.FunctionWithArgOpts{SourceMap: dag.SourceMap("main.go", 24, 2), DefaultPath: "/", Ignore: []string{".git", "**/node_modules"}}).
+							WithArg("backendBinary", dag.TypeDef().WithObject("File"), dagger.FunctionWithArgOpts{Description: "The compiled backend binary. dagger.toml wires this to the go module's\nbuild of the root package.", SourceMap: dag.SourceMap("main.go", 27, 2)}))), nil
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 
 	"github.com/kpenfound/greetings-api/.dagger/modules/greetings/internal/dagger"
@@ -43,9 +44,16 @@ func (g *Greetings) Build() *dagger.Directory {
 
 // Check a check
 // +check
-func (g *Greetings) IsSec() error {
+func (g *Greetings) IsSec(ctx context.Context) error {
 	if g.Sec == nil {
 		return errors.New("a secret was not set")
+	}
+	ptxt, err := g.Sec.Plaintext(ctx)
+	if err != nil {
+		return err
+	}
+	if ptxt != "supersecret" {
+		return errors.New("secret value was incorrect")
 	}
 	return nil
 }
