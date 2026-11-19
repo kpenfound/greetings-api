@@ -1,6 +1,6 @@
 # greetings-api
 
-JUST A README CHANGE
+JUST A README CHANGE, and another one
 
 A simple greeting api with a beatuiful frontend.
 
