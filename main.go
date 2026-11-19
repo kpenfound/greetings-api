@@ -16,6 +16,7 @@ import (
 //go:embed greetings.json
 var greetingsJson []byte
 
+// Greetings struct: finally a typedoc!
 type Greeting struct {
 	Language string `json:"language"`
 	Greeting string `json:"greeting"`
