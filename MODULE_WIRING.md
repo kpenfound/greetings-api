@@ -18,7 +18,7 @@ Both wires live in [dagger.toml](./dagger.toml).
 
 ### go ← backend:go-test-base
 
-The go module's `base` setting is the container it derives every `go test` run from. This project wires it to a function on the [backend](./.dagger/backend/main.go) module:
+The go module's `base` setting is the container it derives every `go test` run from. This project wires it to a function on the [backend](./.dagger/modules/backend/main.go) module:
 
 ```toml
 [modules.go.settings]
@@ -47,7 +47,7 @@ That last point is why the wiring matters. A skipped test reports the same as a 
 
 ### playwright ← frontend:serve
 
-The playwright module's `service` setting is the service it runs the browser tests against. This project wires it to the [frontend](./.dagger/frontend/src/index.ts) module's `serve` function, the same one `dagger up` uses:
+The playwright module's `service` setting is the service it runs the browser tests against. This project wires it to the [frontend](./.dagger/modules/frontend/src/index.ts) module's `serve` function, the same one `dagger up` uses:
 
 ```toml
 [modules.playwright.settings]
@@ -55,6 +55,22 @@ service = "frontend:serve"
 ```
 
 The playwright module binds that service into its test container as `frontend` and sets `PLAYWRIGHT_BASE_URL` to its exposed port. [website/playwright.config.ts](./website/playwright.config.ts) reads the variable, so the same specs run against `http://frontend:8081` in Dagger and `http://localhost:8081` on a laptop.
+
+### backend, greetings ← go-build binaries
+
+The backend binary comes from the go module too, rather than from a `go build` in the project's own code. The go module lists each main package as a binary, so the backend and greetings modules take the root package's compiled file as a setting:
+
+```toml
+[modules.backend.settings]
+binary = "dag://go-build/modules/binaries/build?go-module=.&go-binary=."
+
+[modules.greetings.settings]
+backendBinary = "dag://go-build/modules/binaries/build?go-module=.&go-binary=."
+```
+
+`dagger list files --all -f=link` prints these addresses.
+
+It is a second install of the same module, `go-build`, because the go module builds on its `base`. With `go`'s base wired to `backend:go-test-base`, which serves the backend, building there would need the binary it is building, and Dagger reports `recursive call detected`. `go-build` has no base, so it builds on the default Go container. It sets `test` and `generate` to `["!**"]` so its checks do not repeat `go`'s, and `go` sets `build` to `["!**"]` so it offers no binaries to wire, since any it built would hit the cycle.
 
 ### What this replaces
 

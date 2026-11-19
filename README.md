@@ -28,19 +28,11 @@ Dagger functions:
 ```
 Name                    Description
 build                   Build the backend and frontend for a specified environment
-debug-broken-tests-pr   Debug broken tests on a pull request and comment fix suggestions
-debug-tests             Debug broken tests. Returns a unified diff of the test fixes
-develop                 Complete an assignment for the greetings project and get back the completed work
-develop-feedback        Agent to develop changes based on feedback on changes made in a Directory
-develop-pull-request    Develop changes based on a Github issue and open a pull request
-develop-review          Agent to review changes made in a Directory
-pull-request-feedback   Receive feedback on an open pull request via slash command
-pull-request-review     Review an open pull request via slash command
-release                 Create a GitHub release
 ```
 
 Checks and services come from the project's modules (`backend`, `frontend`) and
 reusable modules installed in the workspace ([go](https://github.com/dagger/go),
+[golangci-lint](https://github.com/dagger/go/tree/do-not-merge-hack/golangci-lint),
 [eslint](https://github.com/dagger/eslint),
 [playwright](https://github.com/dagger/playwright)). The reusable modules are
 wired to the project's services in `dagger.toml`: `go:test-all` runs the Go e2e
@@ -49,7 +41,4 @@ against `frontend:serve`. List them with `dagger check -l` and `dagger up -l`.
 
 ## Demos
 
-- [Debugger Agent](./DEBUGGER_AGENT.md)
-- [SWE Agent](./SWE_AGENT.md)
-- [Agentic CI](./AGENTIC_CI.md)
 - [Module Wiring](./MODULE_WIRING.md)
