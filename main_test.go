@@ -9,6 +9,7 @@ import (
 	"gotest.tools/v3/assert"
 )
 
+// another go change
 func TestSelectGreeting(t *testing.T) {
 	var greetings []*Greeting
 	err := json.Unmarshal(greetingsJson, &greetings)
