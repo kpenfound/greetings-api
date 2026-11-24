@@ -28,6 +28,12 @@ func (r *Frontend) WithGraphQLQuery(q *querybuilder.Selection) *Frontend {
 	}
 }
 
+// withLoadedID is the Frontend that q, a query of the node whose
+// ID is id, selects, knowing that ID (Loaded).
+func (r *Frontend) withLoadedID(q *querybuilder.Selection, id ID) *Frontend {
+	return &Frontend{query: q, id: &id}
+}
+
 func (r *Frontend) Build() *Directory { // frontend (../../../../../../src/index.ts:24:3)
 	q := r.query.Select("build")
 

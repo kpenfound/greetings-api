@@ -2,5 +2,5 @@ name = "frontend"
 disableDefaultFunctionCaching = true
 
 [entrypoint]
-  kind = "dang"
-  source = "./entrypoint"
+kind = "dang"
+source = "./entrypoint"
