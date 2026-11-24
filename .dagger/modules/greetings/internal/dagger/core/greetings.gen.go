@@ -28,6 +28,12 @@ func (r *Greetings) WithGraphQLQuery(q *querybuilder.Selection) *Greetings {
 	}
 }
 
+// withLoadedID is the Greetings that q, a query of the node whose
+// ID is id, selects, knowing that ID (Loaded).
+func (r *Greetings) withLoadedID(q *querybuilder.Selection, id ID) *Greetings {
+	return &Greetings{query: q, id: &id}
+}
+
 // Build the backend and frontend for a specified environment
 func (r *Greetings) Build() *Directory {
 	q := r.query.Select("build")

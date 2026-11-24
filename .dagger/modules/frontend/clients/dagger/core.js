@@ -98144,7 +98144,7 @@ var init_index_min = __esm(() => {
 });
 
 // src/session/dist/provisioning/engineVersion.js
-var ENGINE_VERSION = "v1.0.0-beta.24";
+var ENGINE_VERSION = "v1.0.0-beta.28";
 
 // src/session/dist/provisioning/bin.js
 import * as crypto2 from "crypto";
@@ -100350,29 +100350,29 @@ function FileTypeNameToValue(name) {
 }
 var FunctionCachePolicy;
 (function(FunctionCachePolicy2) {
-  FunctionCachePolicy2["Default"] = "Default";
-  FunctionCachePolicy2["Never"] = "Never";
-  FunctionCachePolicy2["PerSession"] = "PerSession";
+  FunctionCachePolicy2["Default"] = "DEFAULT";
+  FunctionCachePolicy2["Never"] = "NEVER";
+  FunctionCachePolicy2["PerSession"] = "PER_SESSION";
 })(FunctionCachePolicy || (FunctionCachePolicy = {}));
 function FunctionCachePolicyValueToName(value) {
   switch (value) {
     case FunctionCachePolicy.Default:
-      return "Default";
+      return "DEFAULT";
     case FunctionCachePolicy.Never:
-      return "Never";
+      return "NEVER";
     case FunctionCachePolicy.PerSession:
-      return "PerSession";
+      return "PER_SESSION";
     default:
       return value;
   }
 }
 function FunctionCachePolicyNameToValue(name) {
   switch (name) {
-    case "Default":
+    case "DEFAULT":
       return FunctionCachePolicy.Default;
-    case "Never":
+    case "NEVER":
       return FunctionCachePolicy.Never;
-    case "PerSession":
+    case "PER_SESSION":
       return FunctionCachePolicy.PerSession;
     default:
       return name;
@@ -100445,35 +100445,34 @@ function IdentifierWordKindNameToValue(name) {
 }
 var ImageLayerCompression;
 (function(ImageLayerCompression2) {
-  ImageLayerCompression2["EStarGz"] = "EStarGZ";
-  ImageLayerCompression2["Estargz"] = "EStarGZ";
-  ImageLayerCompression2["Gzip"] = "Gzip";
-  ImageLayerCompression2["Uncompressed"] = "Uncompressed";
-  ImageLayerCompression2["Zstd"] = "Zstd";
+  ImageLayerCompression2["Estargz"] = "ESTARGZ";
+  ImageLayerCompression2["Gzip"] = "GZIP";
+  ImageLayerCompression2["Uncompressed"] = "UNCOMPRESSED";
+  ImageLayerCompression2["Zstd"] = "ZSTD";
 })(ImageLayerCompression || (ImageLayerCompression = {}));
 function ImageLayerCompressionValueToName(value) {
   switch (value) {
-    case ImageLayerCompression.EStarGz:
-      return "EStarGZ";
+    case ImageLayerCompression.Estargz:
+      return "ESTARGZ";
     case ImageLayerCompression.Gzip:
-      return "Gzip";
+      return "GZIP";
     case ImageLayerCompression.Uncompressed:
-      return "Uncompressed";
+      return "UNCOMPRESSED";
     case ImageLayerCompression.Zstd:
-      return "Zstd";
+      return "ZSTD";
     default:
       return value;
   }
 }
 function ImageLayerCompressionNameToValue(name) {
   switch (name) {
-    case "EStarGZ":
-      return ImageLayerCompression.EStarGz;
-    case "Gzip":
+    case "ESTARGZ":
+      return ImageLayerCompression.Estargz;
+    case "GZIP":
       return ImageLayerCompression.Gzip;
-    case "Uncompressed":
+    case "UNCOMPRESSED":
       return ImageLayerCompression.Uncompressed;
-    case "Zstd":
+    case "ZSTD":
       return ImageLayerCompression.Zstd;
     default:
       return name;
@@ -100481,10 +100480,8 @@ function ImageLayerCompressionNameToValue(name) {
 }
 var ImageMediaTypes;
 (function(ImageMediaTypes2) {
-  ImageMediaTypes2["Docker"] = "DockerMediaTypes";
-  ImageMediaTypes2["DockerMediaTypes"] = "DockerMediaTypes";
-  ImageMediaTypes2["Oci"] = "OCIMediaTypes";
-  ImageMediaTypes2["OciMediaTypes"] = "OCIMediaTypes";
+  ImageMediaTypes2["Docker"] = "DOCKER";
+  ImageMediaTypes2["Oci"] = "OCI";
 })(ImageMediaTypes || (ImageMediaTypes = {}));
 function ImageMediaTypesValueToName(value) {
   switch (value) {
@@ -101773,11 +101770,11 @@ class ClientFilesyncMirror extends BaseClient {
 
 class Cloud extends BaseClient {
   _id = undefined;
-  _traceURL = undefined;
-  constructor(ctx, _id, _traceURL) {
+  _traceUrl = undefined;
+  constructor(ctx, _id, _traceUrl) {
     super(ctx);
     this._id = _id;
-    this._traceURL = _traceURL;
+    this._traceUrl = _traceUrl;
   }
   id = async () => {
     if (this._id) {
@@ -101787,11 +101784,11 @@ class Cloud extends BaseClient {
     const response = await ctx.execute();
     return response;
   };
-  traceURL = async () => {
-    if (this._traceURL) {
-      return this._traceURL;
+  traceUrl = async () => {
+    if (this._traceUrl) {
+      return this._traceUrl;
     }
-    const ctx = this._ctx.select("traceURL");
+    const ctx = this._ctx.select("traceUrl");
     const response = await ctx.execute();
     return response;
   };
@@ -102023,12 +102020,12 @@ class Container extends BaseClient {
     const response = await ctx.execute();
     return response;
   };
-  experimentalWithAllGPUs = () => {
-    const ctx = this._ctx.select("experimentalWithAllGPUs");
+  experimentalWithAllGpus = () => {
+    const ctx = this._ctx.select("experimentalWithAllGpus");
     return new Container(ctx);
   };
-  experimentalWithGPU = (devices) => {
-    const ctx = this._ctx.select("experimentalWithGPU", { devices });
+  experimentalWithGpu = (devices) => {
+    const ctx = this._ctx.select("experimentalWithGpu", { devices });
     return new Container(ctx);
   };
   export = async (path8, opts) => {
@@ -102251,8 +102248,8 @@ class Container extends BaseClient {
     const ctx = this._ctx.select("withFiles", { path: path8, sources, ...opts });
     return new Container(ctx);
   };
-  withGPU = () => {
-    const ctx = this._ctx.select("withGPU");
+  withGpu = () => {
+    const ctx = this._ctx.select("withGpu");
     return new Container(ctx);
   };
   withLabel = (name, value) => {
@@ -102461,6 +102458,10 @@ class CurrentModule extends BaseClient {
     const response = await ctx.execute();
     return response;
   };
+  naming = () => {
+    const ctx = this._ctx.select("naming");
+    return new ModuleNaming(ctx);
+  };
   source = () => {
     const ctx = this._ctx.select("source");
     return new Directory(ctx);
@@ -102611,8 +102612,8 @@ class Directory extends BaseClient {
     const response = await ctx.execute();
     return response;
   };
-  directory = (path8) => {
-    const ctx = this._ctx.select("directory", { path: path8 });
+  directory = (path8, opts) => {
+    const ctx = this._ctx.select("directory", { path: path8, ...opts });
     return new Directory(ctx);
   };
   dockerBuild = (opts) => {
@@ -102734,6 +102735,10 @@ class Directory extends BaseClient {
       onConflict: { is_enum: true, value_to_name: PatchConflictValueToName }
     };
     const ctx = this._ctx.select("withPatchFile", { patch, ...opts, __metadata: metadata });
+    return new Directory(ctx);
+  };
+  withPlatform = (platform3) => {
+    const ctx = this._ctx.select("withPlatform", { platform: platform3 });
     return new Directory(ctx);
   };
   withSymlink = (target, linkName) => {
@@ -103462,8 +103467,8 @@ class File3 extends BaseClient {
     const ctx = this._ctx.select("asGitBundle");
     return new GitBundle(ctx);
   };
-  asJSON = () => {
-    const ctx = this._ctx.select("asJSON");
+  asJson = () => {
+    const ctx = this._ctx.select("asJson");
     return new JSONValue(ctx);
   };
   chown = (owner) => {
@@ -103527,8 +103532,8 @@ class File3 extends BaseClient {
     }
     return new Stat(ctx.copy().selectNode(response, "Stat"));
   };
-  sync = async () => {
-    const ctx = this._ctx.select("sync");
+  sync = async (opts) => {
+    const ctx = this._ctx.select("sync", { ...opts });
     const response = await ctx.execute();
     return new File3(ctx.copy().selectNode(response, "File"));
   };
@@ -103890,12 +103895,12 @@ class GeneratedCode extends BaseClient {
     const response = await ctx.execute();
     return response;
   };
-  withVCSGeneratedPaths = (paths) => {
-    const ctx = this._ctx.select("withVCSGeneratedPaths", { paths });
+  withVcsGeneratedPaths = (paths) => {
+    const ctx = this._ctx.select("withVcsGeneratedPaths", { paths });
     return new GeneratedCode(ctx);
   };
-  withVCSIgnoredPaths = (paths) => {
-    const ctx = this._ctx.select("withVCSIgnoredPaths", { paths });
+  withVcsIgnoredPaths = (paths) => {
+    const ctx = this._ctx.select("withVcsIgnoredPaths", { paths });
     return new GeneratedCode(ctx);
   };
   with = (arg) => {
@@ -103964,8 +103969,8 @@ class GitBundle extends BaseClient {
     const response = await ctx.execute();
     return response;
   };
-  prerequisiteSHAs = async () => {
-    const ctx = this._ctx.select("prerequisiteSHAs");
+  prerequisiteShas = async () => {
+    const ctx = this._ctx.select("prerequisiteShas");
     const response = await ctx.execute();
     return response;
   };
@@ -104040,8 +104045,8 @@ class GitCommit extends BaseClient {
   _messageHeadline = undefined;
   _sha = undefined;
   _shortSha = undefined;
-  _treeSHA = undefined;
-  constructor(ctx, _id, _authorEmail, _authorName, _authoredDate, _committedDate, _committerEmail, _committerName, _message, _messageBody, _messageHeadline, _sha, _shortSha, _treeSHA) {
+  _treeSha = undefined;
+  constructor(ctx, _id, _authorEmail, _authorName, _authoredDate, _committedDate, _committerEmail, _committerName, _message, _messageBody, _messageHeadline, _sha, _shortSha, _treeSha) {
     super(ctx);
     this._id = _id;
     this._authorEmail = _authorEmail;
@@ -104055,7 +104060,7 @@ class GitCommit extends BaseClient {
     this._messageHeadline = _messageHeadline;
     this._sha = _sha;
     this._shortSha = _shortSha;
-    this._treeSHA = _treeSHA;
+    this._treeSha = _treeSha;
   }
   id = async () => {
     if (this._id) {
@@ -104182,11 +104187,11 @@ class GitCommit extends BaseClient {
     const ctx = this._ctx.select("tree", { ...opts });
     return new Directory(ctx);
   };
-  treeSHA = async () => {
-    if (this._treeSHA) {
-      return this._treeSHA;
+  treeSha = async () => {
+    if (this._treeSha) {
+      return this._treeSha;
     }
-    const ctx = this._ctx.select("treeSHA");
+    const ctx = this._ctx.select("treeSha");
     const response = await ctx.execute();
     return response;
   };
@@ -104195,14 +104200,14 @@ class GitCommit extends BaseClient {
 class GitPushResult extends BaseClient {
   _id = undefined;
   _disposition = undefined;
-  _previousSHA = undefined;
+  _previousSha = undefined;
   _ref = undefined;
   _sha = undefined;
-  constructor(ctx, _id, _disposition, _previousSHA, _ref, _sha) {
+  constructor(ctx, _id, _disposition, _previousSha, _ref, _sha) {
     super(ctx);
     this._id = _id;
     this._disposition = _disposition;
-    this._previousSHA = _previousSHA;
+    this._previousSha = _previousSha;
     this._ref = _ref;
     this._sha = _sha;
   }
@@ -104222,11 +104227,11 @@ class GitPushResult extends BaseClient {
     const response = await ctx.execute();
     return GitPushDispositionNameToValue(response);
   };
-  previousSHA = async () => {
-    if (this._previousSHA) {
-      return this._previousSHA;
+  previousSha = async () => {
+    if (this._previousSha) {
+      return this._previousSha;
     }
-    const ctx = this._ctx.select("previousSHA");
+    const ctx = this._ctx.select("previousSha");
     const response = await ctx.execute();
     return response;
   };
@@ -104251,15 +104256,15 @@ class GitPushResult extends BaseClient {
 class GitRef extends BaseClient {
   _id = undefined;
   _commit = undefined;
-  _commitSHA = undefined;
+  _commitSha = undefined;
   _contains = undefined;
   _name = undefined;
   _ref = undefined;
-  constructor(ctx, _id, _commit, _commitSHA, _contains, _name, _ref) {
+  constructor(ctx, _id, _commit, _commitSha, _contains, _name, _ref) {
     super(ctx);
     this._id = _id;
     this._commit = _commit;
-    this._commitSHA = _commitSHA;
+    this._commitSha = _commitSha;
     this._contains = _contains;
     this._name = _name;
     this._ref = _ref;
@@ -104288,11 +104293,11 @@ class GitRef extends BaseClient {
     const response = await ctx.execute();
     return response;
   };
-  commitSHA = async () => {
-    if (this._commitSHA) {
-      return this._commitSHA;
+  commitSha = async () => {
+    if (this._commitSha) {
+      return this._commitSha;
     }
-    const ctx = this._ctx.select("commitSHA");
+    const ctx = this._ctx.select("commitSha");
     const response = await ctx.execute();
     return response;
   };
@@ -105088,8 +105093,8 @@ class LLM extends BaseClient {
     const ctx = this._ctx.select("withContentFile", { file, ...opts });
     return new LLM(ctx);
   };
-  withMCPServer = (name, service) => {
-    const ctx = this._ctx.select("withMCPServer", { name, service });
+  withMcpServer = (name, service) => {
+    const ctx = this._ctx.select("withMcpServer", { name, service });
     return new LLM(ctx);
   };
   withModel = (model, opts) => {
@@ -105618,8 +105623,8 @@ class Module_ extends BaseClient {
     const response = await ctx.execute();
     return response.map((r2) => new TypeDef(ctx.copy().selectNode(r2.id, "TypeDef")));
   };
-  introspectionSchemaJSON = () => {
-    const ctx = this._ctx.select("introspectionSchemaJSON");
+  introspectionSchemaJson = () => {
+    const ctx = this._ctx.select("introspectionSchemaJson");
     return new File3(ctx);
   };
   name = async () => {
@@ -105734,6 +105739,77 @@ class ModuleConfigClient extends BaseClient {
   };
 }
 
+class ModuleNaming extends BaseClient {
+  _id = undefined;
+  _mainObject = undefined;
+  _name = undefined;
+  _originalName = undefined;
+  _version = undefined;
+  constructor(ctx, _id, _mainObject, _name, _originalName, _version) {
+    super(ctx);
+    this._id = _id;
+    this._mainObject = _mainObject;
+    this._name = _name;
+    this._originalName = _originalName;
+    this._version = _version;
+  }
+  id = async () => {
+    if (this._id) {
+      return this._id;
+    }
+    const ctx = this._ctx.select("id");
+    const response = await ctx.execute();
+    return response;
+  };
+  enumMemberNames = async (names) => {
+    const ctx = this._ctx.select("enumMemberNames", { names });
+    const response = await ctx.execute();
+    return response;
+  };
+  fieldNames = async (names) => {
+    const ctx = this._ctx.select("fieldNames", { names });
+    const response = await ctx.execute();
+    return response;
+  };
+  mainObject = async (candidates) => {
+    if (this._mainObject) {
+      return this._mainObject;
+    }
+    const ctx = this._ctx.select("mainObject", { candidates });
+    const response = await ctx.execute();
+    return response;
+  };
+  name = async () => {
+    if (this._name) {
+      return this._name;
+    }
+    const ctx = this._ctx.select("name");
+    const response = await ctx.execute();
+    return response;
+  };
+  originalName = async () => {
+    if (this._originalName) {
+      return this._originalName;
+    }
+    const ctx = this._ctx.select("originalName");
+    const response = await ctx.execute();
+    return response;
+  };
+  typeNames = async (names) => {
+    const ctx = this._ctx.select("typeNames", { names });
+    const response = await ctx.execute();
+    return response;
+  };
+  version = async () => {
+    if (this._version) {
+      return this._version;
+    }
+    const ctx = this._ctx.select("version");
+    const response = await ctx.execute();
+    return response;
+  };
+}
+
 class ModuleSource extends BaseClient {
   _id = undefined;
   _asString = undefined;
@@ -105742,8 +105818,8 @@ class ModuleSource extends BaseClient {
   _configExists = undefined;
   _digest = undefined;
   _engineVersion = undefined;
-  _htmlRepoURL = undefined;
-  _htmlURL = undefined;
+  _htmlRepoUrl = undefined;
+  _htmlUrl = undefined;
   _kind = undefined;
   _localContextDirectoryPath = undefined;
   _moduleName = undefined;
@@ -105755,7 +105831,7 @@ class ModuleSource extends BaseClient {
   _sourceSubpath = undefined;
   _sync = undefined;
   _version = undefined;
-  constructor(ctx, _id, _asString, _cloneRef, _commit, _configExists, _digest, _engineVersion, _htmlRepoURL, _htmlURL, _kind, _localContextDirectoryPath, _moduleName, _moduleOriginalName, _originalSubpath, _pin, _repoRootPath, _sourceRootSubpath, _sourceSubpath, _sync, _version) {
+  constructor(ctx, _id, _asString, _cloneRef, _commit, _configExists, _digest, _engineVersion, _htmlRepoUrl, _htmlUrl, _kind, _localContextDirectoryPath, _moduleName, _moduleOriginalName, _originalSubpath, _pin, _repoRootPath, _sourceRootSubpath, _sourceSubpath, _sync, _version) {
     super(ctx);
     this._id = _id;
     this._asString = _asString;
@@ -105764,8 +105840,8 @@ class ModuleSource extends BaseClient {
     this._configExists = _configExists;
     this._digest = _digest;
     this._engineVersion = _engineVersion;
-    this._htmlRepoURL = _htmlRepoURL;
-    this._htmlURL = _htmlURL;
+    this._htmlRepoUrl = _htmlRepoUrl;
+    this._htmlUrl = _htmlUrl;
     this._kind = _kind;
     this._localContextDirectoryPath = _localContextDirectoryPath;
     this._moduleName = _moduleName;
@@ -105802,8 +105878,8 @@ class ModuleSource extends BaseClient {
     const ctx = this._ctx.select("blueprint");
     return new ModuleSource(ctx);
   };
-  clientSchemaIntrospectionJSON = () => {
-    const ctx = this._ctx.select("clientSchemaIntrospectionJSON");
+  clientSchemaIntrospectionJson = (opts) => {
+    const ctx = this._ctx.select("clientSchemaIntrospectionJson", { ...opts });
     return new File3(ctx);
   };
   cloneRef = async () => {
@@ -105876,24 +105952,24 @@ class ModuleSource extends BaseClient {
     const ctx = this._ctx.select("generatedContextDirectory");
     return new Directory(ctx);
   };
-  htmlRepoURL = async () => {
-    if (this._htmlRepoURL) {
-      return this._htmlRepoURL;
+  htmlRepoUrl = async () => {
+    if (this._htmlRepoUrl) {
+      return this._htmlRepoUrl;
     }
-    const ctx = this._ctx.select("htmlRepoURL");
+    const ctx = this._ctx.select("htmlRepoUrl");
     const response = await ctx.execute();
     return response;
   };
-  htmlURL = async () => {
-    if (this._htmlURL) {
-      return this._htmlURL;
+  htmlUrl = async () => {
+    if (this._htmlUrl) {
+      return this._htmlUrl;
     }
-    const ctx = this._ctx.select("htmlURL");
+    const ctx = this._ctx.select("htmlUrl");
     const response = await ctx.execute();
     return response;
   };
-  introspectionSchemaJSON = () => {
-    const ctx = this._ctx.select("introspectionSchemaJSON");
+  introspectionSchemaJson = () => {
+    const ctx = this._ctx.select("introspectionSchemaJson");
     return new File3(ctx);
   };
   kind = async () => {
@@ -105927,6 +106003,10 @@ class ModuleSource extends BaseClient {
     const ctx = this._ctx.select("moduleOriginalName");
     const response = await ctx.execute();
     return response;
+  };
+  naming = () => {
+    const ctx = this._ctx.select("naming");
+    return new ModuleNaming(ctx);
   };
   originalSubpath = async () => {
     if (this._originalSubpath) {
@@ -106030,8 +106110,8 @@ class ModuleSource extends BaseClient {
     const ctx = this._ctx.select("withName", { name });
     return new ModuleSource(ctx);
   };
-  withSDK = (source) => {
-    const ctx = this._ctx.select("withSDK", { source });
+  withSdk = (source) => {
+    const ctx = this._ctx.select("withSdk", { source });
     return new ModuleSource(ctx);
   };
   withSourceSubpath = (path8) => {
@@ -106080,6 +106160,54 @@ class ModuleSource extends BaseClient {
   };
   with = (arg) => {
     return arg(this);
+  };
+}
+
+class Naming extends BaseClient {
+  _id = undefined;
+  _version = undefined;
+  constructor(ctx, _id, _version) {
+    super(ctx);
+    this._id = _id;
+    this._version = _version;
+  }
+  id = async () => {
+    if (this._id) {
+      return this._id;
+    }
+    const ctx = this._ctx.select("id");
+    const response = await ctx.execute();
+    return response;
+  };
+  dictionary = async () => {
+    const ctx = this._ctx.select("dictionary").select("id");
+    const response = await ctx.execute();
+    return response.map((r2) => new NamingTerm(ctx.copy().selectNode(r2.id, "NamingTerm")));
+  };
+  formatIdentifiers = async (names, casing, opts) => {
+    const metadata = {
+      casing: { is_enum: true, value_to_name: CasingValueToName },
+      acronyms: { is_enum: true, value_to_name: AcronymStyleValueToName }
+    };
+    const ctx = this._ctx.select("formatIdentifiers", { names, casing, ...opts, __metadata: metadata });
+    const response = await ctx.execute();
+    return response;
+  };
+  identifier = (name) => {
+    const ctx = this._ctx.select("identifier", { name });
+    return new Identifier(ctx);
+  };
+  module_ = (name, opts) => {
+    const ctx = this._ctx.select("module", { name, ...opts });
+    return new ModuleNaming(ctx);
+  };
+  version = async () => {
+    if (this._version) {
+      return this._version;
+    }
+    const ctx = this._ctx.select("version");
+    const response = await ctx.execute();
+    return response;
   };
 }
 
@@ -106379,15 +106507,6 @@ class Client extends BaseClient {
     const ctx = this._ctx.select("file", { name, contents, ...opts });
     return new File3(ctx);
   };
-  formatIdentifiers = async (names, casing, opts) => {
-    const metadata = {
-      casing: { is_enum: true, value_to_name: CasingValueToName },
-      acronyms: { is_enum: true, value_to_name: AcronymStyleValueToName }
-    };
-    const ctx = this._ctx.select("formatIdentifiers", { names, casing, ...opts, __metadata: metadata });
-    const response = await ctx.execute();
-    return response;
-  };
   function_ = (name, returnType) => {
     const ctx = this._ctx.select("function", { name, returnType });
     return new Function_(ctx);
@@ -106407,10 +106526,6 @@ class Client extends BaseClient {
   http = (url, opts) => {
     const ctx = this._ctx.select("http", { url, ...opts });
     return new File3(ctx);
-  };
-  identifier = (name) => {
-    const ctx = this._ctx.select("identifier", { name });
-    return new Identifier(ctx);
   };
   json = () => {
     const ctx = this._ctx.select("json");
@@ -106435,10 +106550,9 @@ class Client extends BaseClient {
     const ctx = this._ctx.select("moduleSource", { refString, ...opts, __metadata: metadata });
     return new ModuleSource(ctx);
   };
-  namingDictionary = async () => {
-    const ctx = this._ctx.select("namingDictionary").select("id");
-    const response = await ctx.execute();
-    return response.map((r2) => new NamingTerm(ctx.copy().selectNode(r2.id, "NamingTerm")));
+  naming = (opts) => {
+    const ctx = this._ctx.select("naming", { ...opts });
+    return new Naming(ctx);
   };
   node = async (id) => {
     const ctx = this._ctx.select("node", { id }).select("id");
@@ -107505,8 +107619,8 @@ class Workspace extends BaseClient {
     const ctx = this._ctx.select("withReset", { commit, ...opts });
     return new Workspace(ctx);
   };
-  withSDK = (ref, opts) => {
-    const ctx = this._ctx.select("withSDK", { ref, ...opts });
+  withSdk = (ref, opts) => {
+    const ctx = this._ctx.select("withSdk", { ref, ...opts });
     return new Workspace(ctx);
   };
   withUpdatedClients = (opts) => {
@@ -107572,8 +107686,8 @@ class Workspace extends BaseClient {
     const ctx = this._ctx.select("withoutMount", { path: path8 });
     return new Workspace(ctx);
   };
-  withoutSDK = (name, opts) => {
-    const ctx = this._ctx.select("withoutSDK", { name, ...opts });
+  withoutSdk = (name, opts) => {
+    const ctx = this._ctx.select("withoutSdk", { name, ...opts });
     return new Workspace(ctx);
   };
   with = (arg) => {
@@ -107939,6 +108053,14 @@ class WorkspaceSDK extends BaseClient {
     const response = await ctx.execute();
     return response;
   };
+  scopeSetting = async (path8, key) => {
+    const ctx = this._ctx.select("scopeSetting", { path: path8, key }).select("id");
+    const response = await ctx.execute();
+    if (response === null) {
+      return null;
+    }
+    return new JSONValue(ctx.copy().selectNode(response, "JSONValue"));
+  };
 }
 var dag = new Client;
 // src/core/dist/connect.js
@@ -107955,7 +108077,7 @@ async function connect(cb, config = {}) {
     return await cb(client);
   });
 }
-// src/connection.ts
+// src/connect/dist/connection.js
 async function connection(fct, cfg = {}) {
   await withTracing(() => withSession(fct, cfg));
 }
@@ -108119,6 +108241,7 @@ export {
   NetworkProtocolNameToValue,
   NetworkProtocol,
   NamingTerm,
+  Naming,
   Module_,
   ModuleSourceKindValueToName,
   ModuleSourceKindNameToValue,
@@ -108127,6 +108250,7 @@ export {
   ModuleSourceExperimentalFeatureNameToValue,
   ModuleSourceExperimentalFeature,
   ModuleSource,
+  ModuleNaming,
   ModuleConfigClient,
   ListTypeDef,
   Label,

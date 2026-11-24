@@ -2889,6 +2889,10 @@ type ContainerDirectoryOpts = {
      * Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
      */
     expand?: boolean;
+    /**
+     * Repair symlinks that directory selection would break. Resolve targets across the root filesystem and directory or file mounts. Preserve working relative links and links that already have no target. Cache, volume, tmpfs, secret, and socket mounts cause an error if selection, a resolved link, or mount target resolution needs their contents.
+     */
+    resolveBrokenSymlinks?: boolean;
 };
 type ContainerExistsOpts = {
     /**
@@ -2986,7 +2990,7 @@ type ContainerFromOpts = {
     /**
      * Allow HTTPS registry communication without verifying the server certificate.
      */
-    insecureSkipTLSVerify?: boolean;
+    insecureSkipTlsVerify?: boolean;
     /**
      * Ignore the workspace lockfile for this lookup.
      */
@@ -3056,7 +3060,7 @@ type ContainerPublishOpts = {
     /**
      * Allow HTTPS registry communication without verifying the server certificate.
      */
-    insecureSkipTLSVerify?: boolean;
+    insecureSkipTlsVerify?: boolean;
     /**
      * Clamp the image's timestamps to this time, so that rebuilding unchanged files produces identical layers.
      *
@@ -3672,6 +3676,12 @@ type DirectoryAsWorkspaceOpts = {
      */
     cwd?: string;
 };
+type DirectoryDirectoryOpts = {
+    /**
+     * Repair symlinks that directory selection would break. Copy targets from this directory into the result. Preserve working relative links and links that already have no target.
+     */
+    resolveBrokenSymlinks?: boolean;
+};
 type DirectoryDockerBuildOpts = {
     /**
      * Path to the Dockerfile to use (e.g., "frontend.Dockerfile").
@@ -4048,6 +4058,12 @@ type FileSearchOpts = {
     paths?: string[];
     globs?: string[];
 };
+type FileSyncOpts = {
+    /**
+     * Also key the file by its content, so that what consumes it is cached across any two recipes that produce the same file. This hashes the file unless it already has a content key.
+     */
+    keyByContent?: boolean;
+};
 type FileWithReplacedOpts = {
     /**
      * Replace all occurrences of the pattern.
@@ -4144,9 +4160,9 @@ type FunctionWithDeprecatedOpts = {
  * The behavior configured for function result caching.
  */
 declare enum FunctionCachePolicy {
-    Default = "Default",
-    Never = "Never",
-    PerSession = "PerSession"
+    Default = "DEFAULT",
+    Never = "NEVER",
+    PerSession = "PER_SESSION"
 }
 /**
  * Utility function to convert a FunctionCachePolicy value to its name so
@@ -4257,7 +4273,7 @@ type GitRefPushOpts = {
     /**
      * Optional lease: a full lowercase object ID allows replacement only if the remote ref still has that value. Checked even for up-to-date pushes. Empty or omitted uses normal non-force rules, creating the ref if it does not exist.
      */
-    expectedRemoteSHA?: string;
+    expectedRemoteSha?: string;
 };
 type GitRefTreeOpts = {
     /**
@@ -4459,11 +4475,10 @@ declare function IdentifierWordKindNameToValue(name: string): IdentifierWordKind
  * Compression algorithm to use for image layers.
  */
 declare enum ImageLayerCompression {
-    EStarGz = "EStarGZ",
-    Estargz = "EStarGZ",
-    Gzip = "Gzip",
-    Uncompressed = "Uncompressed",
-    Zstd = "Zstd"
+    Estargz = "ESTARGZ",
+    Gzip = "GZIP",
+    Uncompressed = "UNCOMPRESSED",
+    Zstd = "ZSTD"
 }
 /**
  * Utility function to convert a ImageLayerCompression value to its name so
@@ -4479,10 +4494,8 @@ declare function ImageLayerCompressionNameToValue(name: string): ImageLayerCompr
  * Mediatypes to use in published or exported image metadata.
  */
 declare enum ImageMediaTypes {
-    Docker = "DockerMediaTypes",
-    DockerMediaTypes = "DockerMediaTypes",
-    Oci = "OCIMediaTypes",
-    OciMediaTypes = "OCIMediaTypes"
+    Docker = "DOCKER",
+    Oci = "OCI"
 }
 /**
  * Utility function to convert a ImageMediaTypes value to its name so
@@ -4807,6 +4820,16 @@ type ModuleServeOpts = {
      */
     entrypoint?: boolean;
 };
+type ModuleSourceClientSchemaIntrospectionJsonOpts = {
+    /**
+     * The engine version of the client the schema is generated for, e.g. the engineVersion of the module that depends on this one: core is described as that client sees it, capped at this engine's version.
+     *
+     * This module is still loaded at the engine version it declares, and so named by its own naming rules, as the engine serves it to such a client. Defaults to this module's own engine version.
+     *
+     * Use this rather than withEngineVersion, which makes this module declare another version and so changes its names.
+     */
+    clientVersion?: string;
+};
 /**
  * Experimental features of a module
  */
@@ -4847,6 +4870,18 @@ declare function ModuleSourceKindValueToName(value: ModuleSourceKind): string;
  * it can be properly used inside the module runtime.
  */
 declare function ModuleSourceKindNameToValue(name: string): ModuleSourceKind;
+type NamingFormatIdentifiersOpts = {
+    /**
+     * How to write acronyms and terms where a word starts with a capital.
+     */
+    acronyms?: AcronymStyle;
+};
+type NamingModuleOpts = {
+    /**
+     * The module's original name, when it's loaded under another (as a dependency alias): its main object and namespaced type names are spelled after it. Defaults to name.
+     */
+    originalName?: string;
+};
 /**
  * Transport layer network protocol associated to a port.
  */
@@ -4981,16 +5016,6 @@ type ClientFileOpts = {
      */
     permissions?: number;
 };
-type ClientFormatIdentifiersOpts = {
-    /**
-     * How to write acronyms and terms where a word starts with a capital.
-     */
-    acronyms?: AcronymStyle;
-    /**
-     * The engine version whose naming dictionary to parse the names with, e.g. the __schemaVersion of a schema being generated. Defaults to the caller's engine version.
-     */
-    version?: string;
-};
 type ClientGitOpts = {
     /**
      * DEPRECATED: Set to true to keep .git directory.
@@ -5076,6 +5101,12 @@ type ClientModuleSourceOpts = {
      * If set, error out if the ref string is not of the provided requireKind.
      */
     requireKind?: ModuleSourceKind;
+};
+type ClientNamingOpts = {
+    /**
+     * The engine version to answer for, e.g. the engine version a module declares. Defaults to the caller's. Normalized as a module's is: a version past the engine's is capped at the engine's own.
+     */
+    version?: string;
 };
 type ClientSecretOpts = {
     /**
@@ -6540,11 +6571,11 @@ declare class ClientFilesyncMirror extends BaseClient {
  */
 declare class Cloud extends BaseClient {
     private readonly _id?;
-    private readonly _traceURL?;
+    private readonly _traceUrl?;
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _traceURL?: string);
+    constructor(ctx?: Context, _id?: ID, _traceUrl?: string);
     /**
      * A unique identifier for this Cloud.
      */
@@ -6552,7 +6583,7 @@ declare class Cloud extends BaseClient {
     /**
      * The trace URL for the current session
      */
-    traceURL: () => Promise<string>;
+    traceUrl: () => Promise<string>;
 }
 declare class CollectionDelta extends BaseClient {
     private readonly _id?;
@@ -6711,6 +6742,7 @@ declare class Container extends BaseClient {
      * Mounts are included.
      * @param path The path of the directory to retrieve (e.g., "./src").
      * @param opts.expand Replace "${VAR}" or "$VAR" in the value of path according to the current environment variables defined in the container (e.g. "/$VAR/foo").
+     * @param opts.resolveBrokenSymlinks Repair symlinks that directory selection would break. Resolve targets across the root filesystem and directory or file mounts. Preserve working relative links and links that already have no target. Cache, volume, tmpfs, secret, and socket mounts cause an error if selection, a resolved link, or mount target resolution needs their contents.
      */
     directory: (path: string, opts?: ContainerDirectoryOpts) => Directory;
     /**
@@ -6748,17 +6780,17 @@ declare class Container extends BaseClient {
      * Configures all available GPUs on the host to be accessible to this container.
      *
      * This currently works for Nvidia devices only.
-     * @deprecated Use "withGPU" instead.
+     * @deprecated Use "withGpu" instead.
      */
-    experimentalWithAllGPUs: () => Container;
+    experimentalWithAllGpus: () => Container;
     /**
      * Configures the provided list of devices to be accessible to this container.
      *
      * This currently works for Nvidia devices only.
      * @param devices List of devices to be accessible to this container.
-     * @deprecated Use "withGPU" instead, which exposes all GPUs available on the host.
+     * @deprecated Use "withGpu" instead, which exposes all GPUs available on the host.
      */
-    experimentalWithGPU: (devices: string[]) => Container;
+    experimentalWithGpu: (devices: string[]) => Container;
     /**
      * Writes the container as an OCI tarball to the destination file path on the host.
      *
@@ -6824,7 +6856,7 @@ declare class Container extends BaseClient {
      * @param opts.protocol Protocol to use for registry communication.
      *
      * Defaults to "HTTPS". Use "HTTP" only for plain HTTP registries.
-     * @param opts.insecureSkipTLSVerify Allow HTTPS registry communication without verifying the server certificate.
+     * @param opts.insecureSkipTlsVerify Allow HTTPS registry communication without verifying the server certificate.
      * @param opts.noLock Ignore the workspace lockfile for this lookup.
      */
     from: (address: string, opts?: ContainerFromOpts) => Container;
@@ -6894,7 +6926,7 @@ declare class Container extends BaseClient {
      * @param opts.protocol Protocol to use for registry communication.
      *
      * Defaults to "HTTPS". Use "HTTP" only for plain HTTP registries.
-     * @param opts.insecureSkipTLSVerify Allow HTTPS registry communication without verifying the server certificate.
+     * @param opts.insecureSkipTlsVerify Allow HTTPS registry communication without verifying the server certificate.
      * @param opts.sourceDateEpoch Clamp the image's timestamps to this time, so that rebuilding unchanged files produces identical layers.
      *
      * Formatted in seconds following Unix epoch (e.g., 1672531199). File timestamps in every layer and the image's creation times that are later than this are set to it, as with BuildKit's rewrite-timestamp and SOURCE_DATE_EPOCH. Every layer is rewritten, so this costs time on each export.
@@ -7118,7 +7150,7 @@ declare class Container extends BaseClient {
      *
      * This currently works with NVIDIA devices only, and requires the engine to run with GPU support enabled.
      */
-    withGPU: () => Container;
+    withGpu: () => Container;
     /**
      * Retrieves this container plus the given label.
      * @param name The name of the label (e.g., "org.opencontainers.artifact.created").
@@ -7447,6 +7479,13 @@ declare class CurrentModule extends BaseClient {
      */
     name: () => Promise<string>;
     /**
+     * The names the engine gives this module's own declarations: the same as its source's ModuleSource.naming, for module runtimes, which have no ModuleSource.
+     *
+     * It answers for the module under its own name (ModuleSource.moduleName), by the naming rules of the version the module is named by. A workspace or toolchain that loads the module under another name namespaces its types under that name instead, which this doesn't reflect.
+     * @experimental
+     */
+    naming: () => ModuleNaming;
+    /**
      * The directory containing the module's source code loaded into the engine (plus any generated code that may have been created).
      */
     source: () => Directory;
@@ -7575,8 +7614,9 @@ declare class Directory extends BaseClient {
     /**
      * Retrieves a directory at the given path.
      * @param path Location of the directory to retrieve. Example: "/src"
+     * @param opts.resolveBrokenSymlinks Repair symlinks that directory selection would break. Copy targets from this directory into the result. Preserve working relative links and links that already have no target.
      */
-    directory: (path: string) => Directory;
+    directory: (path: string, opts?: DirectoryDirectoryOpts) => Directory;
     /**
      * Use Dockerfile compatibility to build a container from this directory. Only use this function for Dockerfile compatibility. Otherwise use the native Container type directly, it is feature-complete and supports all Dockerfile features.
      * @param opts.dockerfile Path to the Dockerfile to use (e.g., "frontend.Dockerfile").
@@ -7747,6 +7787,15 @@ declare class Directory extends BaseClient {
      * @experimental
      */
     withPatchFile: (patch: File, opts?: DirectoryWithPatchFileOpts) => Directory;
+    /**
+     * Retrieves this directory, declared as made for the given platform.
+     *
+     * Declare a result whose contents are the same whichever platform made them, such as a Go package compiled for a platform by any platform's Go toolchain. An engine of another platform that makes the same directory for the same platform then finds this one, and the other way around.
+     *
+     * The contents are not checked: a declared result that depends on the platform it was made on can be found where it doesn't belong.
+     * @param platform The platform the directory's contents are for (e.g., "linux/arm64").
+     */
+    withPlatform: (platform: Platform) => Directory;
     /**
      * Return a snapshot with a symlink
      * @param target Location of the file or directory to link to (e.g., "/existing/file").
@@ -8280,7 +8329,7 @@ declare class File extends BaseClient {
     /**
      * Parse the file contents as JSON.
      */
-    asJSON: () => JSONValue;
+    asJson: () => JSONValue;
     /**
      * Change the owner of the file recursively.
      * @param owner A user:group to set for the file.
@@ -8353,8 +8402,9 @@ declare class File extends BaseClient {
     stat: () => Promise<Stat | null>;
     /**
      * Force evaluation in the engine.
+     * @param opts.keyByContent Also key the file by its content, so that what consumes it is cached across any two recipes that produce the same file. This hashes the file unless it already has a content key.
      */
-    sync: () => Promise<File>;
+    sync: (opts?: FileSyncOpts) => Promise<File>;
     /**
      * Retrieves this file with its name set to the given name.
      * @param name Name to set file to.
@@ -8649,11 +8699,11 @@ declare class GeneratedCode extends BaseClient {
     /**
      * Set the list of paths to mark generated in version control.
      */
-    withVCSGeneratedPaths: (paths: string[]) => GeneratedCode;
+    withVcsGeneratedPaths: (paths: string[]) => GeneratedCode;
     /**
      * Set the list of paths to ignore in version control.
      */
-    withVCSIgnoredPaths: (paths: string[]) => GeneratedCode;
+    withVcsIgnoredPaths: (paths: string[]) => GeneratedCode;
     /**
      * Call the provided function with current GeneratedCode.
      *
@@ -8719,7 +8769,7 @@ declare class GitBundle extends BaseClient {
     /**
      * Commits that must already exist wherever this bundle is applied.
      */
-    prerequisiteSHAs: () => Promise<string[]>;
+    prerequisiteShas: () => Promise<string[]>;
     /**
      * Refs advertised by the bundle and the object IDs they resolve to.
      */
@@ -8779,11 +8829,11 @@ declare class GitCommit extends BaseClient {
     private readonly _messageHeadline?;
     private readonly _sha?;
     private readonly _shortSha?;
-    private readonly _treeSHA?;
+    private readonly _treeSha?;
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _authorEmail?: string, _authorName?: string, _authoredDate?: string, _committedDate?: string, _committerEmail?: string, _committerName?: string, _message?: string, _messageBody?: string, _messageHeadline?: string, _sha?: string, _shortSha?: string, _treeSHA?: string);
+    constructor(ctx?: Context, _id?: ID, _authorEmail?: string, _authorName?: string, _authoredDate?: string, _committedDate?: string, _committerEmail?: string, _committerName?: string, _message?: string, _messageBody?: string, _messageHeadline?: string, _sha?: string, _shortSha?: string, _treeSha?: string);
     /**
      * A unique identifier for this GitCommit.
      */
@@ -8865,7 +8915,7 @@ declare class GitCommit extends BaseClient {
      *
      * Commits with identical trees have identical contents and file modes.
      */
-    treeSHA: () => Promise<string>;
+    treeSha: () => Promise<string>;
 }
 /**
  * A receipt for a completed Git push. Reading or replaying the receipt does not push again.
@@ -8873,13 +8923,13 @@ declare class GitCommit extends BaseClient {
 declare class GitPushResult extends BaseClient {
     private readonly _id?;
     private readonly _disposition?;
-    private readonly _previousSHA?;
+    private readonly _previousSha?;
     private readonly _ref?;
     private readonly _sha?;
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _disposition?: GitPushDisposition, _previousSHA?: string, _ref?: string, _sha?: string);
+    constructor(ctx?: Context, _id?: ID, _disposition?: GitPushDisposition, _previousSha?: string, _ref?: string, _sha?: string);
     /**
      * A unique identifier for this GitPushResult.
      */
@@ -8891,7 +8941,7 @@ declare class GitPushResult extends BaseClient {
     /**
      * The previous remote object ID; empty when the ref was created.
      */
-    previousSHA: () => Promise<string>;
+    previousSha: () => Promise<string>;
     /**
      * The fully qualified remote ref.
      */
@@ -8907,14 +8957,14 @@ declare class GitPushResult extends BaseClient {
 declare class GitRef extends BaseClient {
     private readonly _id?;
     private readonly _commit?;
-    private readonly _commitSHA?;
+    private readonly _commitSha?;
     private readonly _contains?;
     private readonly _name?;
     private readonly _ref?;
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _commit?: string, _commitSHA?: string, _contains?: boolean, _name?: string, _ref?: string);
+    constructor(ctx?: Context, _id?: ID, _commit?: string, _commitSha?: string, _contains?: boolean, _name?: string, _ref?: string);
     /**
      * A unique identifier for this GitRef.
      */
@@ -8932,13 +8982,13 @@ declare class GitRef extends BaseClient {
     asWorkspace: (opts?: GitRefAsWorkspaceOpts) => Workspace;
     /**
      * The resolved commit id at this ref.
-     * @deprecated Use "commitSHA" instead.
+     * @deprecated Use "commitSha" instead.
      */
     commit: () => Promise<string>;
     /**
      * The resolved commit SHA at this ref.
      */
-    commitSHA: () => Promise<string>;
+    commitSha: () => Promise<string>;
     /**
      * Find the best common ancestor between this ref and another ref.
      * @param other The other ref to compare against.
@@ -8971,7 +9021,7 @@ declare class GitRef extends BaseClient {
      * @param opts.to Destination remote repository. Defaults to the origin remote's push routing, or the source's repository URL when none is registered. Required when the source has no remote URL.
      * @param opts.remote Name of a registered remote to push to (see GitRepository.withRemote). Defaults to origin. The remote's push URLs, or its URL, become the destination; more than one push URL requires an explicit to instead.
      * @param opts.branch Destination branch; a refs/ prefix is used verbatim. Defaults to this ref's branch name. Required for detached and non-branch refs.
-     * @param opts.expectedRemoteSHA Optional lease: a full lowercase object ID allows replacement only if the remote ref still has that value. Checked even for up-to-date pushes. Empty or omitted uses normal non-force rules, creating the ref if it does not exist.
+     * @param opts.expectedRemoteSha Optional lease: a full lowercase object ID allows replacement only if the remote ref still has that value. Checked even for up-to-date pushes. Empty or omitted uses normal non-force rules, creating the ref if it does not exist.
      */
     push: (opts?: GitRefPushOpts) => GitPushResult;
     /**
@@ -9082,7 +9132,7 @@ declare class GitRepository extends BaseClient {
      * Returns details of a commit.
      * @param id Identifier of the commit (e.g., "b6315d8f2810962c601af73f86831f6866ea798b").
      *
-     * May be abbreviated to an unambiguous hex prefix (4-40 characters), which is expanded against locally available objects. Remote repositories (resolved via ls-remote) can only expand prefixes of already-fetched commits; use the full SHA otherwise.
+     * May be abbreviated to an unambiguous hex prefix (4-40 characters), which is expanded to the full SHA. A remote repository that has not fetched the commit yet fetches the history of the refs it advertises to find it.
      */
     commit: (id: string) => GitCommit;
     /**
@@ -9108,7 +9158,7 @@ declare class GitRepository extends BaseClient {
      * Returns details of a ref.
      * @param name Ref's name (can be a commit identifier, a tag name, a branch name, or a fully-qualified ref).
      *
-     * Commit identifiers may be abbreviated: an unambiguous hex prefix (4-40 characters) of a commit SHA resolves like git rev-parse, with named refs taking precedence. Abbreviated SHAs resolve against locally available objects, so remote repositories (resolved via ls-remote) can only expand prefixes of already-fetched commits; use the full SHA or a named ref otherwise.
+     * Commit identifiers may be abbreviated: an unambiguous hex prefix (4-40 characters) of a commit SHA resolves like git rev-parse, with named refs taking precedence, to the full SHA. A remote repository that has not fetched the commit yet fetches the history of the refs it advertises to find it, so only commits reachable from those refs can be abbreviated.
      *
      * The name may be followed by git revision suffixes, applied left to right: `~N` follows first parents N times and `^N` selects the Nth parent (`~` and `^` mean 1, `^0` is the commit itself), e.g. `HEAD~3`, `main^2` or `abc1234~2`. The result is a detached ref of the resulting commit; remote repositories fetch the history the walk needs. Other git revision syntax (`^{...}`, `@{...}`, `:path`, ranges) is not supported.
      *
@@ -9677,7 +9727,7 @@ declare class LLM extends BaseClient {
      * @param name The name of the MCP server
      * @param service The MCP service to run and communicate with over stdio
      */
-    withMCPServer: (name: string, service: Service) => LLM;
+    withMcpServer: (name: string, service: Service) => LLM;
     /**
      * Change the model for the rest of the conversation. The message history is preserved; the new model takes effect on the next step.
      * @param model The model to use, e.g. "claude-sonnet-4-5" or "gpt-5.4".
@@ -10100,7 +10150,7 @@ declare class Module_ extends BaseClient {
      *
      * Note: this is in the context of a module, so some core types may be hidden.
      */
-    introspectionSchemaJSON: () => File;
+    introspectionSchemaJson: () => File;
     /**
      * The name of the module
      */
@@ -10187,6 +10237,74 @@ declare class ModuleConfigClient extends BaseClient {
     generator: () => Promise<string>;
 }
 /**
+ * The names the engine gives a module's own declarations, by the naming rules of the version the module is named by.
+ *
+ * Every list-taking field answers in input order.
+ */
+declare class ModuleNaming extends BaseClient {
+    private readonly _id?;
+    private readonly _mainObject?;
+    private readonly _name?;
+    private readonly _originalName?;
+    private readonly _version?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID, _mainObject?: string, _name?: string, _originalName?: string, _version?: string);
+    /**
+     * A unique identifier for this ModuleNaming.
+     */
+    id: () => Promise<ID>;
+    /**
+     * The schema names of enum members this module declares, in input order: SCREAMING_SNAKE_CASE.
+     *
+     * A name already written in GraphQL's enum member convention (HTTP2, P_256) is kept as it is. With the engine's identifier naming rules, Arm64 is ARM64 and GitHub is GITHUB; with the legacy strcase rules, Arm64 is ARM_64.
+     *
+     * Errors on a name the module's naming rules can't parse (non-ASCII, no letters or digits, or over 256 bytes). The legacy rules name anything.
+     * @param names The enum member names as the module's source declares them.
+     */
+    enumMemberNames: (names: string[]) => Promise<string[]>;
+    /**
+     * The schema names of functions, object fields and function arguments this module declares, including interface functions and their arguments, in input order.
+     *
+     * With the engine's identifier naming rules, acronyms are written like words: getURL is getUrl, baseURL is baseUrl, HTTPClient is httpClient. With the legacy strcase rules, HTTPClient is httpclient and e2eTest is e2ETest.
+     *
+     * Errors on a name the module's naming rules can't parse (non-ASCII, no letters or digits, or over 256 bytes). The legacy rules name anything.
+     * @param names The function, field and argument names as the module's source declares them.
+     */
+    fieldNames: (names: string[]) => Promise<string[]>;
+    /**
+     * Which of the candidates, the names of objects this module declares, the engine takes as the module's main object; null if none.
+     *
+     * The engine finds the main object by the module's name, in any casing: the first candidate, in input order, whose name normalizes to the same type name as the module's, or is spelled as that type name already (K8STools for module k8s-tools, by either rules: strcase spells k8s-tools K8STools, though it would normalize K8STools again to K8Stools). Failing that, with the engine's identifier naming rules only, the only candidate spelled the same once lowercased without word boundaries (Sha256Sum for module sha256sum); several such candidates are ambiguous, and give null.
+     *
+     * Errors on a name the module's naming rules can't parse (non-ASCII, no letters or digits, or over 256 bytes). The legacy rules name anything.
+     * @param candidates The object names as the module's source declares them.
+     */
+    mainObject: (candidates: string[]) => Promise<string>;
+    /**
+     * The module's name, which namespaces its types.
+     */
+    name: () => Promise<string>;
+    /**
+     * The module's original name, which its main object and namespaced type names are spelled after. It differs from name when the module is loaded under another name, as a dependency alias.
+     */
+    originalName: () => Promise<string>;
+    /**
+     * The schema names of objects, interfaces and enums this module declares, as the engine installs them: namespaced under the module's name, in input order.
+     *
+     * A name is prefixed with the module's name unless it already starts with the module's name on a word boundary. With the engine's identifier naming rules: HttpClient in module my-mod is MyModHTTPClient; Postman in module post is PostPostman, while PostMan stays PostMan; K8STools in module k8s-tools is K8sTools, the module's own name. With the legacy strcase rules, HttpClient in module my-mod is MyModHttpClient.
+     *
+     * Errors on a name the module's naming rules can't parse (non-ASCII, no letters or digits, or over 256 bytes). The legacy rules name anything.
+     * @param names The type names as the module's source declares them.
+     */
+    typeNames: (names: string[]) => Promise<string[]>;
+    /**
+     * The normalized engine version whose naming rules name the module.
+     */
+    version: () => Promise<string>;
+}
+/**
  * The source needed to load and run a module, along with any metadata about the source such as versions/urls/etc.
  */
 declare class ModuleSource extends BaseClient {
@@ -10197,8 +10315,8 @@ declare class ModuleSource extends BaseClient {
     private readonly _configExists?;
     private readonly _digest?;
     private readonly _engineVersion?;
-    private readonly _htmlRepoURL?;
-    private readonly _htmlURL?;
+    private readonly _htmlRepoUrl?;
+    private readonly _htmlUrl?;
     private readonly _kind?;
     private readonly _localContextDirectoryPath?;
     private readonly _moduleName?;
@@ -10213,7 +10331,7 @@ declare class ModuleSource extends BaseClient {
     /**
      * Constructor is used for internal usage only, do not create object from it.
      */
-    constructor(ctx?: Context, _id?: ID, _asString?: string, _cloneRef?: string, _commit?: string, _configExists?: boolean, _digest?: string, _engineVersion?: string, _htmlRepoURL?: string, _htmlURL?: string, _kind?: ModuleSourceKind, _localContextDirectoryPath?: string, _moduleName?: string, _moduleOriginalName?: string, _originalSubpath?: string, _pin?: string, _repoRootPath?: string, _sourceRootSubpath?: string, _sourceSubpath?: string, _sync?: ID, _version?: string);
+    constructor(ctx?: Context, _id?: ID, _asString?: string, _cloneRef?: string, _commit?: string, _configExists?: boolean, _digest?: string, _engineVersion?: string, _htmlRepoUrl?: string, _htmlUrl?: string, _kind?: ModuleSourceKind, _localContextDirectoryPath?: string, _moduleName?: string, _moduleOriginalName?: string, _originalSubpath?: string, _pin?: string, _repoRootPath?: string, _sourceRootSubpath?: string, _sourceSubpath?: string, _sync?: ID, _version?: string);
     /**
      * A unique identifier for this ModuleSource.
      */
@@ -10234,9 +10352,14 @@ declare class ModuleSource extends BaseClient {
     /**
      * The client-facing introspection schema JSON file for this module source.
      *
-     * This is the schema consumed by client codegen: unlike introspectionSchemaJSON (the module-facing schema), it hides no core types and installs this module (reached via dag.<moduleName>) so a generated client can bind it. The module's dependencies are excluded: a client is generated for a single module plus core, not its dependency graph.
+     * This is the schema consumed by client codegen: unlike introspectionSchemaJson (the module-facing schema), it hides no core types and installs this module (reached via dag.<moduleName>) so a generated client can bind it. The module's dependencies are excluded: a client is generated for a single module plus core, not its dependency graph.
+     * @param opts.clientVersion The engine version of the client the schema is generated for, e.g. the engineVersion of the module that depends on this one: core is described as that client sees it, capped at this engine's version.
+     *
+     * This module is still loaded at the engine version it declares, and so named by its own naming rules, as the engine serves it to such a client. Defaults to this module's own engine version.
+     *
+     * Use this rather than withEngineVersion, which makes this module declare another version and so changes its names.
      */
-    clientSchemaIntrospectionJSON: () => File;
+    clientSchemaIntrospectionJson: (opts?: ModuleSourceClientSchemaIntrospectionJsonOpts) => File;
     /**
      * The ref to clone the root of the git repo from. Only valid for git sources.
      */
@@ -10292,11 +10415,11 @@ declare class ModuleSource extends BaseClient {
     /**
      * The URL to access the web view of the repository (e.g., GitHub, GitLab, Bitbucket).
      */
-    htmlRepoURL: () => Promise<string>;
+    htmlRepoUrl: () => Promise<string>;
     /**
      * The URL to the source's git repo in a web browser. Only valid for git sources.
      */
-    htmlURL: () => Promise<string>;
+    htmlUrl: () => Promise<string>;
     /**
      * The introspection schema JSON file for this module source.
      *
@@ -10304,7 +10427,7 @@ declare class ModuleSource extends BaseClient {
      *
      * Note: this is in the context of a module, so some core types may be hidden.
      */
-    introspectionSchemaJSON: () => File;
+    introspectionSchemaJson: () => File;
     /**
      * The kind of module source (currently local, git or dir).
      */
@@ -10321,6 +10444,17 @@ declare class ModuleSource extends BaseClient {
      * The original name of the module as read from the module config file (or set for the first time with the withName API).
      */
     moduleOriginalName: () => Promise<string>;
+    /**
+     * The names the engine gives this module's own declarations, by the naming rules of the version the module is named by: its engine version, capped at the engine's own.
+     *
+     * Modules declaring a version before the identifier casing cut get the legacy strcase names; later ones get the engine's identifier naming rules.
+     *
+     * For SDK codegen, which must reproduce these names before the module is loaded: this reads only the source's name, original name and engine version, so it answers before the module's entrypoint is generated.
+     *
+     * It answers for the module under its own name (moduleName). A workspace or toolchain that loads the module under another name namespaces its types under that name instead, which this doesn't reflect.
+     * @experimental
+     */
+    naming: () => ModuleNaming;
     /**
      * The original subpath used when instantiating this module source, relative to the context directory.
      */
@@ -10409,7 +10543,7 @@ declare class ModuleSource extends BaseClient {
      * Update the module source with a new SDK.
      * @param source The SDK source to set.
      */
-    withSDK: (source: string) => ModuleSource;
+    withSdk: (source: string) => ModuleSource;
     /**
      * Update the module source with a new source subpath.
      * @param path The path to set as the source subpath. Must be relative to the module source's source root directory.
@@ -10474,6 +10608,49 @@ declare class ModuleSource extends BaseClient {
      * This is useful for reusability and readability by not breaking the calling chain.
      */
     with: (arg: (param: ModuleSource) => ModuleSource) => ModuleSource;
+}
+/**
+ * The engine's identifier naming rules at an engine version.
+ */
+declare class Naming extends BaseClient {
+    private readonly _id?;
+    private readonly _version?;
+    /**
+     * Constructor is used for internal usage only, do not create object from it.
+     */
+    constructor(ctx?: Context, _id?: ID, _version?: string);
+    /**
+     * A unique identifier for this Naming.
+     */
+    id: () => Promise<ID>;
+    /**
+     * The acronyms and terms used to parse and format identifiers.
+     */
+    dictionary: () => Promise<NamingTerm[]>;
+    /**
+     * Format many names at once, for codegen. Returns them in input order.
+     * @param names The names to format, in any casing.
+     * @param casing The casing to format the names in.
+     * @param opts.acronyms How to write acronyms and terms where a word starts with a capital.
+     */
+    formatIdentifiers: (names: string[], casing: Casing, opts?: NamingFormatIdentifiersOpts) => Promise<string[]>;
+    /**
+     * Parse a name in any casing into words.
+     *
+     * Known acronyms and terms come from the naming dictionary; everything else falls back to the case heuristic. Errors on non-ASCII input, input with no letters or digits, or input over 256 bytes.
+     * @param name The name to parse.
+     */
+    identifier: (name: string) => Identifier;
+    /**
+     * The names the engine gives the declarations of a module named by these rules.
+     * @param name The module's name, which namespaces its types.
+     * @param opts.originalName The module's original name, when it's loaded under another (as a dependency alias): its main object and namespaced type names are spelled after it. Defaults to name.
+     */
+    module_: (name: string, opts?: NamingModuleOpts) => ModuleNaming;
+    /**
+     * The normalized engine version these rules answer for.
+     */
+    version: () => Promise<string>;
 }
 /**
  * An entry in the naming dictionary.
@@ -10724,15 +10901,6 @@ declare class Client extends BaseClient {
      */
     file: (name: string, contents: string, opts?: ClientFileOpts) => File;
     /**
-     * Format many names at once, for codegen. Returns them in input order.
-     * @param names The names to format, in any casing.
-     * @param casing The casing to format the names in.
-     * @param opts.acronyms How to write acronyms and terms where a word starts with a capital.
-     * @param opts.version The engine version whose naming dictionary to parse the names with, e.g. the __schemaVersion of a schema being generated. Defaults to the caller's engine version.
-     * @experimental
-     */
-    formatIdentifiers: (names: string[], casing: Casing, opts?: ClientFormatIdentifiersOpts) => Promise<string[]>;
-    /**
      * Creates a function.
      * @param name Name of the function, in its original format from the implementation language.
      * @param returnType Return type of the function.
@@ -10773,14 +10941,6 @@ declare class Client extends BaseClient {
      */
     http: (url: string, opts?: ClientHttpOpts) => File;
     /**
-     * Parse a name in any casing into words.
-     *
-     * Known acronyms and terms come from the naming dictionary; everything else falls back to the case heuristic. Errors on non-ASCII input, input with no letters or digits, or input over 256 bytes.
-     * @param name The name to parse.
-     * @experimental
-     */
-    identifier: (name: string) => Identifier;
-    /**
      * Initialize a JSON value
      */
     json: () => JSONValue;
@@ -10813,10 +10973,11 @@ declare class Client extends BaseClient {
      */
     moduleSource: (refString: string, opts?: ClientModuleSourceOpts) => ModuleSource;
     /**
-     * The acronyms and terms used to parse and format identifiers.
+     * The engine's identifier naming rules at an engine version.
+     * @param opts.version The engine version to answer for, e.g. the engine version a module declares. Defaults to the caller's. Normalized as a module's is: a version past the engine's is capped at the engine's own.
      * @experimental
      */
-    namingDictionary: () => Promise<NamingTerm[]>;
+    naming: (opts?: ClientNamingOpts) => Naming;
     /**
      * Load any object by its ID.
      */
@@ -11818,17 +11979,17 @@ declare class Workspace extends BaseClient {
      */
     withModule: (ref: string, opts?: WorkspaceWithModuleOpts) => Workspace;
     /**
-     * Return this workspace with a directory mounted read-only at the given path, without mutating the source.
+     * Return this workspace with a directory mounted at the given path, without mutating the source.
      *
-     * Mounted content is readable through the normal workspace file tools but shadows the source at the mount path and stays out of the pending changeset: it never appears in changes, is never exported, and cannot be modified.
+     * Mounted content is readable and editable through the normal workspace file tools but shadows the source at the mount path and stays out of the pending changeset: neither it nor edits to it appear in changes or are exported. Use withoutMount to remove the mount.
      * @param path Location of the mounted directory. Relative paths resolve from the workspace cwd.
      * @param source Directory to mount.
      */
     withMountedDirectory: (path: string, source: Directory) => Workspace;
     /**
-     * Return this workspace with a file mounted read-only at the given path, without mutating the source.
+     * Return this workspace with a file mounted at the given path, without mutating the source.
      *
-     * Mounted content is readable through the normal workspace file tools but shadows the source at the mount path and stays out of the pending changeset: it never appears in changes, is never exported, and cannot be modified.
+     * Mounted content is readable and editable through the normal workspace file tools but shadows the source at the mount path and stays out of the pending changeset: neither it nor edits to it appear in changes or are exported. Use withoutMount to remove the mount.
      * @param path Location of the mounted file. Relative paths resolve from the workspace cwd.
      * @param source File to mount.
      */
@@ -11851,7 +12012,7 @@ declare class Workspace extends BaseClient {
     /**
      * Return this workspace with the given Git-compatible patch file applied, without mutating the source.
      *
-     * Paths in the patch are relative to the workspace root, whatever its cwd, as `git diff` writes them. Patching a path at or under a mount is an error.
+     * Paths in the patch are relative to the workspace root, whatever its cwd, as `git diff` writes them. Sections for paths in a mount apply to the mounted content; a section cannot move a file across a mount boundary or delete a mount point.
      * @param patch File containing the patch to apply
      * @param opts.onConflict How to handle hunks that no longer apply to the target content: fail (default), or apply what fits and leave git-style conflict markers where it doesn't.
      * @experimental
@@ -11876,7 +12037,7 @@ declare class Workspace extends BaseClient {
      * @param opts.here Write to the workspace config directory at the workspace cwd.
      * @param opts.asSdkName Optional override for the SDK name conventionally derived from the installed module name.
      */
-    withSDK: (ref: string, opts?: WorkspaceWithSdkOpts) => Workspace;
+    withSdk: (ref: string, opts?: WorkspaceWithSdkOpts) => Workspace;
     /**
      * Return this workspace with the selected module clients updated.
      *
@@ -11987,7 +12148,7 @@ declare class Workspace extends BaseClient {
      * @param name Name of the installed SDK entry to remove.
      * @param opts.here Write to the workspace config directory at the workspace cwd.
      */
-    withoutSDK: (name: string, opts?: WorkspaceWithoutSdkOpts) => Workspace;
+    withoutSdk: (name: string, opts?: WorkspaceWithoutSdkOpts) => Workspace;
     /**
      * Call the provided function with current Workspace.
      *
@@ -12247,6 +12408,18 @@ declare class WorkspaceSDK extends BaseClient {
      * The module reference this SDK was installed from.
      */
     ref: () => Promise<string>;
+    /**
+     * The value a setting records in this SDK's scope settings, as a native JSON value.
+     *
+     * Reads [sdks.<name>.scopes."<scope>".settings] from the workspace config, in the scope whose key resolves to path. The setting key is matched without regard to case.
+     *
+     * Null when no scope resolves to path, or the scope records no such setting. Fails when the config is invalid, path escapes the workspace root, key matches several recorded settings, or the value cannot be represented as JSON.
+     *
+     * Fails when this SDK is no longer installed in the workspace config, even if Workspace.sdk returned it earlier.
+     * @param path Scope path, relative to the workspace cwd or absolute from the workspace root.
+     * @param key Setting name, matched without regard to case.
+     */
+    scopeSetting: (path: string, key: string) => Promise<JSONValue | null>;
 }
 declare const dag: Client;
 
@@ -12406,5 +12579,5 @@ declare const enumType: () => (<T extends Class>(constructor: T) => T);
  */
 declare const argument: (opts?: ArgumentOptions) => ((target: object, propertyKey: string | undefined, parameterIndex: number) => void);
 
-export { AcronymStyle, AcronymStyleNameToValue, AcronymStyleValueToName, Address, Agent, AgentMessage, AgentMessageDelivery, AgentMessageDeliveryNameToValue, AgentMessageDeliveryValueToName, AgentState, AgentStateNameToValue, AgentStateValueToName, Artifact, ArtifactDimension, ArtifactDimensionKey, ArtifactDimensionKind, ArtifactDimensionKindNameToValue, ArtifactDimensionKindValueToName, ArtifactPath, Artifacts, BaseClient, CacheSharingMode, CacheSharingModeNameToValue, CacheSharingModeValueToName, CacheVolume, Casing, CasingNameToValue, CasingValueToName, Changeset, ChangesetMergeConflict, ChangesetMergeConflictNameToValue, ChangesetMergeConflictValueToName, ChangesetsMergeConflict, ChangesetsMergeConflictNameToValue, ChangesetsMergeConflictValueToName, Check, Client, ClientFilesyncMirror, Cloud, CollectionDelta, CollectionTypeDef, Command, Connection, Container, Context, CurrentModule, DaggerSDKError, DiffStat, DiffStatKind, DiffStatKindNameToValue, DiffStatKindValueToName, Directory, DockerImageRefValidationError, ERROR_CODES, Engine, EngineCache, EngineCacheEntry, EngineCacheEntrySet, EngineSessionConnectParamsParseError, EngineSessionConnectionTimeoutError, EngineSessionError, EnumTypeDef, EnumValueTypeDef, EnvFile, EnvVariable, Error$1 as Error, ErrorValue, ExecError, ExistsType, ExistsTypeNameToValue, ExistsTypeValueToName, Expertise, FieldTypeDef, File, FileType, FileTypeNameToValue, FileTypeValueToName, FunctionArg, FunctionCachePolicy, FunctionCachePolicyNameToValue, FunctionCachePolicyValueToName, FunctionCall, FunctionCallArgValue, FunctionNotFound, Function_, GeneratedCode, Generator, GitBundle, GitBundleRef, GitCommit, GitPushDisposition, GitPushDispositionNameToValue, GitPushDispositionValueToName, GitPushResult, GitRef, GitRemote, GitRepository, GraphQLClient, GraphQLRequestError, HTTPState, HealthcheckConfig, Host, Identifier, IdentifierWord, IdentifierWordKind, IdentifierWordKindNameToValue, IdentifierWordKindValueToName, ImageLayerCompression, ImageLayerCompressionNameToValue, ImageLayerCompressionValueToName, ImageMediaTypes, ImageMediaTypesNameToValue, ImageMediaTypesValueToName, InitEngineSessionBinaryError, InputTypeDef, InterfaceTypeDef, IntrospectionError, JSONValue, LLM, LLMContent, LLMContentBlock, LLMContentBlockKind, LLMContentBlockKindNameToValue, LLMContentBlockKindValueToName, LLMMessage, LLMMessageOrigin, LLMMessageOriginKind, LLMMessageOriginKindNameToValue, LLMMessageOriginKindValueToName, LLMMessageRole, LLMMessageRoleNameToValue, LLMMessageRoleValueToName, LLMSkill, LLMTokenUsage, Label, ListTypeDef, ModuleConfigClient, ModuleSource, ModuleSourceExperimentalFeature, ModuleSourceExperimentalFeatureNameToValue, ModuleSourceExperimentalFeatureValueToName, ModuleSourceKind, ModuleSourceKindNameToValue, ModuleSourceKindValueToName, Module_, NamingTerm, NetworkProtocol, NetworkProtocolNameToValue, NetworkProtocolValueToName, NotAwaitedRequestError, ObjectTypeDef, PatchConflict, PatchConflictNameToValue, PatchConflictValueToName, Port, RegistryProtocol, RegistryProtocolNameToValue, RegistryProtocolValueToName, RemoteGitMirror, ReturnType, ReturnTypeNameToValue, ReturnTypeValueToName, SDKConfig, ScalarTypeDef, Schema, SearchResult, SearchSubmatch, Secret, Service, Socket, SourceMap, Stat, Terminal, TooManyNestedObjectsError, TypeDef, TypeDefKind, TypeDefKindNameToValue, TypeDefKindValueToName, UnknownDaggerError, Volume, Workspace, WorkspaceCommitPick, WorkspaceCommitPickReason, WorkspaceCommitPickReasonNameToValue, WorkspaceCommitPickReasonValueToName, WorkspaceCommitPickStatus, WorkspaceCommitPickStatusNameToValue, WorkspaceCommitPickStatusValueToName, WorkspaceGit, WorkspaceMigration, WorkspaceMigrationStep, WorkspaceModule, WorkspaceModuleSetting, WorkspaceSDK, _ExportableClient, _NodeClient, _SyncerClient, agent, argument, check, collection, computeQuery, connect, connection, dag, delta, enumType, field, func, generate, get, getRegisteredClass, getTracer, globalConnection, keys, object, shared, up, withGQLClient, withSession };
-export type { AddressContainerOpts, AddressDirectoryOpts, AddressFileOpts, AddressGitRefOpts, AgentNotifyOpts, AgentPauseOpts, AgentSendOpts, AgentStopOpts, ArtifactUriOpts, ArtifactValueOpts, ArtifactsFilterDirectivesOpts, ArtifactsFilterParentDirectivesOpts, ArtifactsFilterParentTypesOpts, ArtifactsFilterTypesOpts, ArtifactsPathDefinitionsOpts, BuildArg, Bytes, CallbackFct, ChangesetFilterOpts, ChangesetWithChangesetOpts, ChangesetWithChangesetsOpts, ClientBlobOpts, ClientCacheVolumeOpts, ClientContainerOpts, ClientCurrentTypeDefsOpts, ClientEngineVolumeOpts, ClientEnvFileOpts, ClientFileOpts, ClientFormatIdentifiersOpts, ClientGitOpts, ClientHttpOpts, ClientLLMOpts, ClientModuleSourceOpts, ClientSecretOpts, ClientServeModuleOpts, ClientSshfsVolumeOpts, ConnectOpts, ContainerAsServiceOpts, ContainerAsTarballOpts, ContainerDirectoryOpts, ContainerExistsOpts, ContainerExportImageOpts, ContainerExportOpts, ContainerFileOpts, ContainerFromOpts, ContainerImportOpts, ContainerLayerOpts, ContainerManifestOpts, ContainerPublishOpts, ContainerShellOpts, ContainerStatOpts, ContainerTerminalOpts, ContainerUpOpts, ContainerWithDefaultTerminalCmdOpts, ContainerWithDirectoryOpts, ContainerWithDockerHealthcheckOpts, ContainerWithEntrypointOpts, ContainerWithEnvVariableOpts, ContainerWithExecOpts, ContainerWithExposedPortOpts, ContainerWithFileOpts, ContainerWithFilesOpts, ContainerWithMountedCacheOpts, ContainerWithMountedDirectoryOpts, ContainerWithMountedFileOpts, ContainerWithMountedFilesOpts, ContainerWithMountedSecretOpts, ContainerWithMountedTempOpts, ContainerWithMountedVolumeOpts, ContainerWithNewFileOpts, ContainerWithRunOpts, ContainerWithShellOpts, ContainerWithSymlinkOpts, ContainerWithUnixSocketOpts, ContainerWithWorkdirOpts, ContainerWithoutDirectoryOpts, ContainerWithoutEntrypointOpts, ContainerWithoutExposedPortOpts, ContainerWithoutFileOpts, ContainerWithoutFilesOpts, ContainerWithoutMountOpts, ContainerWithoutUnixSocketOpts, CurrentModuleWorkdirOpts, DirectoryAsModuleOpts, DirectoryAsModuleSourceOpts, DirectoryAsWorkspaceOpts, DirectoryDockerBuildOpts, DirectoryEntriesOpts, DirectoryExistsOpts, DirectoryExportOpts, DirectoryFilterOpts, DirectorySearchOpts, DirectoryStatOpts, DirectoryTerminalOpts, DirectoryWithDirectoryOpts, DirectoryWithFileOpts, DirectoryWithFilesOpts, DirectoryWithNewDirectoryOpts, DirectoryWithNewFileOpts, DirectoryWithPatchFileOpts, DirectoryWithPatchOpts, EngineCacheEntrySetOpts, EngineCachePruneOpts, EnvFileGetOpts, EnvFileVariablesOpts, Exportable, FileAsEnvFileOpts, FileContentsOpts, FileDigestOpts, FileExportOpts, FileExtractOpts, FileSearchOpts, FileWithReplacedOpts, FunctionWithArgOpts, FunctionWithCachePolicyOpts, FunctionWithDeprecatedOpts, GitCommitAncestorReleaseTagOpts, GitCommitChangesOpts, GitCommitReleaseTagOpts, GitCommitTreeOpts, GitRefAsWorkspaceOpts, GitRefLogOpts, GitRefPushOpts, GitRefTreeOpts, GitRefWithCommitOpts, GitRepositoryAsWorkspaceOpts, GitRepositoryBranchOpts, GitRepositoryBranchesOpts, GitRepositoryBundleOpts, GitRepositoryHeadOpts, GitRepositoryLatestOpts, GitRepositoryRefOpts, GitRepositoryTagOpts, GitRepositoryTagsOpts, GitRepositoryWithBundleOpts, GitRepositoryWithRemoteOpts, HostDirectoryOpts, HostFileOpts, HostFindUpOpts, HostServiceOpts, HostTunnelOpts, ID, IdentifierFormatOpts, JSON, JSONValueContentsOpts, LLMArtifactsOpts, LLMContentBlockInput, LLMContentWithFileOpts, LLMLoopOpts, LLMMessageOriginInput, LLMSpawnOpts, LLMStepOpts, LLMWithContentFileOpts, LLMWithContentOpts, LLMWithModelOpts, LLMWithPromptOpts, LLMWithResponseOpts, LLMWithToolResultOpts, LLMWithToolsOpts, Metadata, ModuleServeOpts, Node, PipelineLabel, Platform, PortForward, QueryTree, ServeSpec, ServiceEndpointOpts, ServicePortsOpts, ServiceStopOpts, ServiceTerminalOpts, ServiceUpOpts, Syncer, TypeDefWithEnumMemberOpts, TypeDefWithEnumOpts, TypeDefWithEnumValueOpts, TypeDefWithFieldOpts, TypeDefWithInterfaceOpts, TypeDefWithObjectOpts, TypeDefWithScalarOpts, Void, WorkspaceArtifactsOpts, WorkspaceChangesOpts, WorkspaceCompareCommitsFromOpts, WorkspaceConfigReadOpts, WorkspaceDirectoryOpts, WorkspaceExportOpts, WorkspaceFindRootsOpts, WorkspaceFindUpOpts, WorkspaceMigrateModuleOpts, WorkspaceMigrateOpts, WorkspaceSearchOpts, WorkspaceWithClientOpts, WorkspaceWithCommitOpts, WorkspaceWithCommitsFromOpts, WorkspaceWithConfigEnvOpts, WorkspaceWithConfigValueOpts, WorkspaceWithFileOpts, WorkspaceWithInitModuleOpts, WorkspaceWithModuleOpts, WorkspaceWithNewFileOpts, WorkspaceWithPatchFileOpts, WorkspaceWithResetOpts, WorkspaceWithSdkOpts, WorkspaceWithUpdatedClientsOpts, WorkspaceWithUpdatedLockOpts, WorkspaceWithUpdatedModulesOpts, WorkspaceWithoutClientOpts, WorkspaceWithoutConfigEnvOpts, WorkspaceWithoutConfigValueOpts, WorkspaceWithoutModuleOpts, WorkspaceWithoutSdkOpts, __DirectiveArgsOpts, __FieldArgsOpts, __TypeEnumValuesOpts, __TypeFieldsOpts, __TypeInputFieldsOpts, float };
+export { AcronymStyle, AcronymStyleNameToValue, AcronymStyleValueToName, Address, Agent, AgentMessage, AgentMessageDelivery, AgentMessageDeliveryNameToValue, AgentMessageDeliveryValueToName, AgentState, AgentStateNameToValue, AgentStateValueToName, Artifact, ArtifactDimension, ArtifactDimensionKey, ArtifactDimensionKind, ArtifactDimensionKindNameToValue, ArtifactDimensionKindValueToName, ArtifactPath, Artifacts, BaseClient, CacheSharingMode, CacheSharingModeNameToValue, CacheSharingModeValueToName, CacheVolume, Casing, CasingNameToValue, CasingValueToName, Changeset, ChangesetMergeConflict, ChangesetMergeConflictNameToValue, ChangesetMergeConflictValueToName, ChangesetsMergeConflict, ChangesetsMergeConflictNameToValue, ChangesetsMergeConflictValueToName, Check, Client, ClientFilesyncMirror, Cloud, CollectionDelta, CollectionTypeDef, Command, Connection, Container, Context, CurrentModule, DaggerSDKError, DiffStat, DiffStatKind, DiffStatKindNameToValue, DiffStatKindValueToName, Directory, DockerImageRefValidationError, ERROR_CODES, Engine, EngineCache, EngineCacheEntry, EngineCacheEntrySet, EngineSessionConnectParamsParseError, EngineSessionConnectionTimeoutError, EngineSessionError, EnumTypeDef, EnumValueTypeDef, EnvFile, EnvVariable, Error$1 as Error, ErrorValue, ExecError, ExistsType, ExistsTypeNameToValue, ExistsTypeValueToName, Expertise, FieldTypeDef, File, FileType, FileTypeNameToValue, FileTypeValueToName, FunctionArg, FunctionCachePolicy, FunctionCachePolicyNameToValue, FunctionCachePolicyValueToName, FunctionCall, FunctionCallArgValue, FunctionNotFound, Function_, GeneratedCode, Generator, GitBundle, GitBundleRef, GitCommit, GitPushDisposition, GitPushDispositionNameToValue, GitPushDispositionValueToName, GitPushResult, GitRef, GitRemote, GitRepository, GraphQLClient, GraphQLRequestError, HTTPState, HealthcheckConfig, Host, Identifier, IdentifierWord, IdentifierWordKind, IdentifierWordKindNameToValue, IdentifierWordKindValueToName, ImageLayerCompression, ImageLayerCompressionNameToValue, ImageLayerCompressionValueToName, ImageMediaTypes, ImageMediaTypesNameToValue, ImageMediaTypesValueToName, InitEngineSessionBinaryError, InputTypeDef, InterfaceTypeDef, IntrospectionError, JSONValue, LLM, LLMContent, LLMContentBlock, LLMContentBlockKind, LLMContentBlockKindNameToValue, LLMContentBlockKindValueToName, LLMMessage, LLMMessageOrigin, LLMMessageOriginKind, LLMMessageOriginKindNameToValue, LLMMessageOriginKindValueToName, LLMMessageRole, LLMMessageRoleNameToValue, LLMMessageRoleValueToName, LLMSkill, LLMTokenUsage, Label, ListTypeDef, ModuleConfigClient, ModuleNaming, ModuleSource, ModuleSourceExperimentalFeature, ModuleSourceExperimentalFeatureNameToValue, ModuleSourceExperimentalFeatureValueToName, ModuleSourceKind, ModuleSourceKindNameToValue, ModuleSourceKindValueToName, Module_, Naming, NamingTerm, NetworkProtocol, NetworkProtocolNameToValue, NetworkProtocolValueToName, NotAwaitedRequestError, ObjectTypeDef, PatchConflict, PatchConflictNameToValue, PatchConflictValueToName, Port, RegistryProtocol, RegistryProtocolNameToValue, RegistryProtocolValueToName, RemoteGitMirror, ReturnType, ReturnTypeNameToValue, ReturnTypeValueToName, SDKConfig, ScalarTypeDef, Schema, SearchResult, SearchSubmatch, Secret, Service, Socket, SourceMap, Stat, Terminal, TooManyNestedObjectsError, TypeDef, TypeDefKind, TypeDefKindNameToValue, TypeDefKindValueToName, UnknownDaggerError, Volume, Workspace, WorkspaceCommitPick, WorkspaceCommitPickReason, WorkspaceCommitPickReasonNameToValue, WorkspaceCommitPickReasonValueToName, WorkspaceCommitPickStatus, WorkspaceCommitPickStatusNameToValue, WorkspaceCommitPickStatusValueToName, WorkspaceGit, WorkspaceMigration, WorkspaceMigrationStep, WorkspaceModule, WorkspaceModuleSetting, WorkspaceSDK, _ExportableClient, _NodeClient, _SyncerClient, agent, argument, check, collection, computeQuery, connect, connection, dag, delta, enumType, field, func, generate, get, getRegisteredClass, getTracer, globalConnection, keys, object, shared, up, withGQLClient, withSession };
+export type { AddressContainerOpts, AddressDirectoryOpts, AddressFileOpts, AddressGitRefOpts, AgentNotifyOpts, AgentPauseOpts, AgentSendOpts, AgentStopOpts, ArtifactUriOpts, ArtifactValueOpts, ArtifactsFilterDirectivesOpts, ArtifactsFilterParentDirectivesOpts, ArtifactsFilterParentTypesOpts, ArtifactsFilterTypesOpts, ArtifactsPathDefinitionsOpts, BuildArg, Bytes, CallbackFct, ChangesetFilterOpts, ChangesetWithChangesetOpts, ChangesetWithChangesetsOpts, ClientBlobOpts, ClientCacheVolumeOpts, ClientContainerOpts, ClientCurrentTypeDefsOpts, ClientEngineVolumeOpts, ClientEnvFileOpts, ClientFileOpts, ClientGitOpts, ClientHttpOpts, ClientLLMOpts, ClientModuleSourceOpts, ClientNamingOpts, ClientSecretOpts, ClientServeModuleOpts, ClientSshfsVolumeOpts, ConnectOpts, ContainerAsServiceOpts, ContainerAsTarballOpts, ContainerDirectoryOpts, ContainerExistsOpts, ContainerExportImageOpts, ContainerExportOpts, ContainerFileOpts, ContainerFromOpts, ContainerImportOpts, ContainerLayerOpts, ContainerManifestOpts, ContainerPublishOpts, ContainerShellOpts, ContainerStatOpts, ContainerTerminalOpts, ContainerUpOpts, ContainerWithDefaultTerminalCmdOpts, ContainerWithDirectoryOpts, ContainerWithDockerHealthcheckOpts, ContainerWithEntrypointOpts, ContainerWithEnvVariableOpts, ContainerWithExecOpts, ContainerWithExposedPortOpts, ContainerWithFileOpts, ContainerWithFilesOpts, ContainerWithMountedCacheOpts, ContainerWithMountedDirectoryOpts, ContainerWithMountedFileOpts, ContainerWithMountedFilesOpts, ContainerWithMountedSecretOpts, ContainerWithMountedTempOpts, ContainerWithMountedVolumeOpts, ContainerWithNewFileOpts, ContainerWithRunOpts, ContainerWithShellOpts, ContainerWithSymlinkOpts, ContainerWithUnixSocketOpts, ContainerWithWorkdirOpts, ContainerWithoutDirectoryOpts, ContainerWithoutEntrypointOpts, ContainerWithoutExposedPortOpts, ContainerWithoutFileOpts, ContainerWithoutFilesOpts, ContainerWithoutMountOpts, ContainerWithoutUnixSocketOpts, CurrentModuleWorkdirOpts, DirectoryAsModuleOpts, DirectoryAsModuleSourceOpts, DirectoryAsWorkspaceOpts, DirectoryDirectoryOpts, DirectoryDockerBuildOpts, DirectoryEntriesOpts, DirectoryExistsOpts, DirectoryExportOpts, DirectoryFilterOpts, DirectorySearchOpts, DirectoryStatOpts, DirectoryTerminalOpts, DirectoryWithDirectoryOpts, DirectoryWithFileOpts, DirectoryWithFilesOpts, DirectoryWithNewDirectoryOpts, DirectoryWithNewFileOpts, DirectoryWithPatchFileOpts, DirectoryWithPatchOpts, EngineCacheEntrySetOpts, EngineCachePruneOpts, EnvFileGetOpts, EnvFileVariablesOpts, Exportable, FileAsEnvFileOpts, FileContentsOpts, FileDigestOpts, FileExportOpts, FileExtractOpts, FileSearchOpts, FileSyncOpts, FileWithReplacedOpts, FunctionWithArgOpts, FunctionWithCachePolicyOpts, FunctionWithDeprecatedOpts, GitCommitAncestorReleaseTagOpts, GitCommitChangesOpts, GitCommitReleaseTagOpts, GitCommitTreeOpts, GitRefAsWorkspaceOpts, GitRefLogOpts, GitRefPushOpts, GitRefTreeOpts, GitRefWithCommitOpts, GitRepositoryAsWorkspaceOpts, GitRepositoryBranchOpts, GitRepositoryBranchesOpts, GitRepositoryBundleOpts, GitRepositoryHeadOpts, GitRepositoryLatestOpts, GitRepositoryRefOpts, GitRepositoryTagOpts, GitRepositoryTagsOpts, GitRepositoryWithBundleOpts, GitRepositoryWithRemoteOpts, HostDirectoryOpts, HostFileOpts, HostFindUpOpts, HostServiceOpts, HostTunnelOpts, ID, IdentifierFormatOpts, JSON, JSONValueContentsOpts, LLMArtifactsOpts, LLMContentBlockInput, LLMContentWithFileOpts, LLMLoopOpts, LLMMessageOriginInput, LLMSpawnOpts, LLMStepOpts, LLMWithContentFileOpts, LLMWithContentOpts, LLMWithModelOpts, LLMWithPromptOpts, LLMWithResponseOpts, LLMWithToolResultOpts, LLMWithToolsOpts, Metadata, ModuleServeOpts, ModuleSourceClientSchemaIntrospectionJsonOpts, NamingFormatIdentifiersOpts, NamingModuleOpts, Node, PipelineLabel, Platform, PortForward, QueryTree, ServeSpec, ServiceEndpointOpts, ServicePortsOpts, ServiceStopOpts, ServiceTerminalOpts, ServiceUpOpts, Syncer, TypeDefWithEnumMemberOpts, TypeDefWithEnumOpts, TypeDefWithEnumValueOpts, TypeDefWithFieldOpts, TypeDefWithInterfaceOpts, TypeDefWithObjectOpts, TypeDefWithScalarOpts, Void, WorkspaceArtifactsOpts, WorkspaceChangesOpts, WorkspaceCompareCommitsFromOpts, WorkspaceConfigReadOpts, WorkspaceDirectoryOpts, WorkspaceExportOpts, WorkspaceFindRootsOpts, WorkspaceFindUpOpts, WorkspaceMigrateModuleOpts, WorkspaceMigrateOpts, WorkspaceSearchOpts, WorkspaceWithClientOpts, WorkspaceWithCommitOpts, WorkspaceWithCommitsFromOpts, WorkspaceWithConfigEnvOpts, WorkspaceWithConfigValueOpts, WorkspaceWithFileOpts, WorkspaceWithInitModuleOpts, WorkspaceWithModuleOpts, WorkspaceWithNewFileOpts, WorkspaceWithPatchFileOpts, WorkspaceWithResetOpts, WorkspaceWithSdkOpts, WorkspaceWithUpdatedClientsOpts, WorkspaceWithUpdatedLockOpts, WorkspaceWithUpdatedModulesOpts, WorkspaceWithoutClientOpts, WorkspaceWithoutConfigEnvOpts, WorkspaceWithoutConfigValueOpts, WorkspaceWithoutModuleOpts, WorkspaceWithoutSdkOpts, __DirectiveArgsOpts, __FieldArgsOpts, __TypeEnumValuesOpts, __TypeFieldsOpts, __TypeInputFieldsOpts, float };

@@ -28,6 +28,12 @@ func (r *Backend) WithGraphQLQuery(q *querybuilder.Selection) *Backend {
 	}
 }
 
+// withLoadedID is the Backend that q, a query of the node whose
+// ID is id, selects, knowing that ID (Loaded).
+func (r *Backend) withLoadedID(q *querybuilder.Selection, id ID) *Backend {
+	return &Backend{query: q, id: &id}
+}
+
 // The compiled backend binary
 func (r *Backend) Binary() *File {
 	q := r.query.Select("binary")
